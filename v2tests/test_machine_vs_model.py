@@ -4,8 +4,8 @@ import numpy as  np
 
 import aphla as ap
 
-#ap.machines.load('nsls2', 'SR') # TODO: use_cache=False when loading from scratch; eliminate "save_cache"
-ap.machines.load('nsls2', 'SR', save_cache=True)
+ap.machines.load('nsls2', 'SR') # TODO: use_cache=False when loading from scratch; eliminate "save_cache"
+#ap.machines.load('nsls2', 'SR', save_cache=True)
 
 if False:
     print(ap.get_op_mode())
@@ -51,8 +51,19 @@ for unitsys in [None, 'phy', 'pyelegant', 'model']:
     print(e.get('b1', handle='readback', unitsys=unitsys),
           e.getUnit('b1', handle='readback', unitsys=unitsys))
 
-print(ap.getTune(source='machine', plane='h'))
 print(ap.getTunes(source='machine'))
+print(ap.getTunes(source='model'))
+for plane in ['x', 'h', 'y', 'v']:
+    print(plane, ap.getTune(plane, source='machine'))
+    print(plane, ap.getTune(plane, source='model'))
+    print(plane, ap.getTune(plane, source='database'))
+
+print(ap.getChromaticities(source='model'))
+print(ap.getChromaticities(source='database'))
+for plane in ['x', 'h', 'y', 'v']:
+    print(ap.getChromaticity(plane, source='model'))
+    print(ap.getChromaticity(plane, source='database')) # TODO
+
 
 ar1 = ap.getBeta('BPM', search_model_elem_names=False) # default = False
 ar1a = ap.getBeta('BPM', search_model_elem_names=True) # should result in an empty array
@@ -66,8 +77,13 @@ np.max(np.abs(ar3 - ar4))
 
 ar = ap.getAlpha('BPM')
 ar = ap.getEta('BPM')
-#ar = ap.getEtap('BPM') # TODO: not implemented
-#ar = ap.getPhase('BPM') # not working
-#ar = ap.getPhi('BPM') # not working
+ar = ap.getEtap('BPM')
+ar = ap.getPhase('BPM')
+ar = ap.getPhi('BPM') # exactly the same as ap.getPhase()
+
+for k in ['s', 'betax', 'betay', 'alphax', 'alphay', 'etax', 'etay',
+          'etaxp', 'etayp', 'phix', 'phiy']:
+    print(f'{k}: {ap.getTwissUnit(k)}')
+
 
 print

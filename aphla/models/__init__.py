@@ -309,6 +309,62 @@ class PyElegantVariableModel(VariableModel):
 
         return values
 
+    def getTune(self, plane, fractional_only=True):
+        """"""
+
+        self._recalc('twiss')
+        twi = self._raw['twiss']['data']['twi']
+
+        if plane.lower() in ('x', 'h'):
+            v = twi['scalars']['nux']
+        elif plane.lower() in ('y', 'v'):
+            v = twi['scalars']['nuy']
+        else:
+            raise ValueError('Valid values for "plane": "x", "y", "h", "v"')
+
+        if fractional_only:
+            v -= np.floor(v) # Take only the fractional part
+
+        return v
+
+    def getTunes(self, fractional_only=True):
+        """"""
+
+        self._recalc('twiss')
+        twi = self._raw['twiss']['data']['twi']
+
+        tunes = []
+        for plane in ['x', 'y']:
+            v = twi['scalars'][f'nu{plane}']
+            if fractional_only:
+                v -= np.floor(v) # Take only the fractional part
+            tunes.append(v)
+
+        return tuple(tunes)
+
+    def getChromaticity(self, plane):
+        """"""
+
+        self._recalc('twiss')
+        twi = self._raw['twiss']['data']['twi']
+
+        if plane.lower() in ('x', 'h'):
+            v = twi['scalars']['dnux/dp']
+        elif plane.lower() in ('y', 'v'):
+            v = twi['scalars']['dnuy/dp']
+        else:
+            raise ValueError('Valid values for "plane": "x", "y", "h", "v"')
+
+        return v
+
+    def getChromaticities(self):
+        """"""
+
+        self._recalc('twiss')
+        twi = self._raw['twiss']['data']['twi']
+
+        return tuple(twi['scalars'][f'dnu{plane}/dp'] for plane in ['x', 'y'])
+
     def _get_global_index(self, calc_type, elem_name):
         """"""
 
@@ -511,7 +567,7 @@ class PyElegantVariableModel(VariableModel):
             if not col.startswith('phi'):
                 _twi_list.append(arrays[col])
             else:
-                _twi_list.append(arrays[f'psi{col[-1]}'] * 2 * np.pi)
+                _twi_list.append(arrays[f'psi{col[-1]}']) # [rad]
 
         self._twiss._twtable = np.vstack((_twi_list)).T
 

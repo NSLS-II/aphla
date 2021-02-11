@@ -72,6 +72,11 @@ def getEnergy():
     """
     return machines._lat.E_MeV
 
+def getEnergyUnit():
+    """"""
+
+    return 'MeV'
+
 def getOutputDir():
     """get the output data dir for the current lattice"""
     return machines._lat.OUTPUT_DIR
@@ -798,13 +803,13 @@ def getTwissAt(s, columns, **kwargs):
 
 def getPhi(group, **kwargs):
     """
-    get the phase from stored data
+    get the phase [rad] from stored data
 
     this calls :func:`~aphla.apdata.TwissData.get` of the current twiss data.
     """
     col = ['phix', 'phiy']
     if kwargs.pop('spos', False): col.append('s')
-    return getTwiss(group, col=col, **kwargs)
+    return getTwiss(group, col, **kwargs)
 
 
 def getPhase(group, **kwargs):
@@ -870,32 +875,98 @@ def getEta(group, **kwargs):
     if kwargs.pop('spos', False): col.append('s')
     return getTwiss(group, col, **kwargs)
 
+def getEtap(group, **kwargs):
+    """get the so-called "eta prime", i.e., dispersion derivative w.r.t. s
+    from stored data
 
-def getChromaticity(source='database'):
+    Parameters
+    -----------
+    source : str.
+        'database' from database; 'VA' from virtual accelerator where a 'twiss'
+        element must exist.
+
+    Examples
+    --------
+    >>> getEta('p*', spos = True, source = 'database')
+    >>> getEta(['BPM1', 'BPM2'])
+
     """
-    get chromaticity from ["database"]
-    """
-    if source == 'database':
+
+    col = ['etaxp', 'etayp']
+    if kwargs.pop('spos', False): col.append('s')
+    return getTwiss(group, col, **kwargs)
+
+def getTwissUnit(property_name):
+    """"""
+
+    if machines._lat._twiss:
+        return machines._lat._twiss.getUnit(property_name)
+
+    m = models.getModel()
+    m._recalc('twiss') # Make sure that Twiss data are updated, if not yet.
+    if m._twiss:
+        return m._twiss.getUnit(property_name)
+
+    raise RuntimeError(f'Failed to retrieve unit for Twiss property "{property_name}"')
+
+def getChromaticities(**kwargs):
+    """"""
+
+    m = models.getModel()
+    default_src = "database" if m is None else "model"
+    source = kwargs.pop("source", default_src)
+
+    if source == 'model':
+        if m is None:
+            raise RuntimeError('No model is currently loaded.')
+        else:
+            return m.getChromaticities()
+    elif source == 'database':
         return machines._lat.getChromaticities()
-    elif source == "VA":
-        vas = getElements('VA')
-        if not vas: return None
-        twiss = vas[kwargs.get("iva", 0)]
-        return twiss.chromx, twiss.chromy
     else:
         raise ValueError("Unknown source: '%s'" % source)
 
+
+def getChromaticity(plane, **kwargs):
+    """
+    get chromaticity from ["model", "database"]
+    """
+
+    m = models.getModel()
+    default_src = "database" if m is None else "model"
+    source = kwargs.pop("source", default_src)
+
+    ksi_tuple = getChromaticities(source=source)
+    if ksi_tuple is None:
+        return None
+    else:
+        ksix, ksiy = ksi_tuple
+
+    if plane.lower() in ('x', 'h'): return ksix
+    elif plane.lower() in ('y', 'v'): return ksiy
+    else:
+        raise ValueError('Valid values for "plane": "x", "y", "h", "v"')
 
 def getTunes(source='machine', **kwargs):
     """
     get tunes from ['machine', 'database', "VA"]
     """
     if source == 'machine':
+        # If online mode, the data will be pulled from PVs, while if in simulated
+        # mode, they will be pulled from MVs (i.e., from the currently loaded
+        # model).
+
         # return only the first matched element
         nu = getElements('tune')
         if not nu:
             raise RuntimeError("can not find element 'tune'")
         return nu[0].x, nu[0].y
+    elif source == 'model':
+        m = models.getModel()
+        if m is None:
+            raise RuntimeError('No model is currently loaded.')
+        else:
+            return m.getTunes()
     elif source == 'database':
         return machines._lat.getTunes()
     elif source == "VA":
@@ -907,8 +978,8 @@ def getTunes(source='machine', **kwargs):
         raise ValueError("Unknow source: '%s'" % source)
 
 
-def getTune(source='machine', plane = 'h'):
-    """get one of the tune, 'h' or 'v'
+def getTune(plane, source='machine'):
+    """get one of the tune, 'h' or 'v' or 'x' or 'y'.
 
     Examples
     ---------
@@ -916,10 +987,10 @@ def getTune(source='machine', plane = 'h'):
 
     """
     nux, nuy = getTunes(source)
-    if plane == 'h': return nux
-    elif plane == 'v': return nuy
+    if plane.lower() in ('x', 'h'): return nux
+    elif plane.lower() in ('y', 'v'): return nuy
     else:
-        raise ValueError("plane must be either h or v")
+        raise ValueError('Valid values for "plane": "x", "y", "h", "v"')
 
 
 def _getFftTune(plane = 'hv', mode = ''):

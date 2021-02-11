@@ -261,6 +261,9 @@ class TwissData:
         self._twtable = []
         self._cols = ['s', 'alphax', 'alphay', 'betax', 'betay',
                       'etax', 'etaxp', 'etay', 'etayp', 'phix', 'phiy']
+        self._cols_units = ['m', 'unitless', 'unitless', 'm', 'm',
+                            'm', 'unitless', 'm', 'unitless', 'rad', 'rad']
+        # ^ Units following ELEGANT's Twiss SDDS output files
 
     def _find_element(self, elemname):
         try:
@@ -549,6 +552,16 @@ class TwissData:
         c.close()
         conn.close()
 
+    def getUnit(self, col_name):
+        """"""
+
+        if col_name not in self._cols:
+            print('Valid column names: {}'.format(', '.join([n for n in self._cols])))
+            raise ValueError(f'Invalid name: "{col_name}"')
+
+        i = self._cols.index(col_name)
+
+        return self._cols_units[i]
 
 def _updateLatticePvDb(dbfname, cfslist, **kwargs):
     """
