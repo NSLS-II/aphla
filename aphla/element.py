@@ -22,7 +22,7 @@ from itertools import permutations
 from . import OperationMode, OP_MODE
 from .unitconv import *
 from . import engines
-from .models import modelget #, modelput
+from .models import modelget, modelput
 
 # public symbols
 __all__ = [ "CaElement", "merge",
@@ -472,7 +472,7 @@ class CaAction:
         return the value of setpoint PV or None if such PV is not defined.
         """
 
-        if OP_MODE == OperationMode.ONLINE:
+        if OP_MODE.value == OperationMode.ONLINE:
             if self.pvsp:
                 rawret = caget(self.pvsp, timeout=self.timeout, format=FORMAT_CTRL)
                 # update the limits when necessary
@@ -491,9 +491,9 @@ class CaAction:
             else:
                 #raise ValueError("no setpoint PVs")
                 return None
-        else:
+        elif OP_MODE.value == OperationMode.SIMULATION:
             if self.mvsp:
-                rawret = modelput(self.mvsp)
+                rawret = modelget(self.mvsp)
                 model_unitsys = engines.getEngineName()
                 if unitsys == 'model':
                     unitsys = model_unitsys
@@ -504,6 +504,8 @@ class CaAction:
                     return self._unit_conv(rawret, model_unitsys, unitsys, self.ucsp)
             else:
                 return None
+        else:
+            raise ValueError(f'Unexpected operation mode value : {OP_MODE.value}')
 
     def putSetpoint(self, val, unitsys = None, bc = 'exception', wait=True, timeout = 5):
         """
@@ -521,7 +523,7 @@ class CaAction:
             raise IOError("setting an disabled element")
         if self.opflags & _READONLY: raise IOError("setting a readonly field")
 
-        if OP_MODE == OperationMode.ONLINE:
+        if OP_MODE.value == OperationMode.ONLINE:
             if isinstance(val, (float, int, str)):
                 #rawval = [self._unit_conv(val, unitsys, None, self.ucsp)] * \
                     #len(self.pvsp)
@@ -572,23 +574,27 @@ class CaAction:
                 if ret.ok: continue
                 raise RuntimeError("Failed at setting {0} to {1}".format(
                         self.pvsp[i], rawval[i]))
-        else:
+
+        elif OP_MODE.value == OperationMode.SIMULATION:
             model_unitsys = engines.getEngineName()
             if unitsys == 'model':
                 unitsys = model_unitsys
             if isinstance(val, (float, int, str)):
                 #rawval = [self._unit_conv(val, unitsys, model_unitsys, self.ucsp)] * \
-                    #len(self.pvsp)
+                    #len(self.mvsp)
                 rawval = [self._unit_conv(val, unitsys, model_unitsys, 'setpoint')] * \
-                    len(self.pvsp)
+                    len(self.mvsp)
             else:
-                # one more level of nest, due to pvsp=[]
+                # one more level of nest, due to mvsp=[]
                 #rawval = [ [self._unit_conv(v, unitsys, model_unitsys, self.ucsp)
                             #for v in val] ]
                 rawval = [ [self._unit_conv(v, unitsys, model_unitsys, 'setpoint')
                             for v in val] ]
 
             retlst = modelput(self.mvsp, rawval)
+
+        else:
+            raise ValueError(f'Unexpected operation mode value : {OP_MODE.value}')
 
         return retlst
 
@@ -1562,9 +1568,15 @@ class CaElement(AbstractElement):
         if not decr:
             raise AttributeError("field '%s' is not defined for '%s'" % (
                     att, self.name))
-        if not decr.pvsp:
-            raise ValueError("field '%s' in '%s' is not writable" % (
-                        att, self.name))
+
+        if OP_MODE.value == OperationMode.ONLINE:
+            _vsp = decr.pvsp
+        elif OP_MODE.value == OperationMode.SIMULATION:
+            _vsp = decr.mvsp
+        else:
+            raise ValueError(f'Unexpected operation mode value : {OP_MODE.value}')
+        if not _vsp:
+            raise ValueError(f"field '{att}' in '{self.name}' is not writable")
 
         bc = kwargs.get('bc', 'exception')
         wait = kwargs.get("wait", True)

@@ -219,6 +219,8 @@ class PyElegantVariableModel(VariableModel):
 
         pe = self.engine = engines.getEngine()
 
+        self.disable_pyelegant_stdout()
+
         self.LTE = pe.ltemanager.Lattice(
             LTE_filepath=self.base_LTE_filepath,
             used_beamline_name=self.base_used_beamline_name)
@@ -264,6 +266,17 @@ class PyElegantVariableModel(VariableModel):
         if d is not None:
             for k, v in d.items():
                 self._proc[k] = v
+
+    def enable_pyelegant_stdout(self):
+        """"""
+
+        self.engine.enable_stdout()
+
+    def disable_pyelegant_stdout(self):
+        """"""
+
+        self.engine.disable_stdout()
+
 
     def get(self, mv_list):
         """"""
@@ -512,6 +525,8 @@ class PyElegantVariableModel(VariableModel):
             self.write_LTE()
             self.need_LTE_write = False
 
+        print(f'* Re-calculating the model property "{prop}"...')
+
         if prop == 'closed_orbit':
             clo_calc = pe.orbit.ClosedOrbitCalculator(
                 self.temp_fielpaths['LTE'], E_MeV, fixed_length=True,
@@ -545,6 +560,8 @@ class PyElegantVariableModel(VariableModel):
         else:
             raise ValueError(f'Invalid calculated property: "{prop}"')
 
+        print(f'* Finished re-calculation of the model property "{prop}".')
+
     def _update_TwissData_obj(self):
         """"""
 
@@ -571,30 +588,37 @@ class PyElegantVariableModel(VariableModel):
 
         self._twiss._twtable = np.vstack((_twi_list)).T
 
-    def put(self, mv, value):
+    def put(self, mv_list, value_list):
         """"""
 
-        d = mv['pyelegant']
-        name = d['elem_name']
-        field = d['property']
+        assert len(mv_list) == len(value_list)
 
-        elem_ind = self.elem_defs_index_maps[name]
-        elem_def = self.elem_defs[elem_ind]
-        elem_type = elem_def[1]
+        for mv, value in zip(mv_list, value_list):
+            d = mv['pyelegant']
+            name = d['elem_name']
+            field = d['property']
 
-        mod_prop = {field: value}
+            if not name.startswith('!'):
+                elem_ind = self.elem_defs_index_maps[name]
+                elem_def = self.elem_defs[elem_ind]
+                elem_type = elem_def[1]
 
-        elem_def = self.LTE.modify_elem_def(elem_def, mod_prop)
+                mod_prop = {field: value}
 
-        self.elem_defs[elem_ind] = elem_def
+                elem_def = self.LTE.modify_elem_def(elem_def, mod_prop)
 
-        # Update "need_LTE_write" and "need_recalc" states
-        info = self._get_elem_type_field_info(elem_type, field, 'setpoint')
-        if not self.need_LTE_write:
-            self.need_LTE_write = info['need_LTE_write']
-        for k, v in self.need_recalc.items():
-            if not v:
-                self.need_recalc[k] = info['need_recalc'][k]
+                self.elem_defs[elem_ind] = elem_def
+
+                # Update "need_LTE_write" and "need_recalc" states
+                info = self._get_elem_type_field_info(elem_type, field, 'setpoint')
+                if not self.need_LTE_write:
+                    self.need_LTE_write = info['need_LTE_write']
+                for k, v in self.need_recalc.items():
+                    if not v:
+                        self.need_recalc[k] = info['need_recalc'][k]
+            else:
+                raise NotImplementedError
+
 
     def write_LTE(self):
         """"""
