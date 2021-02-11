@@ -4,8 +4,9 @@ import numpy as  np
 
 import aphla as ap
 
-ap.machines.load('nsls2', 'SR') # TODO: use_cache=False when loading from scratch; eliminate "save_cache"
-#ap.machines.load('nsls2', 'SR', save_cache=True)
+#ap.machines.load('nsls2', 'SR')
+#ap.machines.load('nsls2', 'SR', update_cache=True)
+ap.machines.loadfast('nsls2', 'SR') # Deprecated, but kept for backward compatibility
 
 if False:
     print(ap.get_op_mode())

@@ -140,9 +140,12 @@ def load(machine, submachine = "*", **kwargs):
     -----------
     machine: str. the exact name of machine
     submachine: str. default '*'. pattern of sub machines
-    use_cache: bool. default True. If True, use cache, but this option will be
-               ignored if "save_cache" is True.
-    save_cache: bool. default False, If True, save cache.
+    update_cache: bool. default False. If False, it will try to load the lattice
+      from the cache file, if the file exists and is up to date; Otherwise, a
+      lattice is created from scratch and saved to the cache file for faster
+      loading next time. If True, a lattice will be created from scratch and
+      saved to the cache file, even if the cache file already exists and is
+      up to date, effectively force-updating the cache file.
 
     This machine can be a path to config dir.
     """
@@ -151,18 +154,10 @@ def load(machine, submachine = "*", **kwargs):
 
     lat_dict, lat0 = {}, None
 
-    use_cache = kwargs.get('use_cache', True)
-    save_cache = kwargs.get('save_cache', False)
+    update_cache = kwargs.get('update_cache', False)
     verbose = kwargs.get('verbose', 0)
     return_lattices = kwargs.get("return_lattices", False)
 
-    if save_cache:
-        if use_cache:
-            print('* WARNING: The cache file will NOT be used because '
-                  '"save_cache" is set to True.')
-        use_cache = False
-
-    #importlib.import_module(machine, 'machines')
     machdir, machname = _findMachinePath(machine)
     if verbose:
         print("loading machine data '%s: %s'" % (machname, machdir))
@@ -190,7 +185,7 @@ def load(machine, submachine = "*", **kwargs):
         # the default submachine
         accdefault = d.get("default_submachine", "")
 
-        if use_cache:
+        if not update_cache:
             if submachine == '*':
                 selected_submachine = d.get("default_submachine", "")
                 if selected_submachine == "":
@@ -273,12 +268,9 @@ def load(machine, submachine = "*", **kwargs):
                            'Will attempt initialization without a cache file.')
                     print(msg)
                     _logger.error(msg)
-                    save_cache = True
                 else:
                     # Loading from cache was successful.
                     return
-            else:
-                save_cache = True
 
         print('* Constructing the machine lattice from the database files...')
 
@@ -485,10 +477,10 @@ def load(machine, submachine = "*", **kwargs):
 
     _lat = lat0
     _lattice_dict.update(lat_dict)
-    if save_cache:
-        selected_lattice_name = [k for (k,v) in _lattice_dict.items()
-                                 if _lat == v][0]
-        saveCache(machine, _lattice_dict, selected_lattice_name)
+
+    selected_lattice_name = [k for (k,v) in _lattice_dict.items()
+                             if _lat == v][0]
+    saveCache(machine, _lattice_dict, selected_lattice_name)
 
     #if verbose:
     #    print "Default lattice:", lat0.name
@@ -498,13 +490,18 @@ def load(machine, submachine = "*", **kwargs):
 
 def loadfast(machine, submachine = "*"):
     """
-    Deprecated. load() with "use_cache=True" should be used instead.
+    Deprecated. load() with the default option "update_cache=False" should be
+    used instead.
 
     :author: Yoshtieru Hidaka <yhidaka@bnl.gov>
     """
 
-    warnings.warn('load() with "use_cache=True" should be used instead',
+    warnings.warn('load() with "update_cache=False" should be used instead',
                   DeprecationWarning)
+    print('** DeprecationWarning: load() with "update_cache=False" should be used instead')
+
+    load(machine, submachine=submachine)
+    return
 
     machine_folderpath = os.path.join(HLA_CONFIG_DIR, machine)
 
@@ -628,6 +625,8 @@ def saveCache(machine_name, lattice_dict, selected_lattice_name):
             submachine=selected_lattice_name)
 
         print(f'Saving the lattice to the cache file "{cache_filepstr}"...')
+
+        Path(cache_filepstr).parent.mkdir(mode=0o700, parents=True, exist_ok=True)
 
         with gzip.GzipFile(cache_filepstr, 'w') as f:
             pickle.dump(selected_lattice_name, f)
