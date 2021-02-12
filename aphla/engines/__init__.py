@@ -43,7 +43,7 @@ def load(engine_name=''):
     try:
         _ENGINES[engine_name] = importlib.import_module(engine_name)
     except:
-        print(f'WARNING: Engine "{engine_name}" could NOT be imported')
+        raise ImportError(f'Engine "{engine_name}" could NOT be imported')
 
     use(engine_name) # Select the loaded engine
 
