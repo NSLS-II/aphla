@@ -343,11 +343,20 @@ for pv, elem_def, tags in cfa_rows:
             #   'mcky' like 'SR:C30-MG{PS:CH1A}K:Ps2DCCT1-I'
             continue
 
+        # Fix wrong/obsolete PVs to correct/updated PVs
+        if elem['elemType'] == 'TUNE':
+            if pv == 'SR:C16-BI{TuneNA}Freq:Vx-I':
+                pv = 'SR:OPS-BI{IGPF}FBX:Tune-I'
+            elif pv == 'SR:C16-BI{TuneNA}Freq:Vy-I':
+                pv = 'SR:OPS-BI{IGPF}FBY:Tune-I'
+            else:
+                raise ValueError
+
         elem['map'][field][handle]['pv'] = pv
         if epsilon:
             elem['map'][field][handle]['epsilon'] = epsilon
 
-        # Add model variable information
+        # Add model variable (MV) information
         mv_d = dict(elem_name=elemName.upper())
         if elem['elemType'] in ('BPM', 'UBPM_', '_BPM'):
             mv_d['property'] = field
@@ -485,4 +494,4 @@ shutil.copy(nsls2_elems_pvs_mvs_pgz_file,
 #with gzip.GzipFile(nsls2_elems_pvs_mvs_pgz_file, 'rb') as f:
     #loaded_SR = pickle.load(f)
 
-print
+print('Finished')

@@ -8,6 +8,11 @@ ap.machines.load('nsls2', 'SR')
 #ap.machines.load('nsls2', 'SR', update_cache=True)
 #ap.machines.loadfast('nsls2', 'SR') # Deprecated, but kept for backward compatibility
 
+print(ap.getEnergy(), ap.getEnergyUnit())
+print(ap.getTunes(source='machine'))
+print(ap.getTune('x', source='machine'))
+print(ap.getTune('y', source='machine'))
+
 if False:
     print(ap.get_op_mode())
     print(ap.OP_MODE)
