@@ -1143,6 +1143,8 @@ class CaElement(AbstractElement):
         for uc, ucf in [(self._field[field].ucrb, self._field[field].ucfrb),
                         (self._field[field].ucsp, self._field[field].ucfsp)]:
             if uc == {}:
+                # Add only the basic identity conversion from None to None
+                ucf[(None, None)] = identity
                 continue
 
             #uc = {(None, 'phy'): 1, ('phy', 'model'): 2, ('model', 'pyelegant'): 3}
