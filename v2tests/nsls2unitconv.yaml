@@ -3367,6 +3367,34 @@ SR:
     polarity: 1
     table_key: rot_coil_STP-9816-1006_000.xls
 
+  Machine_FracTunes:
+    groups: [TUNE]
+    fields: [x, y]
+    handles: [readback]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: unitless
+    dst_unit: unitless
+    class: polynomial
+    invertible: True
+    coeffs: [1.0, 0.0]
+
+  #--------------------------------------
+  # Unit conversions defined for virtual elements
+  #--------------------------------------
+
+  Virtual_BPM:
+    elements: ['HLA:VBPM']
+    fields: [x, x0, y, y0]
+    handles: [readback]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: mm
+    dst_unit: mm
+    class: polynomial
+    invertible: True
+    coeffs: [1.0, 0.0]
+
 
   #-------------------------------------
   # Model unit conversions defined by "groups" for "pyelegant" engine
@@ -3508,3 +3536,15 @@ SR:
     class: polynomial
     invertible: True
     coeffs: [0.25, 0.0]
+
+  Model_FracTunes:
+    groups: [TUNE]
+    fields: [x, y]
+    handles: [readback]
+    src_unitsys: pyelegant
+    dst_unitsys: phy
+    src_unit: unitless
+    dst_unit: unitless
+    class: polynomial
+    invertible: True
+    coeffs: [1.0, 0.0]

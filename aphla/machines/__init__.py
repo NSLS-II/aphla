@@ -334,6 +334,15 @@ def load(machine, submachine = "*", **kwargs):
             lat.OUTPUT_DIR = d.get("output_dir",
                                    Path(HLA_OUTPUT_DIR).joinpath(msect))
 
+            vfams = { HLA_VBPM:  ('BPM',  d.get("virtual_bpm_exclude", [])),
+                      HLA_VHCOR: ('HCOR', d.get("virtual_hcor_exclude", [])),
+                      HLA_VVCOR: ('VCOR', d.get("virtual_vcor_exclude", [])),
+                      HLA_VCOR:  ('COR',  d.get("virtual_cor_exclude", [])),
+                      HLA_VQUAD: ('QUAD', d.get("virtual_quad_exclude", [])),
+                      HLA_VSEXT: ('SEXT', d.get("virtual_sext_exclude", [])),
+            }
+            createVirtualElements(lat, vfams)
+
             if 'unit_conversion' in d:
                 _logger.info("loading unit conversion '%s'"
                              % ', '.join(d['unit_conversion']))
@@ -347,14 +356,6 @@ def load(machine, submachine = "*", **kwargs):
                 lat._twiss.load(phy_fname, group="Twiss")
                 setGoldenLattice(lat, phy_fname, "Golden")
 
-            vfams = { HLA_VBPM:  ('BPM',  d.get("virtual_bpm_exclude", [])),
-                      HLA_VHCOR: ('HCOR', d.get("virtual_hcor_exclude", [])),
-                      HLA_VVCOR: ('VCOR', d.get("virtual_vcor_exclude", [])),
-                      HLA_VCOR:  ('COR',  d.get("virtual_cor_exclude", [])),
-                      HLA_VQUAD: ('QUAD', d.get("virtual_quad_exclude", [])),
-                      HLA_VSEXT: ('SEXT', d.get("virtual_sext_exclude", [])),
-            }
-            createVirtualElements(lat, vfams)
             lat_dict[msect] = lat
             if verbose:
                 nelems = len(lat.getElementList('*'))

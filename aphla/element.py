@@ -423,10 +423,9 @@ class CaAction:
                         # keep the first one for `reset`
                         self.rb.pop(1)
                 if len(self.pvrb) == 1:
-                    #return self._unit_conv(rawret[0], None, unitsys, self.ucrb)
                     return self._unit_conv(rawret[0], None, unitsys, 'readback')
                 else:
-                    return self._unit_conv(rawret, None, unitsys, self.ucrb)
+                    return self._unit_conv(rawret, None, unitsys, 'readback')
             else:
                 return None
         elif OP_MODE.value == OperationMode.SIMULATION:

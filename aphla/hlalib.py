@@ -1039,7 +1039,7 @@ def getQuads():
     return machines._lat.getGroupMembers('QUAD', op='union')
 
 
-def getOrbit(pat = '', spos = False):
+def getOrbit(pat='', spos=False, unitsys='phy'):
     """
     Return orbit
 
@@ -1068,8 +1068,24 @@ def getOrbit(pat = '', spos = False):
             ret[:,2] = bpm.sb
         else:
             ret = np.zeros((n,2), 'd')
-        ret[:,0] = bpm.x
-        ret[:,1] = bpm.y
+
+        try:
+            ret[:, 0] = bpm.get('x', handle='readback', unitsys=unitsys)
+        except:
+            if unitsys is not None:
+                print(f'Unit conversion for element "{bpm.name}", field "x" failed for {unitsys}')
+                ret[:, 0] = bpm.x
+            else:
+                raise
+
+        try:
+            ret[:, 1] = bpm.get('y', handle='readback', unitsys=unitsys)
+        except:
+            if unitsys is not None:
+                print(f'Unit conversion for element "{bpm.name}", field "y" failed for {unitsys}')
+                ret[:, 1] = bpm.y
+            else:
+                raise
         return ret
 
     # need match the element name
@@ -1077,7 +1093,9 @@ def getOrbit(pat = '', spos = False):
         elems = [e for e in getBpms()
                 if fnmatch(e.name, pat) and e.isEnabled()]
         if not elems: return None
-        ret = [[e.x, e.y, e.sb] for e in elems]
+        ret = [[e.get('x', handle='readback', unitsys=unitsys),
+                e.get('y', handle='readback', unitsys=unitsys),
+                e.sb] for e in elems]
     elif isinstance(pat, (list,)):
         elems = machines._lat.getElementList(pat)
         if not elems: return None
@@ -1085,7 +1103,10 @@ def getOrbit(pat = '', spos = False):
         ret = []
         for e in elems:
             if not e.name in bpm: ret.append([None, None, None])
-            else: ret.append([e.x, e.y, e.sb])
+            else: ret.append([
+                e.get('x', handle='readback', unitsys=unitsys),
+                e.get('y', handle='readback', unitsys=unitsys),
+                e.sb])
     if not ret: return None
     obt = np.array(ret, 'd')
     if not spos: return obt[:,:2]
