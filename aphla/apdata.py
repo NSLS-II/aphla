@@ -502,7 +502,7 @@ class TwissData:
         for i,k in enumerate(self._cols):
             data[k] = [v[i] for v in self._twtable]
 
-        f = h5py.File(filename)
+        f = h5py.File(filename, 'a')
         grp = f.create_group(group)
         grp['twtable'] = data
         grp['tune'] = np.array(self.tune)

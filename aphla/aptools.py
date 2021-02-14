@@ -715,7 +715,7 @@ def measTuneRm(quad, **kwargs):
         m[:,i] = mc
         time.sleep(kwargs.get("wait", 1.5))
         if output:
-            f = h5py.File(output)
+            f = h5py.File(output, 'a')
             if pv in f:
                 del f[pv]
             g = f.create_group(pv)
@@ -728,7 +728,7 @@ def measTuneRm(quad, **kwargs):
             g["dx"] = dxlst
             f.close()
     if output:
-        f = h5py.File(output)
+        f = h5py.File(output, 'a')
         if "m" in f:
             del f["m"]
         f["m"] = m
@@ -879,7 +879,7 @@ def measOrbitRm(bpmfld, corfld, **kwargs):
         _logger.info("%d/%d" % (i, len(corfld)), cor.name, np.min(m[:,i]), np.max(m[:,i]))
 
         if output:
-            f = h5py.File(output)
+            f = h5py.File(output, 'a')
             #g0 = f.require_group("OrbitResponseMatrix")
             g0 = f.require_group(h5group)
             grpname = "resp__%s.%s" % (cor.name, fld)
@@ -906,7 +906,7 @@ def measOrbitRm(bpmfld, corfld, **kwargs):
     tau1, Icur1 = getLifetimeCurrent()
     if output:
         # save the overall matrix
-        f = h5py.File(output)
+        f = h5py.File(output, 'a')
         g = f.require_group(h5group)
         if "m" in g:
             del g["m"]

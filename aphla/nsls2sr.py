@@ -320,8 +320,7 @@ def _saveSrBpmData(fname, waveform, names, x, y, Is, **kwargs):
     dcct_data = kwargs.get("dcct_data", None)
     pvpref = kwargs.get("pvpref", None)
 
-    # open with default 'a' mode: rw if exists, create otherwise
-    h5f = h5py.File(fname)
+    h5f = h5py.File(fname, 'a')
     if group != "/":
         grp = h5f.create_group(group)
     grp = h5f[group]
@@ -553,7 +552,7 @@ def saveLattice(**kwargs):
     nlive, ndead = _saveLattice(
         output, lat, elemflds, notes, **kwargs)
 
-    h5f = h5py.File(output)
+    h5f = h5py.File(output, 'a')
     h5g = h5f[lat.name]
     nameinfo = {}
     for elfam,flds in elemflds:
@@ -748,7 +747,7 @@ def measKickedTbtData(idriver, ampl, **kwargs):
     if output:
         (name, x, y, Isum, ts, offset), output = bpmdata
 
-        f = h5py.File(output)
+        f = h5py.File(output, 'a')
         g = f[h5g]
         g["I"]  = Idcct1
         g["I"].attrs["dI"] = Idcct1 - Idcct0
@@ -801,7 +800,7 @@ def measFaPsd(count=5000, nfft=4096, sleep=3, output=False, h5group="/", note=""
         pvs = ['SR:C03-BI{DCCT:1}I:Total-I', 'SR:FOFB{}FOFBOn',
                'SR:C16-BI{FPM:2}BunchQ-Wf',
                "SR-FOFB{}Kp1", "SR-FOFB{}Ki1", ]
-        h5f = h5py.File(output)
+        h5f = h5py.File(output, 'a')
         h5f["DCCT"] = caget('SR:C03-BI{DCCT:1}I:Total-I')
         h5f["FOFB"] = caget('SR:FOFB{}FOFBOn')
         h5f["fillpattern"] = caget('SR:C16-BI{FPM:2}BunchQ-Wf')

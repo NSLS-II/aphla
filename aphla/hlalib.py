@@ -1382,7 +1382,7 @@ def saveLattice(output, lat, elemflds, notes, **kwargs):
                               group=lat.name, notes=notes, **kwargs)
 
     import h5py
-    h5f = h5py.File(output)
+    h5f = h5py.File(output, 'a')
     grp = h5f[lat.name]
     # add elem field information
     grp.attrs["_query_"] = [
@@ -1710,7 +1710,7 @@ def saveElement(elem, output, h5group = "/"):
     save element info to HDF5 file *output* in *h5group*
     """
     import h5py
-    h5f = h5py.File(output)
+    h5f = h5py.File(output, 'a')
     grp = h5f.require_group(h5group)
     for fld in elem.fields():
         try:

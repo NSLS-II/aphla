@@ -236,8 +236,7 @@ def _saveBrBpmData(fname, waveform, data, **kwargs):
     dcct_data = kwargs.get("dcct_data", None)
     pvpref = kwargs.get("pvpref", None)
 
-    # open with default 'a' mode: rw if exists, create otherwise
-    h5f = h5py.File(fname)
+    h5f = h5py.File(fname, 'a')
     if group != "/":
         grp = h5f.create_group(group)
     grp = h5f[group]
@@ -902,7 +901,7 @@ def measBrCaRmCol(kker, **kwargs):
                      t0.strftime("orm_%Y_%m_%d_%H%M%S.hdf5")))
 
     # save dx list
-    h5f = h5py.File(output_file)
+    h5f = h5py.File(output_file, 'a')
     grp = h5f.create_group(kker)
     grp.attrs["orm_t0"] = t0.strftime("%Y_%m_%d_%H:%M:%S.%f")
     grp["dxlst"] = dxlst
@@ -945,7 +944,7 @@ def measBrCaRmCol(kker, **kwargs):
 
     t1 = datetime.now()
 
-    h5f = h5py.File(output_file)
+    h5f = h5py.File(output_file, 'a')
     h5f[kker].attrs["orm_t1"] = t1.strftime("%Y_%m_%d_%H:%M:%S.%f")
     h5f.close()
     return output_file
