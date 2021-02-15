@@ -97,38 +97,75 @@ class OperationMode():
 
 OP_MODE = OperationMode(OperationMode.ONLINE)
 
-def get_op_mode():
+def getOpMode():
     """"""
 
     return OP_MODE.value
 
-def set_op_mode(new_mode_value):
+def setOpMode(new_mode_value):
     """"""
 
-    OP_MODE.value = new_mode_value
+    orig_mode = getOpModeStr()
 
-def get_op_mode_str():
+    OP_MODE.value = new_mode_value
+    if OP_MODE.value == OperationMode.ONLINE:
+        catools.CA_OFFLINE = False
+    else:
+        catools.CA_OFFLINE = True
+
+    new_mode = getOpModeStr()
+
+    print(f'Operation Mode has been changed from "{orig_mode}" to "{new_mode}".')
+
+def getOpModeStr():
     """"""
 
     return OP_MODE.__repr__()
 
-def set_op_mode_str(new_mode_str):
+def setOpModeStr(new_mode_str):
     """"""
 
     upper_new_mode_str = new_mode_str.upper()
 
     if hasattr(OP_MODE, upper_new_mode_str):
+        orig_mode = getOpModeStr()
+
         OP_MODE.value = getattr(OP_MODE, upper_new_mode_str)
+        if OP_MODE.value == OperationMode.ONLINE:
+            catools.CA_OFFLINE = False
+        else:
+            catools.CA_OFFLINE = True
+
+        new_mode = getOpModeStr()
+
+        print(f'Operation Mode has been changed from "{orig_mode}" to "{new_mode}".')
     else:
         valid_str = ', '.join([f'"{s}"' for s in OP_MODE._get_valid_str_values()])
         raise ValueError(
             f'Invalid string: "{upper_new_mode_str}" '
             f'(Valid str values are {valid_str})')
 
+def switchToOnline():
+    """"""
+    setOpModeStr('ONLINE')
+
+def switchToOn():
+    switchToOnline()
+
+def switchToSimulation():
+    """"""
+    setOpModeStr('SIMULATION')
+
+def switchToSim():
+    """"""
+    switchToSimulation()
+
+
 this_folder = os.path.dirname(os.path.abspath(__file__))
 facility_d = yaml.YAML().load(Path(this_folder).joinpath('facility.yaml').read_text())
 facility_name = facility_d['name']
 
+from . import catools
 from .catools import *
 from .chanfinder import *
 from . import machines
