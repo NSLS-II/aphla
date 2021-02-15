@@ -435,10 +435,9 @@ class CaAction:
                 if unitsys == 'model':
                     unitsys = model_unitsys
                 if len(self.mvrb) == 1:
-                    #return self._unit_conv(rawret[0], model_unitsys, unitsys, self.ucrb)
                     return self._unit_conv(rawret[0], model_unitsys, unitsys, 'readback')
                 else:
-                    return self._unit_conv(rawret, model_unitsys, unitsys, self.ucrb)
+                    return self._unit_conv(rawret, model_unitsys, unitsys, 'readback')
             else:
                 return None
         else:
@@ -483,10 +482,9 @@ class CaAction:
                         except:
                             pass
                 if len(self.pvsp) == 1:
-                    #return self._unit_conv(rawret[0], None, unitsys, self.ucsp)
                     return self._unit_conv(rawret[0], None, unitsys, 'setpoint')
                 else:
-                    return self._unit_conv(rawret, None, unitsys, self.ucsp)
+                    return self._unit_conv(rawret, None, unitsys, 'setpoint')
             else:
                 #raise ValueError("no setpoint PVs")
                 return None
@@ -497,10 +495,9 @@ class CaAction:
                 if unitsys == 'model':
                     unitsys = model_unitsys
                 if len(self.mvsp) == 1:
-                    #return self._unit_conv(rawret[0], model_unitsys, unitsys, self.ucsp)
                     return self._unit_conv(rawret[0], model_unitsys, unitsys, 'setpoint')
                 else:
-                    return self._unit_conv(rawret, model_unitsys, unitsys, self.ucsp)
+                    return self._unit_conv(rawret, model_unitsys, unitsys, 'setpoint')
             else:
                 return None
         else:
@@ -1001,6 +998,25 @@ class CaElement(AbstractElement):
                 return []
         else: return []
 
+    def mv(self, **kwargs):
+        """"""
+        if len(kwargs) == 0:
+            return {} # TODO
+        elif len(kwargs) == 1:
+            return {} # TODO
+        elif len(kwargs) == 2:
+            handle = kwargs.get('handle', None)
+            fd = kwargs.get('field', None)
+            if fd not in self._field: return {}
+            if handle == 'readback':
+                return self._field[kwargs['field']].mvrb
+            elif handle == 'setpoint':
+                return self._field[kwargs['field']].mvsp
+            else:
+                return {}
+        else: return {}
+
+
     def hasPv(self, pv, inalias = False):
         """check if this element has pv.
 
@@ -1371,7 +1387,7 @@ class CaElement(AbstractElement):
                     raise ValueError(
                         f"invalid handle value '{elemhandle}' for mv '{str(mv)}'")
 
-    def setGetAction(self, v, field, idx = None, desc = ''):
+    def setGetAction(self, v, field, idx = None, desc = '', vtype='pv'):
         """set the action when reading *field*.
 
         the previous action will be replaced if it was defined.
@@ -1380,9 +1396,14 @@ class CaElement(AbstractElement):
         if field not in self._field:
             self._field[field] = CaAction(trace=self.trace)
 
-        self._field[field].setReadbackPv(v, idx)
+        if vtype == 'pv':
+            self._field[field].setReadbackPv(v, idx)
+        elif vtype == 'mv':
+            self._field[field].setReadbackMv(v, idx)
+        else:
+            raise ValueError(f'Unexpected "vtype": {vtype}')
 
-    def setPutAction(self, v, field, idx=None, desc = ''):
+    def setPutAction(self, v, field, idx=None, desc = '', vtype='pv'):
         """set the action for writing *field*.
 
         the previous action will be replaced if it was define.
@@ -1391,7 +1412,12 @@ class CaElement(AbstractElement):
         if field not in self._field:
             self._field[field] = CaAction(trace=self.trace)
 
-        self._field[field].setSetpointPv(v, idx)
+        if vtype == 'pv':
+            self._field[field].setSetpointPv(v, idx)
+        elif vtype == 'mv':
+            self._field[field].setSetpointMv(v, idx)
+        else:
+            raise ValueError(f'Unexpected "vtype": {vtype}')
 
     def fields(self):
         """return element's fields, sorted."""
@@ -1662,18 +1688,24 @@ def merge(elems, field = None, **kwargs):
     """
 
     # count 'field' owners and its rb,wb PVs.
-    count, pvdict = {}, {}
+    count, pvdict, mvdict = {}, {}, {}
     for e in elems:
         fds = e.fields()
         for f in fds:
             if f in count: count[f] += 1
             else: count[f] = 1
+
             pvrb = e.pv(field=f, handle='readback')
             pvsp = e.pv(field=f, handle='setpoint')
             if f not in pvdict: pvdict[f] = [[], []]
-            #print f, pvrb, pvsp
             pvdict[f][0].extend(pvrb)
             pvdict[f][1].extend(pvsp)
+
+            mvrb = e.mv(field=f, handle='readback')
+            mvsp = e.mv(field=f, handle='setpoint')
+            if f not in mvdict: mvdict[f] = [[], []]
+            mvdict[f][0].extend(mvrb)
+            mvdict[f][1].extend(mvsp)
 
     elem = CaElement(**kwargs)
     #print "merged:", elem
@@ -1683,10 +1715,14 @@ def merge(elems, field = None, **kwargs):
             if v < len(elems):
                 _logger.warn("field '%s' has %d < %d" % (k, v, len(elems)))
                 pvdict.pop(k)
+                mvdict.pop(k)
         #print list(pvdict)
-        for fld,pvs in pvdict.items():
+        for fld, pvs in pvdict.items():
             if len(pvs[0]) > 0: elem.setGetAction(pvs[0], fld, None, '')
             if len(pvs[1]) > 0: elem.setPutAction(pvs[1], fld, None, '')
+        for fld, mvs in mvdict.items():
+            if len(mvs[0]) > 0: elem.setGetAction(mvs[0], fld, None, '', vtype='mv')
+            if len(mvs[1]) > 0: elem.setPutAction(mvs[1], fld, None, '', vtype='mv')
         elem.sb = [e.sb for e in elems]
         elem.se = [e.se for e in elems]
         elem._name = [e.name for e in elems]
@@ -1694,6 +1730,11 @@ def merge(elems, field = None, **kwargs):
         pvrb, pvsp = pvdict[field][0], pvdict[field][1]
         if len(pvrb) > 0: elem.setGetAction(pvrb, field, None, '')
         if len(pvsp) > 0: elem.setPutAction(pvsp, field, None, '')
+        if field in mvdict:
+            mvrb, mvsp = mvdict[field][0], mvdict[field][1]
+            if len(mvrb) > 0: elem.setGetAction(mvrb, field, None, '', vtype='mv')
+            if len(mvsp) > 0: elem.setPutAction(mvsp, field, None, '', vtype='mv')
+
         # count the element who has the field
         elemgrp = [e for e in elems if field in e.fields()]
         elem.sb = [e.sb for e in elemgrp]

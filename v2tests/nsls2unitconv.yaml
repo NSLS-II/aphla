@@ -3548,3 +3548,19 @@ SR:
     class: polynomial
     invertible: True
     coeffs: [1.0, 0.0]
+
+  #--------------------------------------
+  # Model unit conversions defined for virtual elements
+  #--------------------------------------
+
+  Model_Virtual_BPM:
+    elements: ['HLA:VBPM']
+    fields: [x, x0, y, y0]
+    handles: [readback]
+    src_unitsys: pyelegant
+    dst_unitsys: phy
+    src_unit: m
+    dst_unit: mm
+    class: polynomial
+    invertible: True
+    coeffs: [1.3, 0.0]
