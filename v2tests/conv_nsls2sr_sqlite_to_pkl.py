@@ -373,16 +373,16 @@ for pv, elem_def, tags in cfa_rows:
             mv_d['property'] = 'K2'
         elif elem['elemType'] == 'COR':
             if field == 'x':
-                mv_d['property'] = 'HKICK[0]' # [rad]
-                mv_d['elem_name'] = mv_d['elem_name'].replace('G', 'XG')
+                mv_d['property'] = ('HKICK', 0) # [rad]
+                mv_d['elem_name'] = mv_d['elem_name'].replace('G', 'YG')
             elif field == 'x_2nd':
-                mv_d['property'] = 'HKICK[1]' # [rad]
-                mv_d['elem_name'] = mv_d['elem_name'].replace('G', 'XG')
+                mv_d['property'] = ('HKICK', 1) # [rad]
+                mv_d['elem_name'] = mv_d['elem_name'].replace('G', 'YG')
             elif field == 'y':
-                mv_d['property'] = 'VKICK[0]' # [rad]
+                mv_d['property'] = ('VKICK', 0) # [rad]
                 mv_d['elem_name'] = mv_d['elem_name'].replace('G', 'YG')
             elif field == 'y_2nd':
-                mv_d['property'] = 'VKICK[1]' # [rad]
+                mv_d['property'] = ('VKICK', 1) # [rad]
                 mv_d['elem_name'] = mv_d['elem_name'].replace('G', 'YG')
             elif field in ('mcblx', 'mckx', 'mcbly', 'mcky'):
                 raise ValueError # Corresponding PVs are disconnected, and this
@@ -390,7 +390,7 @@ for pv, elem_def, tags in cfa_rows:
             elif field in ('ramping[0]', 'ramping[1]'):
                 mv_d['property'] = None # indicates "do nothing" to the model
                 if field.endswith('[0]'):
-                    mv_d['elem_name'] = mv_d['elem_name'].replace('G', 'XG')
+                    mv_d['elem_name'] = mv_d['elem_name'].replace('G', 'YG')
                 elif field.endswith('[1]'):
                     mv_d['elem_name'] = mv_d['elem_name'].replace('G', 'YG')
                 else:

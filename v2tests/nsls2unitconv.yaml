@@ -3412,6 +3412,19 @@ SR:
     invertible: True
     coeffs: [1e3, 0.0]
 
+  Model_SCOR_x_2nd:
+    elements: [ch1g6c07b, ch1g2c08a, ch1g6c17b, ch1g2c18a, cl1g6c22b, cl1g2c23a,
+               ch1g6c27b, ch1g2c28a]
+    fields: [x_2nd]
+    handles: [readback, setpoint]
+    src_unitsys: pyelegant
+    dst_unitsys: phy
+    src_unit: rad
+    dst_unit: mrad
+    class: polynomial
+    invertible: True
+    coeffs: [1e3, 0.0]
+
   Model_BPM:
     groups: [BPM, UBPM]
     fields: [x, x0, y, y0]
@@ -3563,4 +3576,4 @@ SR:
     dst_unit: mm
     class: polynomial
     invertible: True
-    coeffs: [1.3, 0.0]
+    coeffs: [1e3, 0.0]

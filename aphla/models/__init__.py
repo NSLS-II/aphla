@@ -267,6 +267,8 @@ class PyElegantVariableModel(VariableModel):
             for k, v in d.items():
                 self._proc[k] = v
 
+        self._setpoints_to_be_summed = {}
+
     def enable_pyelegant_stdout(self):
         """"""
 
@@ -294,10 +296,27 @@ class PyElegantVariableModel(VariableModel):
                 elem_type = elem_def[1]
                 elem_prop = self.LTE.parse_elem_properties(elem_def[2])
 
+                if isinstance(field, tuple):
+                    field, index = field
+                else:
+                    index = None
+
                 info = self._get_elem_type_field_info(elem_type, field, 'readback')
 
                 if info['calc_prop'] is None:
                     v = elem_prop.get(field, info['default_val'])
+
+                    if index is not None:
+                        _sp_d = self._setpoints_to_be_summed
+                        if (name, field) not in _sp_d:
+                            _sp_d[(name, field)] = [0.0] * (index+1)
+                            _sp_d[(name, field)][0] = v # Assume the total value
+                            # is in the first index.
+                        else:
+                            while len(_sp_d[(name, field)]) < index+1:
+                                _sp_d[(name, field)].append(0.0)
+
+                        v = _sp_d[(name, field)][index]
                 else:
                     self._recalc(info['calc_prop'])
 
@@ -602,6 +621,19 @@ class PyElegantVariableModel(VariableModel):
                 elem_ind = self.elem_defs_index_maps[name]
                 elem_def = self.elem_defs[elem_ind]
                 elem_type = elem_def[1]
+
+                if isinstance(field, tuple):
+                    field, index = field
+                    _sp_d = self._setpoints_to_be_summed
+                    if (name, field) not in _sp_d:
+                        _sp_d[(name, field)] = [0.0] * (index+1)
+                    else:
+                        while len(_sp_d[(name, field)]) < index+1:
+                            _sp_d[(name, field)].append(0.0)
+
+                    _sp_d[(name, field)][index] = value
+
+                    value = np.sum(_sp_d[(name, field)])
 
                 mod_prop = {field: value}
 
