@@ -470,7 +470,9 @@ class TwissData:
             _logger.warn("no '%s' in '%s', ignore" % (group, filename))
             return
         grp = f[group]
-        self.tune = tuple(grp['tune'])
+        self.tune = tuple(grp['tune'][()])
+        self.chrom = tuple(grp['chrom'][()])
+        self.alphac = grp['alphac'][()]
         self.element = [s.decode() if hasattr(s, 'decode') else s
                         for s in grp['twtable']['element'][()]]
         self._twtable = np.zeros((len(self.element), 11), 'd')
