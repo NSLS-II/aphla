@@ -371,7 +371,7 @@ class BbaBowtie:
         save the result to HDF5 file
         """
         import h5py
-        h5f = h5py.File(output)
+        h5f = h5py.File(output, 'a')
         pgrp = h5f.require_group(group)
         grpname = "{0}.{1}-{2}.{3}-{4}.{5}_{6}".format(
             self._b.name, self._bf,

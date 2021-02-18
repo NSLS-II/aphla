@@ -550,7 +550,7 @@ def switchFeedback(ID, fftable = "off"):
 def initFile(ID, fieldList, parTable):
     """initilize file name with path, save parameter table to hdf5"""
     fileName = ap.outputFileName("ID", ID.name+"_")
-    fid = h5py.File(fileName)
+    fid = h5py.File(fileName, 'a')
     grp = fid.require_group(ID.name)
     grp.attrs["__FORMAT__"] = 1
     # setup parameters
@@ -612,7 +612,7 @@ def saveState(idobj, output, iiter,
     prefix = "background" if background is None else "iter"
 
     # create background subgroup with index
-    fid = h5py.File(output)
+    fid = h5py.File(output, 'a')
     iterindex = max([int(g[len(prefix)+1:]) for g in list(fid[idobj.name])
                      if g.startswith(prefix)] + [-1]) + 1
     groupName = "{0}_{1:04d}".format(prefix, iterindex)
@@ -686,7 +686,7 @@ def recordMeasCompletion(h5filepath, IDName, groupName):
     the user-requested measurements have been successfully completed.
     """
 
-    fid = h5py.File(h5filepath)
+    fid = h5py.File(h5filepath, 'a')
     grp = fid[IDName][groupName]
     t1 = datetime.now()
     grp.attrs['meas_completed'] = t1.strftime("%Y-%m-%d %H:%M:%S.%f")
