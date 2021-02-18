@@ -993,6 +993,28 @@ def getTune(plane, source='machine'):
         raise ValueError('Valid values for "plane": "x", "y", "h", "v"')
 
 
+def getMomentumCompaction(**kwargs):
+    """"""
+
+    m = models.getModel()
+    default_src = "database" if m is None else "model"
+    source = kwargs.pop("source", default_src)
+
+    if source == 'model':
+        if m is None:
+            raise RuntimeError('No model is currently loaded.')
+        else:
+            return m.getMomentumCompaction()
+    elif source == 'database':
+        return machines._lat.getMomentumCompaction()
+    else:
+        raise ValueError("Unknown source: '%s'" % source)
+
+def getAlphac(**kwargs):
+    """"""
+
+    return getMomentumCompaction(**kwargs)
+
 def _getFftTune(plane = 'hv', mode = ''):
     """get tune from FFT
 

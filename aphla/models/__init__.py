@@ -416,6 +416,14 @@ class PyElegantVariableModel(VariableModel):
 
         return tuple(twi['scalars'][f'dnu{plane}/dp'] for plane in ['x', 'y'])
 
+    def getMomentumCompaction(self):
+        """"""
+
+        self._recalc('twiss')
+        twi = self._raw['twiss']['data']['twi']
+
+        return twi['scalars']['alphac']
+
     def _get_global_index(self, calc_type, elem_name):
         """"""
 

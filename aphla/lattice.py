@@ -811,6 +811,10 @@ class Lattice:
         """return chromaticities -> (chx, chy) from twiss data"""
         return self._twiss.chrom
 
+    def getMomentumCompaction(self):
+        """return momentum compaction from twiss data"""
+        return self._twiss.alphac
+
     def getBeamlineProfile(self, **kwargs):
         """
         :param s1: s-begin
