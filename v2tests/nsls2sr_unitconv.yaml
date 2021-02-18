@@ -1,4 +1,4 @@
-table_filepath: nsls2unitconv_tables.pkl
+table_filepath: nsls2sr_unitconv_tables.pkl
 
 SR:
   #-------------------------------------
