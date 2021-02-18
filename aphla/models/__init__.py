@@ -37,16 +37,23 @@ def avail_names():
 
 def names():
     """
-    Return all the loaded lattice model names for the currently selected
-    submachine/engine.
+    Return all the loaded lattice model names.
     """
 
-    submachine = machines.getMachineName()
-    engine_name = engines.getEngineName()
+    d = {}
+    for submachine, _Ms1 in _MODELS.items():
+        for engine_name, _Ms2 in _Ms1.items():
+            for model_name, _model in _Ms2.items():
+                if _model is not None:
+                    if submachine not in d:
+                        d[submachine] = {engine_name: []}
+                    elif engine_name not in d[submachine]:
+                        d[submachine][engine_name] = []
 
-    return [_model_name for _model_name, _model
-            in _MODELS[submachine][engine_name].items()
-            if _model is not None]
+                    d[submachine][engine_name].append(model_name)
+
+    return d
+
 
 def load(submachine='', engine_name='', model_name=''):
     """
@@ -124,6 +131,18 @@ def getModel():
     """
 
     return _SEL_MODEL
+
+def getModelName():
+    """"""
+
+    submachine = machines.getMachineName()
+    engine_name = engines.getEngineName()
+
+    for model_name, _model in _MODELS[submachine][engine_name].items():
+        if _model is _SEL_MODEL:
+            return model_name
+    else:
+        raise RuntimeError('Failed to retrieve the name of the currently selected model.')
 
 def modelget(mv):
     """"""
