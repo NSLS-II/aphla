@@ -5,14 +5,14 @@ import aphla as ap
 # Available submachine names
 ['LN', 'LTD1', 'LTD2', 'LTB', 'BR', 'BTD', 'BTS', 'SR']
 
-#submachine = 'SR'
-#submachine = 'BTS'
-#submachine = 'BTD'
-#submachine = 'BR'
-#submachine = 'LTB'
-#submachine = 'LTD2'
-#submachine = 'LTD1'
-submachine = 'LN'
+#submachine = 'SR' # /epics/aphla/apconf/nsls2/nsls2_sr.sqlite
+#submachine = 'BTS' # /epics/aphla/apconf/nsls2/nsls2_bts.sqlite
+#submachine = 'BTD' # /epics/aphla/apconf/nsls2/nsls2_BTD.sqlite
+#submachine = 'BR' # /epics/aphla/apconf/nsls2/nsls2_BR.sqlite
+#submachine = 'LTB' # /epics/aphla/apconf/nsls2/nsls2_LTB.sqlite
+#submachine = 'LTD2' # /epics/aphla/apconf/nsls2/nsls2_LTD2.sqlite
+#submachine = 'LTD1' # /epics/aphla/apconf/nsls2/nsls2_LTD1.sqlite
+submachine = 'LN' # /epics/aphla/apconf/nsls2/nsls2_LN.sqlite
 
 ap.machines.load('nsls2', submachine)
 
