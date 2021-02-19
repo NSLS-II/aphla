@@ -347,6 +347,8 @@ def load(machine, submachine = "*", **kwargs):
                 _logger.info("loading unit conversion '%s'"
                              % ', '.join(d['unit_conversion']))
                 loadUnitConversion(lat, machdir, d['unit_conversion'])
+            #
+            setupUnitConversionFuncs(lat)
 
             if 'physics_data' in d:
                 _logger.info(f"loading physics data '{d['physics_data']}'")

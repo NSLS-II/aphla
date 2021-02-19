@@ -270,7 +270,13 @@ def loadUnitConversionYaml(lat, yaml_file):
                 for handle in uhandles:
                     eobj.addUnitConversion(fld, uc, usrcsys, udstsys, handle=handle)
 
-    # For each element, create a unit conversion function for each field/handle/(src,dst)
+def setupUnitConversionFuncs(lat):
+    """
+    For each element, create a unit conversion function for each
+    field/handle/(src,dst). If no unit conversion data is found, identity
+    function is assigned.
+    """
+
     for e in lat.getElementList('*'):
         for fld in list(e.fields()):
             e.addUnitConversionFuncs(fld)
