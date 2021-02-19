@@ -205,9 +205,16 @@ def loadUnitConversionYaml(lat, yaml_file):
         yfac = v.get('calib_factor', 1.0)
 
         if v['class'] == 'polynomial':
-            a = [yfac**i for i in range(len(v['coeffs']))]
+            if 'coeffs' in v:
+                coeffs = v['coeffs']
+            elif 'table_key' in v:
+                coeffs = tables[v['table_key']]
+            else:
+                raise RuntimeError(
+                    '"coeffs" or "table_key" must be defined for the polynomial unit conversion')
+            a = [yfac**i for i in range(len(coeffs))]
             a.reverse() # in place
-            newp = [v['coeffs'][i]*c for i,c in enumerate(a)]
+            newp = [coeffs[i]*c for i,c in enumerate(a)]
             uc = UcPoly(usrc, udst, newp)
         elif v['class'] == 'interpolation':
             t = tables[v['table_key']]
