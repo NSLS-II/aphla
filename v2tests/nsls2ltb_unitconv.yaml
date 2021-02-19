@@ -1,0 +1,94 @@
+LTB: &LTB # LTB unit conversion data will be also used for the lattices LN,
+          # LTD1, LTD2 as well
+
+  #-------------------------------------
+  # Unit conversions defined by "groups"
+  #-------------------------------------
+  HCOR: &HCOR
+    groups: [HCOR]
+    fields: [x]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: "T*m"
+    class: polynomial
+    invertible: True
+    coeffs: [7.02e-4, 0.0]
+  VCOR:
+    <<: *HCOR
+    groups: [VCOR]
+    fields: [y]
+
+  BPM:
+    groups: [BPM]
+    fields: [x, y]
+    handles: [readback]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: um
+    dst_unit: mm
+    class: polynomial
+    invertible: True
+    coeffs: [1e-3, 0.0]
+
+  #--------------------------------------
+  # Unit conversions defined by "elements"
+  #--------------------------------------
+
+  Dipoles:
+    elements: [B1, B2, B3, B4]
+    fields: [b0]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: "T*m"
+    class: polynomial
+    invertible: True
+    coeffs: [0.001765982, 0.0]
+
+  QuadsNormAperSolidIronPoleTip:
+    elements: [Q1, Q2, Q3, Q4, Q7, Q1BD1, Q2BD1]
+    fields: [b1]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: "T/m"
+    class: polynomial
+    invertible: True
+    coeffs: [0.080434155, 0.0]
+
+  QuadsNormAperCorrectPoleTip:
+    elements: [Q8, Q9, Q10, Q11, Q12, Q13, Q14, Q15]
+    fields: [b1]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: "T/m"
+    class: polynomial
+    invertible: True
+    coeffs: [0.08310826, 0.0]
+
+  QuadsWideAper:
+    elements: [Q5, Q6]
+    fields: [b1]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: "T/m"
+    class: polynomial
+    invertible: True
+    coeffs: [0.027125245, 0.0]
+
+
+# LTB unit conversion data will be also used for the lattices LN, LTD1, LTD2 as well
+LN:
+  <<: *LTB
+LTD1:
+  <<: *LTB
+LTD2:
+  <<: *LTB

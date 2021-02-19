@@ -82,12 +82,15 @@ elif TEST_NAME == 'unitconv':
         for e in ap.getElements('*'):
             for fld in field_list:
                 if fld in e.fields():
-                    args = (e.name, fld, 'setpoint', None)
-                    print(args)
-                    test_sp_values[args] = e.get(args[1], handle=args[2], unitsys=args[3])
-                    args = (e.name, fld, 'setpoint', 'phy')
-                    print(args)
-                    test_sp_values[args] = e.get(args[1], handle=args[2], unitsys=args[3])
+                    avail_unitsystems = e.getUnitSystems(fld)
+                    # Bring "None" in front
+                    if None in avail_unitsystems:
+                        avail_unitsystems.remove(None)
+                        avail_unitsystems = [None] + sorted(avail_unitsystems)
+                    for unitsys in avail_unitsystems:
+                        args = (e.name, fld, 'setpoint', unitsys)
+                        print(args)
+                        test_sp_values[args] = e.get(args[1], handle=args[2], unitsys=args[3])
                     time.sleep(0.2)
 
         with open(f'test_unitconv_sp_values_{submachine}_{conda_env_name}_{TEST_NAME}.pkl', 'wb') as f:

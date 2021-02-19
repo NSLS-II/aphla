@@ -55,11 +55,16 @@ BTS:
 
 LTB:
   controls_protocol: EPICS
-  cfs_url: nsls2_LTB.sqlite
+  #cfs_url: nsls2_LTB.sqlite
   #cfs_url: http://channelfinder.cs.nsls2.local/ChannelFinder
   #cfs_url: http://web01.nsls2.bnl.gov:8080/ChannelFinder
-  cfs_tag: aphla.sys.LTB
-  unit_conversion: ltb_unitconv.ini
+  #cfs_tag: aphla.sys.LTB
+  cfs:
+    type: pgz # gzipped pickle file
+    path: nsls2_ltb_elems_pvs_mvs.pgz
+    tag: aphla.sys.LTB
+  #unit_conversion: ltb_unitconv.ini
+  unit_conversion: [nsls2ltb_unitconv.yaml]
   loop: 0
 
 LTD1:
