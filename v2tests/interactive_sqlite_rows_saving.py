@@ -6,8 +6,8 @@ import aphla as ap
 ['LN', 'LTD1', 'LTD2', 'LTB', 'BR', 'BTD', 'BTS', 'SR']
 
 #submachine = 'SR' # /epics/aphla/apconf/nsls2/nsls2_sr.sqlite
-submachine = 'BTS' # /epics/aphla/apconf/nsls2/nsls2_bts.sqlite
-#submachine = 'BTD' # /epics/aphla/apconf/nsls2/nsls2_BTD.sqlite
+#submachine = 'BTS' # /epics/aphla/apconf/nsls2/nsls2_bts.sqlite
+submachine = 'BTD' # /epics/aphla/apconf/nsls2/nsls2_BTD.sqlite
 #submachine = 'BR' # /epics/aphla/apconf/nsls2/nsls2_BR.sqlite
 #submachine = 'LTB' # /epics/aphla/apconf/nsls2/nsls2_LTB.sqlite
 #submachine = 'LTD2' # /epics/aphla/apconf/nsls2/nsls2_LTD2.sqlite

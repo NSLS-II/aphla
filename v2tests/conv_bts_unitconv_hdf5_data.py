@@ -28,7 +28,10 @@ f.close()
 
 table_filepath = 'nsls2bts_unitconv_tables.pkl'
 tables = dict(BTS={})
+tables['BTD'] = {} # Note that some elements are shared by both BTS and BTD
+# lattices, so the unit conversion data need to be copied for BTD as well.
 for k, v in unitconvs.items():
     tables['BTS'][k] = v['table']
+    tables['BTD'][k] = v['table']
 with open(table_filepath, 'wb') as f:
     pickle.dump(tables, f)

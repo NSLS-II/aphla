@@ -1,0 +1,152 @@
+table_filepath: nsls2bts_unitconv_tables.pkl
+
+BTS: &BTS # BTS unit conversion data will be also used for the lattice BTD as well
+
+  #-------------------------------------
+  # Unit conversions defined by "groups"
+  #-------------------------------------
+  BPM:
+    groups: [BPM]
+    fields: [x, y]
+    handles: [readback]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: mm
+    dst_unit: mm
+    class: polynomial
+    invertible: True
+    coeffs: [1.0, 0.0]
+
+  #--------------------------------------
+  # Unit conversions defined by "elements"
+  #--------------------------------------
+
+  "B1_b0_BL(I)": &B1_b0_BL_I
+    elements: [B1, B2, B3, B4]
+    fields: [b0]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: "T*m"
+    class: polynomial
+    invertible: False
+    table_key: "B1_b0_BL(I)"
+  "B1_b0_I(BL)":
+    <<: *B1_b0_BL_I
+    src_unitsys: phy
+    dst_unitsys:
+    src_unit: "T*m"
+    dst_unit: A
+    table_key: "B1_b0_I(BL)"
+
+  "HCOR_x_BL(I)": &HCOR_x_BL_I
+    elements: [C1, C2, C3, C4, C5, C6, C7]
+    fields: [x]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: "T*m"
+    class: polynomial
+    invertible: False
+    table_key: "HCOR_x_BL(I)"
+  "HCOR_x_I(BL)":
+    <<: *HCOR_x_BL_I
+    src_unitsys: phy
+    dst_unitsys:
+    src_unit: "T*m"
+    dst_unit: A
+    table_key: "HCOR_x_I(BL)"
+
+
+  "VCOR1_y_BL(I)": &VCOR1_y_BL_I
+    elements: [C1, C2, C3, C4, C5, C6, C7, C8, C9]
+    fields: [y]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: "T*m"
+    class: polynomial
+    invertible: False
+    table_key: "VCOR1_y_BL(I)"
+  "VCOR1_y_I(BL)":
+    <<: *VCOR1_y_BL_I
+    src_unitsys: phy
+    dst_unitsys:
+    src_unit: "T*m"
+    dst_unit: A
+    table_key: "VCOR1_y_I(BL)"
+
+
+
+  "ISBU3_b0_BL(I)":
+    elements: [ISBU3]
+    fields: [b0]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: kA
+    dst_unit: "T*m"
+    class: polynomial
+    invertible: True
+    table_key: "ISBU3_b0_BL(I)"
+
+  "ISBU4_b0_BL(I)":
+    elements: [ISBU4]
+    fields: [b0]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: kA
+    dst_unit: "T*m"
+    class: polynomial
+    invertible: True
+    table_key: "ISBU4_b0_BL(I)"
+
+  "IS_b0_BL(I)":
+    elements: [IS]
+    fields: [v]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: "T*m"
+    class: polynomial
+    invertible: True
+    table_key: "IS_b0_BL(I)"
+
+  "SP3_b0_BL(I)":
+    elements: [SP2, SP3]
+    fields: [b0]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: "T*m"
+    class: polynomial
+    invertible: True
+    table_key: "SP3_b0_BL(I)"
+
+
+  QD: &QD
+    elements: [Q2, Q3, Q5, Q7, Q9, Q10, Q11, Q13]
+    fields: [b1]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: "m^{-1}"
+    class: interpolation
+    invertible: True
+    polarity: 1
+    table_key: rot_coil_BST-QDP-5200-0004_000.xls # Named as "rot_coil_BST-QDP-5200-0004_000.xls_D" in original "bts_unitconv.hdf5"
+  QF:
+    <<: *QD
+    elements: [Q1, Q4, Q6, Q8, Q12, Q14]
+    polarity: -1
+
+
+BTD: # BTS unit conversion data will be also used for the lattice BTD as well
+  <<: *BTS

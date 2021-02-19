@@ -10,13 +10,13 @@ conda_env_name = [
 
 import aphla as ap
 
-submachine = 'BR'
+submachine = 'BTD'
 
-ap.machines.load('nsls2', submachine)
+ap.machines.load('nsls2', submachine, update_cache=True)
 
-#TEST_NAME = 'elem_pvs'
+TEST_NAME = 'elem_pvs'
 #TEST_NAME = 'unitconv'
-TEST_NAME = 'unitsymb'
+#TEST_NAME = 'unitsymb'
 
 import logging
 logging.basicConfig(
@@ -27,6 +27,9 @@ logging.basicConfig(
 )
 
 all_elems = ap.getElements('*')
+
+assert len(all_elems) == 16
+# ^ Note that there are 0 elements that have no fields/PVs associated with.
 
 if False:
     all_u_elem_props = []
@@ -49,17 +52,6 @@ if False:
 
 if TEST_NAME == 'elem_pvs':
 
-    # Note that the fields/handles ("b1", "setpoint"), ("b1", "readback"),
-    # ("b1_1k", "readback"), ("b2", "setpoint"), ("b2", "readback"),
-    # ("b2_1k", "readback") for the elements ["BD1", "BD2", "BF"] are NOT defined
-    # in SQLite, but those fields will be added when the unit conversion file is
-    # loaded, utilizing its "rawfield" info and eobj.addAliasField(fld, realfld).
-    #
-    # So, before you properly set up the unit conversion file for v2 aphla,
-    # you will see these fields/handles missing when running this section.
-    # But after the unit conversion file is properly loaded, then you should
-    # NOT see any discrepancy between the v1 and v2 aphla logs.
-
     for i, e in enumerate(all_elems):
         fields = e.fields()
         for fld in fields:
@@ -67,27 +59,27 @@ if TEST_NAME == 'elem_pvs':
                 for pv in e.pv(field=fld, handle=h):
                     logging.info(f'{e.name} : {fld} : {h} : {pv}')
 
+        if fields == []:
+            logging.info(f'{e.name}')
+
 
 elif TEST_NAME == 'unitconv':
 
     # Comments: Differences remain for BPMs' x and y fields for handle='setpoint',
     # as the unit conversion for setpoints have been removed for v2.
 
-    #load_test_sp_from_file = False
-    load_test_sp_from_file = True
+    load_test_sp_from_file = False
+    #load_test_sp_from_file = True
 
-    field_list = ['b0', 'b0_1k', 'b1', 'b1_1k', 'b2', 'b2_1k',
-                  'x', 'x_1k', 'y', 'y_1k']
+    field_list = [
+        'b0', 'b1', 'centroidX', 'centroidY', 'image', 'position',
+        'sigmaX', 'sigmaY', 'sizeX', 'sizeY', 'v', 'x', 'y',
+    ]
 
     if not load_test_sp_from_file:
         test_sp_values = {}
 
-        bends = ap.getElements('BEND')
-        quads = ap.getElements('QUAD')
-        sexts = ap.getElements('SEXT')
-        cors = ap.getElements('HCOR') + ap.getElements('VCOR')
-
-        for e in bends + quads + sexts + cors:
+        for e in ap.getElements('*'):
             for fld in field_list:
                 if fld in e.fields():
                     args = (e.name, fld, 'setpoint', None)

@@ -93,6 +93,10 @@ elif TEST_NAME == 'unitconv':
         for fld in fields:
             for h in ['setpoint', 'readback']:
                 avail_unitsystems = e.getUnitSystems(fld)
+                # Bring "None" in front
+                if None in avail_unitsystems:
+                    avail_unitsystems.remove(None)
+                    avail_unitsystems = [None] + sorted(avail_unitsystems)
                 for src in avail_unitsystems:
                     for dst in avail_unitsystems:
                         convertible = e.convertible(fld, src, dst, handle=h)
@@ -113,6 +117,10 @@ elif TEST_NAME == 'unitsymb':
         for fld in fields:
             for h in ['setpoint', 'readback']:
                 avail_unitsystems = e.getUnitSystems(fld)
+                # Bring "None" in front
+                if None in avail_unitsystems:
+                    avail_unitsystems.remove(None)
+                    avail_unitsystems = [None] + sorted(avail_unitsystems)
                 for src in avail_unitsystems:
                     unit = e.getUnit(fld, handle=h, unitsys=src)
                     logging.info(f'{e.name} : {fld} : {h} : {src} : {unit}')

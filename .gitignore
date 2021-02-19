@@ -10,3 +10,5 @@ aphla/version.py
 aphla/facility.yaml
 
 v2tests/nsls2unitconv_quads_sexts.yaml
+v2tests/test_load_*.log
+v2tests/test_unitconv_sp_values*.pkl

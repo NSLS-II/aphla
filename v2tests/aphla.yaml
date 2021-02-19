@@ -13,7 +13,7 @@ BR:
   cfs:
     type: pgz # gzipped pickle file
     path: nsls2_br_elems_pvs_mvs.pgz
-  tag: aphla.sys.BR
+    tag: aphla.sys.BR
   #cfs_tag: aphla.sys.BR
   #unit_conversion: [br_unitconv.hdf5, UnitConversion]
   unit_conversion: [nsls2br_unitconv.yaml]
@@ -22,11 +22,16 @@ BR:
 
 BTD:
   controls_protocol: EPICS
-  cfs_url: nsls2_BTD.sqlite
+  #cfs_url: nsls2_BTD.sqlite
   #cfs_url: http://channelfinder.cs.nsls2.local/ChannelFinder
   #cfs_url: http://web01.nsls2.bnl.gov:8080/ChannelFinder
-  cfs_tag: aphla.sys.BTD
-  unit_conversion: [bts_unitconv.hdf5, UnitConversion]
+  #cfs_tag: aphla.sys.BTD
+  cfs:
+    type: pgz # gzipped pickle file
+    path: nsls2_btd_elems_pvs_mvs.pgz
+    tag: aphla.sys.BTD
+  #unit_conversion: [bts_unitconv.hdf5, UnitConversion]
+  unit_conversion: [nsls2bts_unitconv.yaml]
   loop: 0
   #virtual_bpm_exclude:
 
@@ -40,7 +45,7 @@ BTS:
   cfs:
     type: pgz # gzipped pickle file
     path: nsls2_bts_elems_pvs_mvs.pgz
-  tag: aphla.sys.BTS
+    tag: aphla.sys.BTS
   #unit_conversion: [bts_unitconv.hdf5, UnitConversion]
   unit_conversion: [nsls2bts_unitconv.yaml]
   s_begin: 0.0
