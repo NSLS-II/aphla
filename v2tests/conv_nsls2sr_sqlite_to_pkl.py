@@ -1,4 +1,6 @@
 '''
+This script should be run in a v2-aphla environment.
+
 Convert the contents of /epics/aphla/apconf/nsls2/nsls2_sr.sqlite as of
 12/09/2020 into a dict in a gzipped pickled file for aphla v2.
 '''

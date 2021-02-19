@@ -7,11 +7,16 @@ COMMON:
 
 BR:
   controls_protocol: EPICS
-  cfs_url: nsls2_BR.sqlite
+  #cfs_url: nsls2_BR.sqlite
   #cfs_url: http://channelfinder.cs.nsls2.local/ChannelFinder
   #cfs_url: http://web01.nsls2.bnl.gov:8080/ChannelFinder
-  cfs_tag: aphla.sys.BR
-  unit_conversion: [br_unitconv.hdf5, UnitConversion]
+  cfs:
+    type: pgz # gzipped pickle file
+    path: nsls2_br_elems_pvs_mvs.pgz
+  tag: aphla.sys.BR
+  #cfs_tag: aphla.sys.BR
+  #unit_conversion: [br_unitconv.hdf5, UnitConversion]
+  unit_conversion: [nsls2br_unitconv.yaml]
   loop: 1
   #virtual_bpm_exclude:
 
@@ -30,9 +35,14 @@ BTS:
   #cfs_url: nsls2_BTS.sqlite
   #cfs_url: http://channelfinder.cs.nsls2.local/ChannelFinder
   #cfs_url: http://web01.nsls2.bnl.gov:8080/ChannelFinder
-  cfs_url: nsls2_bts.sqlite
-  cfs_tag: aphla.sys.BTS
-  unit_conversion: [bts_unitconv.hdf5, UnitConversion]
+  #cfs_url: nsls2_bts.sqlite
+  #cfs_tag: aphla.sys.BTS
+  cfs:
+    type: pgz # gzipped pickle file
+    path: nsls2_bts_elems_pvs_mvs.pgz
+  tag: aphla.sys.BTS
+  #unit_conversion: [bts_unitconv.hdf5, UnitConversion]
+  unit_conversion: [nsls2bts_unitconv.yaml]
   s_begin: 0.0
   s_end: 48.2133
   loop: 0
@@ -76,8 +86,8 @@ SR:
   # mark the s-location for begin and end.
   s_begin: 0.0
   s_end: 791.958
-  loop: 1
-  Ek: 3000.0
+  loop: True
+  E_MeV: 3000.0
   # momentum compaction factor
   alphac: 3.6261976841792413e-04
   # defines the accelerator elements and associated PVs.
@@ -95,7 +105,7 @@ SR:
   #orbit_response_matrix: v2sr_orm.hdf5
   #beam_based_alignment: v2sr_bba.hdf5
   #unit_conversion: [sr_unitconv.hdf5, UnitConversion]
-  unit_conversion: [nsls2unitconv.yaml]
+  unit_conversion: [nsls2sr_unitconv.yaml]
   # aphla will create virtual elements which is a combination of elements in one
   # family, e.g. BPM, COR, HCOR, VCOR, QUAD, SEXT.
   # in case you want to exclude some elements from this

@@ -1,3 +1,7 @@
+# This script should be run both in v1 aphla and v2 aphla such that 2 different
+# log files can be compared to ensure the proper database conversion has been
+# completed between v1 and v2 aphla.
+
 import sys
 import time
 import pickle
