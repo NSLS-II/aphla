@@ -38,7 +38,7 @@ prop = 'handle'
 print(set([tuple(v2.astype(str).tolist()) for k, v in quad_sext_unitconvs.items()
            for k2, v2 in v.items() if k2 == prop]))
 
-table_filepath = 'nsls2unitconv_tables.pkl'
+table_filepath = 'nsls2sr_unitconv_tables.pkl'
 tables = dict(SR={})
 for k, v in quad_sext_unitconvs.items():
     tables['SR'][k] = v['table']

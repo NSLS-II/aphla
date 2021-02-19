@@ -1,0 +1,403 @@
+table_filepath: nsls2br_unitconv_tables.pkl
+
+BR:
+  #-------------------------------------
+  # Unit conversions defined by "groups"
+  #-------------------------------------
+  BPM:
+    groups: [BPM]
+    fields: [x, y]
+    handles: [readback]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: um
+    dst_unit: mm
+    class: polynomial
+    invertible: True
+    coeffs: [1e-3, 0.0]
+
+  #--------------------------------------
+  # Unit conversions defined by "elements"
+  #--------------------------------------
+
+  # -- Unit conversions for BD1 --
+
+  "BD1_b0_B(I)": &BD1_b0_B_I
+    elements: [BD1]
+    fields: [b0, b0_1k]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: unknown
+    class: polynomial
+    invertible: False
+    table_key: "BD1_b0_B(I)"
+  "BD1_b0_I(B)": &BD1_b0_I_B
+    <<: *BD1_b0_B_I
+    src_unitsys: phy
+    dst_unitsys:
+    src_unit: unknown
+    dst_unit: A
+    table_key: "BD1_b0_I(B)"
+
+  "BD1_b1_G(I)": &BD1_b1_G_I
+    <<: *BD1_b0_B_I
+    fields: [b1]
+    rawfield: b0
+    src_unit: A
+    dst_unit: unknown
+    table_key: "BD1_b1_G(I)"
+  "BD1_b1_1k_G(I)":
+    <<: *BD1_b1_G_I
+    fields: [b1_1k]
+    rawfield: b0_1k
+
+  "BD1_b1_I(G)": &BD1_b1_I_G # Not Defined. v1 aphla appears to be just using "BD1_b0_I(B)"
+    <<: *BD1_b0_I_B
+    fields: [b1]
+    rawfield: b0
+    src_unit: unknown
+    dst_unit: A
+    table_key: "BD1_b0_I(B)"
+  "BD1_b1_1k_I(G)": # Not Defined. v1 aphla appears to be just using "BD1_b0_I(B)"
+    <<: *BD1_b1_I_G
+    fields: [b1_1k]
+    rawfield: b0_1k
+
+  "BD1_b2_S(I)": &BD1_b2_S_I
+    <<: *BD1_b0_B_I
+    fields: [b2]
+    rawfield: b0
+    src_unit: A
+    dst_unit: unknown
+    table_key: "BD1_b2_S(I)"
+  "BD1_b2_1k_S(I)":
+    <<: *BD1_b2_S_I
+    fields: [b2_1k]
+    rawfield: b0_1k
+
+  "BD1_b2_I(S)": &BD1_b2_I_S # Not Defined. v1 aphla appears to be just using "BD1_b0_I(B)"
+    <<: *BD1_b0_I_B
+    fields: [b2]
+    rawfield: b0
+    src_unit: unknown
+    dst_unit: A
+    table_key: "BD1_b0_I(B)"
+  "BD1_b2_1k_I(S)": # Not Defined. v1 aphla appears to be just using "BD1_b0_I(B)"
+    <<: *BD1_b2_I_S
+    fields: [b2_1k]
+    rawfield: b0_1k
+
+  # -- Unit conversions for BD2 --
+
+  "BD2_b0_B(I)": &BD2_b0_B_I
+    elements: [BD2]
+    fields: [b0, b0_1k]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: unknown
+    class: polynomial
+    invertible: False
+    table_key: "BD2_b0_B(I)"
+  "BD2_b0_I(B)": &BD2_b0_I_B
+    <<: *BD2_b0_B_I
+    src_unitsys: phy
+    dst_unitsys:
+    src_unit: unknown
+    dst_unit: A
+    table_key: "BD2_b0_I(B)"
+
+  "BD2_b1_G(I)": &BD2_b1_G_I
+    <<: *BD2_b0_B_I
+    fields: [b1]
+    rawfield: b0
+    src_unit: A
+    dst_unit: unknown
+    table_key: "BD2_b1_G(I)"
+  "BD2_b1_1k_G(I)":
+    <<: *BD2_b1_G_I
+    fields: [b1_1k]
+    rawfield: b0_1k
+
+  "BD2_b1_I(G)": &BD2_b1_I_G # Not Defined. v1 aphla appears to be just using "BD2_b0_I(B)"
+    <<: *BD2_b0_I_B
+    fields: [b1]
+    rawfield: b0
+    src_unit: unknown
+    dst_unit: A
+    table_key: "BD2_b0_I(B)"
+  "BD2_b1_1k_I(G)": # Not Defined. v1 aphla appears to be just using "BD2_b0_I(B)"
+    <<: *BD2_b1_I_G
+    fields: [b1_1k]
+    rawfield: b0_1k
+
+  "BD2_b2_S(I)": &BD2_b2_S_I
+    <<: *BD2_b0_B_I
+    fields: [b2]
+    rawfield: b0
+    src_unit: A
+    dst_unit: unknown
+    table_key: "BD2_b2_S(I)"
+  "BD2_b2_1k_S(I)":
+    <<: *BD2_b2_S_I
+    fields: [b2_1k]
+    rawfield: b0_1k
+
+  "BD2_b2_I(S)": &BD2_b2_I_S # Not Defined. v1 aphla appears to be just using "BD2_b0_I(B)"
+    <<: *BD2_b0_I_B
+    fields: [b2]
+    rawfield: b0
+    src_unit: unknown
+    dst_unit: A
+    table_key: "BD2_b0_I(B)"
+  "BD2_b2_1k_I(S)": # Not Defined. v1 aphla appears to be just using "BD2_b0_I(B)"
+    <<: *BD2_b2_I_S
+    fields: [b2_1k]
+    rawfield: b0_1k
+
+  # -- Unit conversions for BF --
+
+  "BF_b0_B(I)": &BF_b0_B_I
+    elements: [BF]
+    fields: [b0, b0_1k]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: unknown
+    class: polynomial
+    invertible: False
+    table_key: "BF_b0_B(I)"
+  "BF_b0_I(B)": &BF_b0_I_B
+    <<: *BF_b0_B_I
+    src_unitsys: phy
+    dst_unitsys:
+    src_unit: unknown
+    dst_unit: A
+    table_key: "BF_b0_I(B)"
+
+  "BF_b1_G(I)": &BF_b1_G_I
+    <<: *BF_b0_B_I
+    fields: [b1]
+    rawfield: b0
+    src_unit: A
+    dst_unit: unknown
+    table_key: "BF_b1_G(I)"
+  "BF_b1_1k_G(I)":
+    <<: *BF_b1_G_I
+    fields: [b1_1k]
+    rawfield: b0_1k
+
+  "BF_b1_I(G)": &BF_b1_I_G # Not Defined. v1 aphla appears to be just using "BF_b0_I(B)"
+    <<: *BF_b0_I_B
+    fields: [b1]
+    rawfield: b0
+    src_unit: unknown
+    dst_unit: A
+    table_key: "BF_b0_I(B)"
+  "BF_b1_1k_I(G)": # Not Defined. v1 aphla appears to be just using "BF_b0_I(B)"
+    <<: *BF_b1_I_G
+    fields: [b1_1k]
+    rawfield: b0_1k
+
+  "BF_b2_S(I)": &BF_b2_S_I
+    <<: *BF_b0_B_I
+    fields: [b2]
+    rawfield: b0
+    src_unit: A
+    dst_unit: unknown
+    table_key: "BF_b2_S(I)"
+  "BF_b2_1k_S(I)":
+    <<: *BF_b2_S_I
+    fields: [b2_1k]
+    rawfield: b0_1k
+
+  "BF_b2_I(S)": &BF_b2_I_S # Not Defined. v1 aphla appears to be just using "BF_b0_I(B)"
+    <<: *BF_b0_I_B
+    fields: [b2]
+    rawfield: b0
+    src_unit: unknown
+    dst_unit: A
+    table_key: "BF_b0_I(B)"
+  "BF_b2_1k_I(S)": # Not Defined. v1 aphla appears to be just using "BF_b0_I(B)"
+    <<: *BF_b2_I_S
+    fields: [b2_1k]
+    rawfield: b0_1k
+
+
+
+  "CXW_x_BL(I)": &CXW_x_BL_I
+    elements: [DSCXW1, DSCXW2, ISCXW1, ISCXW2, CSCXW1, CSCXW2, XSCXW1, XSCXW2]
+    fields: [x, x_1k]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: unknown
+    class: polynomial
+    invertible: False
+    table_key: "CXW_x_BL(I)"
+  "CXW_x_I(BL)":
+    <<: *CXW_x_BL_I
+    src_unitsys: phy
+    dst_unitsys:
+    src_unit: unknown
+    dst_unit: A
+    table_key: "CXW_x_I(BL)"
+
+
+  "CX_x_BL(I)": &CX_x_BL_I
+    elements: [
+      A1CX1, A1CX2, A1CX3, A2CX1, A2CX2, A2CX3, A3CX1, A3CX2, A3CX3,
+      A4CX1, A4CX2, A4CX3]
+    fields: [x, x_1k]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: unknown
+    class: polynomial
+    invertible: False
+    table_key: "CX_x_BL(I)" # Note this is named (by mistake I think) "CX_b2_BL(I)" in the v1 aphla HDF5
+  "CX_x_I(BL)":
+    <<: *CX_x_BL_I
+    src_unitsys: phy
+    dst_unitsys:
+    src_unit: unknown
+    dst_unit: A
+    table_key: "CX_x_I(BL)"
+
+
+  "CY_y_BL(I)": &CY_y_BL_I
+    elements: [
+      A1CY1, A1CY2, A1CY3, A1CY4, A2CY1, A2CY2, A2CY3, A2CY4,
+      A3CY1, A3CY2, A3CY3, A3CY4, A4CY1, A4CY2, A4CY3, A4CY4]
+    fields: [y, y_1k]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: unknown
+    class: polynomial
+    invertible: False
+    table_key: "CY_y_BL(I)"
+  "CY_y_I(BL)":
+    <<: *CY_y_BL_I
+    src_unitsys: phy
+    dst_unitsys:
+    src_unit: unknown
+    dst_unit: A
+    table_key: "CY_y_I(BL)"
+
+
+  "QD_b1_1k_G(I)": &QD_b1_1k_G_I
+    elements: [QD]
+    fields: [b1_1k]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: unknown
+    class: polynomial
+    invertible: False
+    table_key: "QD_b1_1k_G(I)"
+  "QD_b1_1k_I(G)":
+    <<: *QD_b1_1k_G_I
+    src_unitsys: phy
+    dst_unitsys:
+    src_unit: unknown
+    dst_unit: A
+    table_key: "QD_b1_1k_I(G)"
+
+  "QF_b1_1k_G(I)": &QF_b1_1k_G_I
+    elements: [QF]
+    fields: [b1_1k]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: unknown
+    class: polynomial
+    invertible: False
+    table_key: "QF_b1_1k_G(I)"
+  "QF_b1_1k_I(G)":
+    <<: *QF_b1_1k_G_I
+    src_unitsys: phy
+    dst_unitsys:
+    src_unit: unknown
+    dst_unit: A
+    table_key: "QF_b1_1k_I(G)"
+
+  "QG_b1_1k_G(I)": &QG_b1_1k_G_I
+    elements: [QG]
+    fields: [b1_1k]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: unknown
+    class: polynomial
+    invertible: False
+    table_key: "QG_b1_1k_G(I)"
+  "QG_b1_1k_I(G)":
+    <<: *QG_b1_1k_G_I
+    src_unitsys: phy
+    dst_unitsys:
+    src_unit: unknown
+    dst_unit: A
+    table_key: "QG_b1_1k_I(G)"
+
+
+  QF_QG_b1: &QF_QG_b1
+    elements: [QF, QG]
+    fields: [b1]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: "m^{-1}"
+    class: interpolation
+    invertible: True
+    polarity: 1
+    table_key: rot_coil_BST-QDP-5200-0004_000.xls
+  QD_b1:
+    <<: *QF_QG_b1
+    elements: [QD]
+    polarity: -1
+
+
+
+  "SD_b2_S(I)": &SD_b2_S_I
+    elements: [A1SD1, A1SD2, A2SD1, A2SD2, A3SD1, A3SD2, A4SD1, A4SD2]
+    fields: [b2, b2_1k]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: unknown
+    class: polynomial
+    invertible: False
+    table_key: "SD_b2_S(I)"
+  "SD_b2_I(S)": &SD_b2_I_S
+    <<: *SD_b2_S_I
+    src_unitsys: phy
+    dst_unitsys:
+    src_unit: unknown
+    dst_unit: A
+    table_key: "SD_b2_I(S)"
+
+
+  "SF_b2_S(I)": &SF_b2_S_I
+    <<: *SD_b2_S_I
+    elements: [A1SF1, A1SF2, A2SF1, A2SF2, A3SF1, A3SF2, A4SF1, A4SF2]
+    table_key: "SF_b2_S(I)"
+  "SF_b2_I(S)":
+    <<: *SF_b2_S_I
+    src_unitsys: phy
+    dst_unitsys:
+    src_unit: unknown
+    dst_unit: A
+    table_key: "SF_b2_I(S)"
