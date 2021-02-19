@@ -1,5 +1,5 @@
-LTB: &LTB # LTB unit conversion data will be also used for the lattices LN,
-          # LTD1, LTD2 as well
+LTB: &LTB # LTB unit conversion data will be also used for the lattices LTD1 &
+          # LTD2 as well
 
   #-------------------------------------
   # Unit conversions defined by "groups"
@@ -85,9 +85,7 @@ LTB: &LTB # LTB unit conversion data will be also used for the lattices LN,
     coeffs: [0.027125245, 0.0]
 
 
-# LTB unit conversion data will be also used for the lattices LN, LTD1, LTD2 as well
-LN:
-  <<: *LTB
+# LTB unit conversion data will be also used for the lattices LTD1, LTD2 as well
 LTD1:
   <<: *LTB
 LTD2:
