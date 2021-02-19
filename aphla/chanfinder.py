@@ -280,6 +280,16 @@ class ChannelFinderAgent(object):
 
                     self.rows.append([pv, prpts, tags, pv_mv_d.get('mv', {})])
 
+            if map_d == {}:
+                assert tags == []
+
+                prpts = deepcopy(elem_props)
+                prpts['elemName'] = elem_name
+
+                pv = ''
+                mv = {}
+                self.rows.append([pv, prpts, tags, mv])
+
 
     def loadSqlite(self, fname, **kwargs):
         """
