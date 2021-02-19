@@ -5,6 +5,57 @@ COMMON:
   # use ~/.hla/ if none of these two are available.
   output_dir: /epics/aphla
 
+LN:
+  controls_protocol: EPICS
+  #cfs_url: nsls2_LN.sqlite
+  #cfs_url: http://channelfinder.cs.nsls2.local/ChannelFinder
+  #cfs_tag: aphla.sys.LN
+  cfs:
+    type: pgz # gzipped pickle file
+    path: nsls2_ln_elems_pvs_mvs.pgz
+    tag: aphla.sys.LN
+  loop: 0
+
+LTD1:
+  controls_protocol: EPICS
+  #cfs_url: nsls2_LTD1.sqlite
+  #cfs_url: http://channelfinder.cs.nsls2.local/ChannelFinder
+  #cfs_tag: aphla.sys.LTD1
+  cfs:
+    type: pgz # gzipped pickle file
+    path: nsls2_ltd1_elems_pvs_mvs.pgz
+    tag: aphla.sys.LTD1
+  #unit_conversion: ltb_unitconv.ini
+  unit_conversion: [nsls2ltb_unitconv.yaml]
+  loop: 0
+
+LTD2:
+  controls_protocol: EPICS
+  #cfs_url: nsls2_LTD2.sqlite
+  #cfs_url: http://channelfinder.cs.nsls2.local/ChannelFinder
+  #cfs_tag: aphla.sys.LTD2
+  cfs:
+    type: pgz # gzipped pickle file
+    path: nsls2_ltd2_elems_pvs_mvs.pgz
+    tag: aphla.sys.LTD2
+  #unit_conversion: ltb_unitconv.ini
+  unit_conversion: [nsls2ltb_unitconv.yaml]
+  loop: 0
+
+LTB:
+  controls_protocol: EPICS
+  #cfs_url: nsls2_LTB.sqlite
+  #cfs_url: http://channelfinder.cs.nsls2.local/ChannelFinder
+  #cfs_url: http://web01.nsls2.bnl.gov:8080/ChannelFinder
+  #cfs_tag: aphla.sys.LTB
+  cfs:
+    type: pgz # gzipped pickle file
+    path: nsls2_ltb_elems_pvs_mvs.pgz
+    tag: aphla.sys.LTB
+  #unit_conversion: ltb_unitconv.ini
+  unit_conversion: [nsls2ltb_unitconv.yaml]
+  loop: 0
+
 BR:
   controls_protocol: EPICS
   #cfs_url: nsls2_BR.sqlite
@@ -52,57 +103,6 @@ BTS:
   s_end: 48.2133
   loop: 0
   #virtual_bpm_exclude:
-
-LTB:
-  controls_protocol: EPICS
-  #cfs_url: nsls2_LTB.sqlite
-  #cfs_url: http://channelfinder.cs.nsls2.local/ChannelFinder
-  #cfs_url: http://web01.nsls2.bnl.gov:8080/ChannelFinder
-  #cfs_tag: aphla.sys.LTB
-  cfs:
-    type: pgz # gzipped pickle file
-    path: nsls2_ltb_elems_pvs_mvs.pgz
-    tag: aphla.sys.LTB
-  #unit_conversion: ltb_unitconv.ini
-  unit_conversion: [nsls2ltb_unitconv.yaml]
-  loop: 0
-
-LTD1:
-  controls_protocol: EPICS
-  #cfs_url: nsls2_LTD1.sqlite
-  #cfs_url: http://channelfinder.cs.nsls2.local/ChannelFinder
-  #cfs_tag: aphla.sys.LTD1
-  cfs:
-    type: pgz # gzipped pickle file
-    path: nsls2_ltd1_elems_pvs_mvs.pgz
-    tag: aphla.sys.LTD1
-  #unit_conversion: ltb_unitconv.ini
-  unit_conversion: [nsls2ltb_unitconv.yaml]
-  loop: 0
-
-LN:
-  controls_protocol: EPICS
-  #cfs_url: nsls2_LN.sqlite
-  #cfs_url: http://channelfinder.cs.nsls2.local/ChannelFinder
-  #cfs_tag: aphla.sys.LN
-  cfs:
-    type: pgz # gzipped pickle file
-    path: nsls2_ln_elems_pvs_mvs.pgz
-    tag: aphla.sys.LN
-  loop: 0
-
-LTD2:
-  controls_protocol: EPICS
-  #cfs_url: nsls2_LTD2.sqlite
-  #cfs_url: http://channelfinder.cs.nsls2.local/ChannelFinder
-  #cfs_tag: aphla.sys.LTD2
-  cfs:
-    type: pgz # gzipped pickle file
-    path: nsls2_ltd2_elems_pvs_mvs.pgz
-    tag: aphla.sys.LTD2
-  #unit_conversion: ltb_unitconv.ini
-  unit_conversion: [nsls2ltb_unitconv.yaml]
-  loop: 0
 
 SR:
   controls_protocol: EPICS
