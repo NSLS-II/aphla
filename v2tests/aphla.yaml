@@ -85,10 +85,15 @@ LN:
 
 LTD2:
   controls_protocol: EPICS
-  cfs_url: nsls2_LTD2.sqlite
+  #cfs_url: nsls2_LTD2.sqlite
   #cfs_url: http://channelfinder.cs.nsls2.local/ChannelFinder
-  cfs_tag: aphla.sys.LTD2
-  unit_conversion: ltb_unitconv.ini
+  #cfs_tag: aphla.sys.LTD2
+  cfs:
+    type: pgz # gzipped pickle file
+    path: nsls2_ltd2_elems_pvs_mvs.pgz
+    tag: aphla.sys.LTD2
+  #unit_conversion: ltb_unitconv.ini
+  unit_conversion: [nsls2ltb_unitconv.yaml]
   loop: 0
 
 SR:
