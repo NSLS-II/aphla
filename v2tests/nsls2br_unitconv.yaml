@@ -29,7 +29,7 @@ BR:
     src_unitsys:
     dst_unitsys: phy
     src_unit: A
-    dst_unit: unknown
+    dst_unit: T
     class: polynomial
     invertible: False
     table_key: "BD1_b0_B(I)"
@@ -37,7 +37,7 @@ BR:
     <<: *BD1_b0_B_I
     src_unitsys: phy
     dst_unitsys:
-    src_unit: unknown
+    src_unit: T
     dst_unit: A
     table_key: "BD1_b0_I(B)"
 
@@ -46,48 +46,48 @@ BR:
     fields: [b1]
     rawfield: b0
     src_unit: A
-    dst_unit: unknown
+    dst_unit: "T/m"
     table_key: "BD1_b1_G(I)"
   "BD1_b1_1k_G(I)":
     <<: *BD1_b1_G_I
     fields: [b1_1k]
     rawfield: b0_1k
 
-  "BD1_b1_I(G)": &BD1_b1_I_G # Not Defined. v1 aphla appears to be just using "BD1_b0_I(B)"
-    <<: *BD1_b0_I_B
-    fields: [b1]
-    rawfield: b0
-    src_unit: unknown
-    dst_unit: A
-    table_key: "BD1_b0_I(B)"
-  "BD1_b1_1k_I(G)": # Not Defined. v1 aphla appears to be just using "BD1_b0_I(B)"
-    <<: *BD1_b1_I_G
-    fields: [b1_1k]
-    rawfield: b0_1k
+  #"BD1_b1_I(G)": &BD1_b1_I_G # Not Defined. v1 aphla appears to be just using "BD1_b0_I(B)"
+    #<<: *BD1_b0_I_B
+    #fields: [b1]
+    #rawfield: b0
+    #src_unit: "T/m"
+    #dst_unit: A
+    #table_key: "BD1_b0_I(B)"
+  #"BD1_b1_1k_I(G)": # Not Defined. v1 aphla appears to be just using "BD1_b0_I(B)"
+    #<<: *BD1_b1_I_G
+    #fields: [b1_1k]
+    #rawfield: b0_1k
 
   "BD1_b2_S(I)": &BD1_b2_S_I
     <<: *BD1_b0_B_I
     fields: [b2]
     rawfield: b0
     src_unit: A
-    dst_unit: unknown
+    dst_unit: "T/(m^2)"
     table_key: "BD1_b2_S(I)"
   "BD1_b2_1k_S(I)":
     <<: *BD1_b2_S_I
     fields: [b2_1k]
     rawfield: b0_1k
 
-  "BD1_b2_I(S)": &BD1_b2_I_S # Not Defined. v1 aphla appears to be just using "BD1_b0_I(B)"
-    <<: *BD1_b0_I_B
-    fields: [b2]
-    rawfield: b0
-    src_unit: unknown
-    dst_unit: A
-    table_key: "BD1_b0_I(B)"
-  "BD1_b2_1k_I(S)": # Not Defined. v1 aphla appears to be just using "BD1_b0_I(B)"
-    <<: *BD1_b2_I_S
-    fields: [b2_1k]
-    rawfield: b0_1k
+  #"BD1_b2_I(S)": &BD1_b2_I_S # Not Defined. v1 aphla appears to be just using "BD1_b0_I(B)"
+    #<<: *BD1_b0_I_B
+    #fields: [b2]
+    #rawfield: b0
+    #src_unit: "T/(m^2)"
+    #dst_unit: A
+    #table_key: "BD1_b0_I(B)"
+  #"BD1_b2_1k_I(S)": # Not Defined. v1 aphla appears to be just using "BD1_b0_I(B)"
+    #<<: *BD1_b2_I_S
+    #fields: [b2_1k]
+    #rawfield: b0_1k
 
   # -- Unit conversions for BD2 --
 
@@ -98,7 +98,7 @@ BR:
     src_unitsys:
     dst_unitsys: phy
     src_unit: A
-    dst_unit: unknown
+    dst_unit: T
     class: polynomial
     invertible: False
     table_key: "BD2_b0_B(I)"
@@ -106,7 +106,7 @@ BR:
     <<: *BD2_b0_B_I
     src_unitsys: phy
     dst_unitsys:
-    src_unit: unknown
+    src_unit: T
     dst_unit: A
     table_key: "BD2_b0_I(B)"
 
@@ -115,48 +115,48 @@ BR:
     fields: [b1]
     rawfield: b0
     src_unit: A
-    dst_unit: unknown
+    dst_unit: "T/m"
     table_key: "BD2_b1_G(I)"
   "BD2_b1_1k_G(I)":
     <<: *BD2_b1_G_I
     fields: [b1_1k]
     rawfield: b0_1k
 
-  "BD2_b1_I(G)": &BD2_b1_I_G # Not Defined. v1 aphla appears to be just using "BD2_b0_I(B)"
-    <<: *BD2_b0_I_B
-    fields: [b1]
-    rawfield: b0
-    src_unit: unknown
-    dst_unit: A
-    table_key: "BD2_b0_I(B)"
-  "BD2_b1_1k_I(G)": # Not Defined. v1 aphla appears to be just using "BD2_b0_I(B)"
-    <<: *BD2_b1_I_G
-    fields: [b1_1k]
-    rawfield: b0_1k
+  #"BD2_b1_I(G)": &BD2_b1_I_G # Not Defined. v1 aphla appears to be just using "BD2_b0_I(B)"
+    #<<: *BD2_b0_I_B
+    #fields: [b1]
+    #rawfield: b0
+    #src_unit: "T/m"
+    #dst_unit: A
+    #table_key: "BD2_b0_I(B)"
+  #"BD2_b1_1k_I(G)": # Not Defined. v1 aphla appears to be just using "BD2_b0_I(B)"
+    #<<: *BD2_b1_I_G
+    #fields: [b1_1k]
+    #rawfield: b0_1k
 
   "BD2_b2_S(I)": &BD2_b2_S_I
     <<: *BD2_b0_B_I
     fields: [b2]
     rawfield: b0
     src_unit: A
-    dst_unit: unknown
+    dst_unit: "T/(m^2)"
     table_key: "BD2_b2_S(I)"
   "BD2_b2_1k_S(I)":
     <<: *BD2_b2_S_I
     fields: [b2_1k]
     rawfield: b0_1k
 
-  "BD2_b2_I(S)": &BD2_b2_I_S # Not Defined. v1 aphla appears to be just using "BD2_b0_I(B)"
-    <<: *BD2_b0_I_B
-    fields: [b2]
-    rawfield: b0
-    src_unit: unknown
-    dst_unit: A
-    table_key: "BD2_b0_I(B)"
-  "BD2_b2_1k_I(S)": # Not Defined. v1 aphla appears to be just using "BD2_b0_I(B)"
-    <<: *BD2_b2_I_S
-    fields: [b2_1k]
-    rawfield: b0_1k
+  #"BD2_b2_I(S)": &BD2_b2_I_S # Not Defined. v1 aphla appears to be just using "BD2_b0_I(B)"
+    #<<: *BD2_b0_I_B
+    #fields: [b2]
+    #rawfield: b0
+    #src_unit: "T/(m^2)"
+    #dst_unit: A
+    #table_key: "BD2_b0_I(B)"
+  #"BD2_b2_1k_I(S)": # Not Defined. v1 aphla appears to be just using "BD2_b0_I(B)"
+    #<<: *BD2_b2_I_S
+    #fields: [b2_1k]
+    #rawfield: b0_1k
 
   # -- Unit conversions for BF --
 
@@ -167,7 +167,7 @@ BR:
     src_unitsys:
     dst_unitsys: phy
     src_unit: A
-    dst_unit: unknown
+    dst_unit: T
     class: polynomial
     invertible: False
     table_key: "BF_b0_B(I)"
@@ -175,7 +175,7 @@ BR:
     <<: *BF_b0_B_I
     src_unitsys: phy
     dst_unitsys:
-    src_unit: unknown
+    src_unit: T
     dst_unit: A
     table_key: "BF_b0_I(B)"
 
@@ -184,48 +184,48 @@ BR:
     fields: [b1]
     rawfield: b0
     src_unit: A
-    dst_unit: unknown
+    dst_unit: "T/m"
     table_key: "BF_b1_G(I)"
   "BF_b1_1k_G(I)":
     <<: *BF_b1_G_I
     fields: [b1_1k]
     rawfield: b0_1k
 
-  "BF_b1_I(G)": &BF_b1_I_G # Not Defined. v1 aphla appears to be just using "BF_b0_I(B)"
-    <<: *BF_b0_I_B
-    fields: [b1]
-    rawfield: b0
-    src_unit: unknown
-    dst_unit: A
-    table_key: "BF_b0_I(B)"
-  "BF_b1_1k_I(G)": # Not Defined. v1 aphla appears to be just using "BF_b0_I(B)"
-    <<: *BF_b1_I_G
-    fields: [b1_1k]
-    rawfield: b0_1k
+  #"BF_b1_I(G)": &BF_b1_I_G # Not Defined. v1 aphla appears to be just using "BF_b0_I(B)"
+    #<<: *BF_b0_I_B
+    #fields: [b1]
+    #rawfield: b0
+    #src_unit: "T/m"
+    #dst_unit: A
+    #table_key: "BF_b0_I(B)"
+  #"BF_b1_1k_I(G)": # Not Defined. v1 aphla appears to be just using "BF_b0_I(B)"
+    #<<: *BF_b1_I_G
+    #fields: [b1_1k]
+    #rawfield: b0_1k
 
   "BF_b2_S(I)": &BF_b2_S_I
     <<: *BF_b0_B_I
     fields: [b2]
     rawfield: b0
     src_unit: A
-    dst_unit: unknown
+    dst_unit: "T/(m^2)"
     table_key: "BF_b2_S(I)"
   "BF_b2_1k_S(I)":
     <<: *BF_b2_S_I
     fields: [b2_1k]
     rawfield: b0_1k
 
-  "BF_b2_I(S)": &BF_b2_I_S # Not Defined. v1 aphla appears to be just using "BF_b0_I(B)"
-    <<: *BF_b0_I_B
-    fields: [b2]
-    rawfield: b0
-    src_unit: unknown
-    dst_unit: A
-    table_key: "BF_b0_I(B)"
-  "BF_b2_1k_I(S)": # Not Defined. v1 aphla appears to be just using "BF_b0_I(B)"
-    <<: *BF_b2_I_S
-    fields: [b2_1k]
-    rawfield: b0_1k
+  #"BF_b2_I(S)": &BF_b2_I_S # Not Defined. v1 aphla appears to be just using "BF_b0_I(B)"
+    #<<: *BF_b0_I_B
+    #fields: [b2]
+    #rawfield: b0
+    #src_unit: "T/(m^2)"
+    #dst_unit: A
+    #table_key: "BF_b0_I(B)"
+  #"BF_b2_1k_I(S)": # Not Defined. v1 aphla appears to be just using "BF_b0_I(B)"
+    #<<: *BF_b2_I_S
+    #fields: [b2_1k]
+    #rawfield: b0_1k
 
 
 
@@ -236,7 +236,7 @@ BR:
     src_unitsys:
     dst_unitsys: phy
     src_unit: A
-    dst_unit: unknown
+    dst_unit: "T*m"
     class: polynomial
     invertible: False
     table_key: "CXW_x_BL(I)"
@@ -244,7 +244,7 @@ BR:
     <<: *CXW_x_BL_I
     src_unitsys: phy
     dst_unitsys:
-    src_unit: unknown
+    src_unit: "T*m"
     dst_unit: A
     table_key: "CXW_x_I(BL)"
 
@@ -258,7 +258,7 @@ BR:
     src_unitsys:
     dst_unitsys: phy
     src_unit: A
-    dst_unit: unknown
+    dst_unit: "T*m"
     class: polynomial
     invertible: False
     table_key: "CX_x_BL(I)" # Note this is named (by mistake I think) "CX_b2_BL(I)" in the v1 aphla HDF5
@@ -266,7 +266,7 @@ BR:
     <<: *CX_x_BL_I
     src_unitsys: phy
     dst_unitsys:
-    src_unit: unknown
+    src_unit: "T*m"
     dst_unit: A
     table_key: "CX_x_I(BL)"
 
@@ -280,7 +280,7 @@ BR:
     src_unitsys:
     dst_unitsys: phy
     src_unit: A
-    dst_unit: unknown
+    dst_unit: "T*m"
     class: polynomial
     invertible: False
     table_key: "CY_y_BL(I)"
@@ -288,67 +288,70 @@ BR:
     <<: *CY_y_BL_I
     src_unitsys: phy
     dst_unitsys:
-    src_unit: unknown
+    src_unit: "T*m"
     dst_unit: A
     table_key: "CY_y_I(BL)"
 
-
-  "QD_b1_1k_G(I)": &QD_b1_1k_G_I
-    elements: [QD]
-    fields: [b1_1k]
-    handles: [readback, setpoint]
-    src_unitsys:
-    dst_unitsys: phy
-    src_unit: A
-    dst_unit: unknown
-    class: polynomial
-    invertible: False
-    table_key: "QD_b1_1k_G(I)"
-  "QD_b1_1k_I(G)":
-    <<: *QD_b1_1k_G_I
-    src_unitsys: phy
-    dst_unitsys:
-    src_unit: unknown
-    dst_unit: A
-    table_key: "QD_b1_1k_I(G)"
-
-  "QF_b1_1k_G(I)": &QF_b1_1k_G_I
-    elements: [QF]
-    fields: [b1_1k]
-    handles: [readback, setpoint]
-    src_unitsys:
-    dst_unitsys: phy
-    src_unit: A
-    dst_unit: unknown
-    class: polynomial
-    invertible: False
-    table_key: "QF_b1_1k_G(I)"
-  "QF_b1_1k_I(G)":
-    <<: *QF_b1_1k_G_I
-    src_unitsys: phy
-    dst_unitsys:
-    src_unit: unknown
-    dst_unit: A
-    table_key: "QF_b1_1k_I(G)"
-
-  "QG_b1_1k_G(I)": &QG_b1_1k_G_I
-    elements: [QG]
-    fields: [b1_1k]
-    handles: [readback, setpoint]
-    src_unitsys:
-    dst_unitsys: phy
-    src_unit: A
-    dst_unit: unknown
-    class: polynomial
-    invertible: False
-    table_key: "QG_b1_1k_G(I)"
-  "QG_b1_1k_I(G)":
-    <<: *QG_b1_1k_G_I
-    src_unitsys: phy
-    dst_unitsys:
-    src_unit: unknown
-    dst_unit: A
-    table_key: "QG_b1_1k_I(G)"
+  # -- Unit conversion for "b1_1k" fields for QD/QF/QG have been disabled
+  #    to avoid unit confusion between "b1" [1/m] vs "b1_1k" [T/m] per G. Wang
+  #    on 02/22/2021
+  #
+  #"QD_b1_1k_G(I)": &QD_b1_1k_G_I
+    #elements: [QD]
+    #fields: [b1_1k]
+    #handles: [readback, setpoint]
+    #src_unitsys:
+    #dst_unitsys: phy
+    #src_unit: A
+    #dst_unit: "T/m"
+    #class: polynomial
+    #invertible: False
+    #table_key: "QD_b1_1k_G(I)"
+  #"QD_b1_1k_I(G)":
+    #<<: *QD_b1_1k_G_I
+    #src_unitsys: phy
+    #dst_unitsys:
+    #src_unit: "T/m"
+    #dst_unit: A
+    #table_key: "QD_b1_1k_I(G)"
+  #
+  #"QF_b1_1k_G(I)": &QF_b1_1k_G_I
+    #elements: [QF]
+    #fields: [b1_1k]
+    #handles: [readback, setpoint]
+    #src_unitsys:
+    #dst_unitsys: phy
+    #src_unit: A
+    #dst_unit: "T/m"
+    #class: polynomial
+    #invertible: False
+    #table_key: "QF_b1_1k_G(I)"
+  #"QF_b1_1k_I(G)":
+    #<<: *QF_b1_1k_G_I
+    #src_unitsys: phy
+    #dst_unitsys:
+    #src_unit: "T/m"
+    #dst_unit: A
+    #table_key: "QF_b1_1k_I(G)"
+  #
+  #"QG_b1_1k_G(I)": &QG_b1_1k_G_I
+    #elements: [QG]
+    #fields: [b1_1k]
+    #handles: [readback, setpoint]
+    #src_unitsys:
+    #dst_unitsys: phy
+    #src_unit: A
+    #dst_unit: "T/m"
+    #class: polynomial
+    #invertible: False
+    #table_key: "QG_b1_1k_G(I)"
+  #"QG_b1_1k_I(G)":
+    #<<: *QG_b1_1k_G_I
+    #src_unitsys: phy
+    #dst_unitsys:
+    #src_unit: "T/m"
+    #dst_unit: A
+    #table_key: "QG_b1_1k_I(G)"
 
 
   QF_QG_b1: &QF_QG_b1
@@ -377,7 +380,7 @@ BR:
     src_unitsys:
     dst_unitsys: phy
     src_unit: A
-    dst_unit: unknown
+    dst_unit: "T/(m^2)"
     class: polynomial
     invertible: False
     table_key: "SD_b2_S(I)"
@@ -385,7 +388,7 @@ BR:
     <<: *SD_b2_S_I
     src_unitsys: phy
     dst_unitsys:
-    src_unit: unknown
+    src_unit: "T/(m^2)"
     dst_unit: A
     table_key: "SD_b2_I(S)"
 
@@ -398,6 +401,6 @@ BR:
     <<: *SF_b2_S_I
     src_unitsys: phy
     dst_unitsys:
-    src_unit: unknown
+    src_unit: "T/(m^2)"
     dst_unit: A
     table_key: "SF_b2_I(S)"
