@@ -482,9 +482,76 @@ for pv, elem_def, tags in cfa_rows:
 
         assert elemName not in submachine
 
+        # Remove unidentified/unwanted elements
+        if elem_def['elemType'] == 'IDCOR':
+            # It looks like these are ID orbit correctors, but the use of these
+            # appeared to have been abandoned, instead the "cch" fields of the
+            # ID elements are being used. So, these elements are being removed
+            # here.
+            print(f'Removing IDCOR element "{elemName}"')
+            continue
+
         elem = submachine[elemName] = {k: v for k, v in elem_def.items()}
 
 print(set(tags_list))
+
+# Add C23 phaser
+elemName = '_phaserg1c23c' # "_" added in front of the name to prevent this
+# element from being included when ap.getElement('p[hlm]*') is used to get all
+# regular BPMs.
+csx1_se = 606.963
+L_phaser = 99e-3 # [m]
+d_csx1_se_phaser_center = 0.16888 # [m] # TODO: Must check w/ Jim
+c23_phaser_elem_def = {
+    'id': None, # Looks like this is assigned by SQLite, useless info in v2 aphla.
+    'elemType': 'PHASER',
+    'cell': 'C23',
+    'girder': 'G1',
+    'symmetry': 'C',
+    'elemLength': L_phaser,
+    'elemPosition': csx1_se + d_csx1_se_phaser_center + L_phaser/2, # corresponds to "se", not "sb"
+    'elemIndex': 300_000, # The order of 2 elements are determined by "sb", as long
+    # as both elements' "index" values are positive integers.
+    'elemGroups': 'PHASER',
+    'virtual': 0,
+    'map': {
+        'gap': dict(get=dict(pv='SR:C23-MG:G1{MG:Phaser-Ax:Y}Mtr.RBV', mv={}),
+                    put=dict(pv='SR:C23-MG:G1{MG:Phaser-Ax:Y}Mtr.VAL', mv={})),
+        'gap_lolim': dict(get=dict(pv='SR:C23-MG:G1{MG:Phaser-Ax:Y}Mtr.LLM', mv={})),
+        'gap_hilim': dict(get=dict(pv='SR:C23-MG:G1{MG:Phaser-Ax:Y}Mtr.HLM', mv={})),
+        'cch0': dict(get=dict(pv='SR:C22-MG{PS:CL1B}I:Ps1DCCT1-I', mv={}),
+                     put=dict(pv='SR:C22-MG{PS:CL1B}I:Sp1_2-SP', mv={})),
+        'cch1': dict(get=dict(pv='SR:C22-MG{PS:CL1B}I:Ps2DCCT1-I', mv={}),
+                     put=dict(pv='SR:C22-MG{PS:CL1B}I:Sp2_2-SP', mv={})),
+        'cch2': dict(get=dict(pv='SR:C23-MG{PS:CL1A}I:Ps1DCCT1-I', mv={}),
+                     put=dict(pv='SR:C23-MG{PS:CL1A}I:Sp1_2-SP', mv={})),
+        'cch3': dict(get=dict(pv='SR:C23-MG{PS:CL1A}I:Ps2DCCT1-I', mv={}),
+                     put=dict(pv='SR:C23-MG{PS:CL1A}I:Sp2_2-SP', mv={})),
+        'orbff0_output': dict(put=dict(pv='SR:C22-MG{PS:CL1B}I:Sp1_2-SP',
+                                       epsilon=0.05, mv={})),
+        'orbff1_output': dict(put=dict(pv='SR:C22-MG{PS:CL1B}I:Sp2_2-SP',
+                                       epsilon=0.05, mv={})),
+        'orbff2_output': dict(put=dict(pv='SR:C23-MG{PS:CL1A}I:Sp1_2-SP',
+                                       epsilon=0.05, mv={})),
+        'orbff3_output': dict(put=dict(pv='SR:C23-MG{PS:CL1A}I:Sp2_2-SP',
+                                       epsilon=0.05, mv={})),
+        },
+    'tags': ['aphla.sys.SR'],
+}
+for iCh in range(4):
+    c23_phaser_elem_def['map'][f'cch[{iCh:d}]'] = dict(
+        get=c23_phaser_elem_def['map'][f'cch{iCh:d}']['get'])
+ff_pv_prefix_template = 'SR:C23-MG:G1{{MG:Phaser-Ax:Y-FF:{0:d}}}'
+for iCh in range(4):
+    c23_phaser_elem_def['map'][f'orbff{iCh:d}_on'] = dict(
+        put=dict(pv=ff_pv_prefix_template.format(iCh)+'Ena-Sel', mv={}))
+for iCh in range(4):
+    c23_phaser_elem_def['map'][f'orbff{iCh:d}_m0_gap'] = dict(
+        put=dict(pv=ff_pv_prefix_template.format(iCh)+'L2-Calc_.C', mv={}))
+for iCh in range(4):
+    c23_phaser_elem_def['map'][f'orbff{iCh:d}_m0_I'] = dict(
+        put=dict(pv=ff_pv_prefix_template.format(iCh)+'L2-Calc_.D', mv={}))
+submachine[elemName] = c23_phaser_elem_def
 
 
 nsls2_elems_pvs_mvs_pgz_file = 'nsls2_sr_elems_pvs_mvs.pgz'
