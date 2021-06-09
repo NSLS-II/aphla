@@ -135,6 +135,29 @@ SR:
   # Unit conversions defined by "elements"
   #--------------------------------------
 
+  Cavity_Freq_GHz:
+    elements: [rfcavity]
+    fields: [f]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: GHz
+    dst_unit: Hz
+    class: polynomial
+    invertible: True
+    coeffs: [1e9, 0.0]
+  Cavity_Freq_Hz:
+    elements: [rfcavity]
+    fields: [f_hz]
+    handles: [readback]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: Hz
+    dst_unit: Hz
+    class: polynomial
+    invertible: True
+    coeffs: [1.0, 0.0]
+
   "SR-MG-CRR-1000_H":
     elements: [
       cm1g4c30a, cl2g6c30b, cl1g6c30b, cl1g2c01a, cl2g2c01a, ch1g6c01b,
