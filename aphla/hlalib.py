@@ -27,6 +27,8 @@ from . import models
 from . import element
 import itertools
 
+from . import ureg, Q_
+
 _logger = logging.getLogger("aphla.hlalib")
 
 #__all__ = [

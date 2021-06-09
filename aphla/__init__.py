@@ -24,6 +24,13 @@ from pathlib import Path
 
 from ruamel import yaml
 
+from pint import UnitRegistry, set_application_registry
+ureg = UnitRegistry()
+set_application_registry(ureg) # needed for pickling/unpickling
+Q_ = Quantity = ureg.Quantity
+
+CONFIG = dict(unitless_quantities=True)
+
 # for compatibilities with Python < 2.7
 class _NullHandler(logging.Handler):
     """a fix for Python2.6 where no NullHandler"""
@@ -159,6 +166,16 @@ def switchToSimulation():
 def switchToSim():
     """"""
     switchToSimulation()
+
+def useQuantitiesWithoutUnits():
+    """"""
+    CONFIG['unitless_quantities'] = True
+def useQuantitiesWithUnits():
+    """"""
+    CONFIG['unitless_quantities'] = False
+def is_unitless():
+    """"""
+    return CONFIG['unitless_quantities']
 
 
 this_folder = os.path.dirname(os.path.abspath(__file__))

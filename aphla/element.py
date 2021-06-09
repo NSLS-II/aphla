@@ -19,6 +19,8 @@ from collections import Iterable
 from functools import partial
 from itertools import permutations
 
+from . import CONFIG
+from . import ureg, Q_
 from . import OperationMode, OP_MODE
 from .unitconv import *
 from . import engines
@@ -314,12 +316,49 @@ class CaAction:
                                #"'%s' to '%s'" % (src, dst))
     def _unit_conv(self, x, src, dst, handle):
 
+        unit = None
+
         if handle == 'readback':
-            return self.ucfrb[(src, dst)](x)
+
+            #return self.ucfrb[(src, dst)](x)
+
+            if not CONFIG['unitless_quantities']:
+                for k, v in self.ucrb.items():
+                    if k[0] == dst:
+                        unit = v.srcunit
+                        break
+                    elif k[1] == dst:
+                        unit = v.dstunit
+                        break
+                else:
+                    unit = None
+
+            m = self.ucfrb[(src, dst)](x)
+
         elif handle == 'setpoint':
-            return self.ucfsp[(src, dst)](x)
+
+            #return self.ucfsp[(src, dst)](x)
+
+            if not CONFIG['unitless_quantities']:
+                for k, v in self.ucsp.items():
+                    if k[0] == dst:
+                        unit = v.srcunit
+                        break
+                    elif k[1] == dst:
+                        unit = v.dstunit
+                        break
+                else:
+                    unit = None
+
+            m = self.ucfsp[(src, dst)](x)
+
         else:
             raise ValueError(f'Invalid handle: {handle}')
+
+        if unit:
+            return Q_(m, unit)
+        else:
+            return m
 
     def _all_within_range(self, v, lowhigh):
         """if lowhigh is not valid, returns true"""
