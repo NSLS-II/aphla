@@ -27,6 +27,7 @@ from . import models
 from . import element
 import itertools
 
+from . import CONFIG
 from . import ureg, Q_
 
 _logger = logging.getLogger("aphla.hlalib")
@@ -1088,10 +1089,17 @@ def getOrbit(pat='', spos=False, unitsys='phy'):
         bpm = machines._lat._find_exact_element(machines.HLA_VBPM)
         n = len(bpm.sb)
         if spos:
-            ret = np.zeros((n, 3), 'd')
-            ret[:,2] = bpm.sb
+            if not CONFIG['unitless_quantities']:
+                ret = Q_(np.zeros((n, 3)), ureg.meter)
+                ret[:, 2] = Q_(bpm.sb, ureg.meter)
+            else:
+                ret = np.zeros((n, 3), 'd')
+                ret[:, 2] = bpm.sb
         else:
-            ret = np.zeros((n,2), 'd')
+            if not CONFIG['unitless_quantities']:
+                ret = Q_(np.zeros((n, 2)), ureg.meter)
+            else:
+                ret = np.zeros((n, 2), 'd')
 
         try:
             ret[:, 0] = bpm.get('x', handle='readback', unitsys=unitsys)
@@ -1131,10 +1139,28 @@ def getOrbit(pat='', spos=False, unitsys='phy'):
                 e.get('x', handle='readback', unitsys=unitsys),
                 e.get('y', handle='readback', unitsys=unitsys),
                 e.sb])
+
     if not ret: return None
-    obt = np.array(ret, 'd')
-    if not spos: return obt[:,:2]
-    else: return obt
+
+    if not CONFIG['unitless_quantities']:
+        n = len(ret)
+        if spos:
+            obt = Q_(np.zeros((n, 3)), ureg.meter)
+        else:
+            obt = Q_(np.zeros((n, 2)), ureg.meter)
+
+        for i in range(2):
+            obt[:, i] = Q_([v[i].magnitude for v in ret], ret[0][i].units)
+
+        if spos:
+            obt[:, 2] = Q_([v[2] for v in ret], ureg.meter)
+
+        return obt
+    else:
+        obt = np.array(ret, 'd')
+        if not spos: return obt[:,:2]
+        else: return obt
+
 
 def getAverageOrbit(pat = '', spos=False, nsample = 5, dt = 0.1):
     t0 = datetime.datetime.now()
