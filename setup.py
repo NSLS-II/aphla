@@ -70,11 +70,10 @@ if not release:
     finally:
         a.close()
 
-write_version_py()
-
 program_name = 'aphla'
 
 facility_name_arg = 'facility-name'
+facility_yaml_filename = 'facility.yaml'
 
 com_req_pakcages = ['numpy', 'cothread', 'h5py', 'ruamel.yaml']
 
@@ -98,7 +97,6 @@ if ('install' in sys.argv) or ('sdist' in sys.argv):
 
     this_folder = os.path.dirname(os.path.abspath(__file__))
 
-    facility_yaml_filename = 'facility.yaml'
     shutil.copy(Path(this_folder).joinpath('facility_configs', f'{facility_name}.yaml'),
                 Path(this_folder).joinpath('aphla', facility_yaml_filename))
 
@@ -145,6 +143,8 @@ class InstallCommand(install):
         """"""
         print(self.facility_name)
         install.run(self)
+
+write_version_py()
 
 setup(
     name = program_name,
