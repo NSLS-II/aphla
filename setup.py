@@ -100,8 +100,6 @@ if ('install' in sys.argv) or ('sdist' in sys.argv):
     shutil.copy(Path(this_folder).joinpath('facility_configs', f'{facility_name}.yaml'),
                 Path(this_folder).joinpath('aphla', facility_yaml_filename))
 
-    sys.argv.remove(facility_name_opt[0])
-
     if 'sdist' in sys.argv:
         # Modify the tarball name to be "aphla-{facility_name}-?.?.?.tar.gz"
         program_name += f'-{facility_name}'
@@ -131,7 +129,7 @@ class InstallCommand(install):
     def initialize_options(self):
         """"""
         install.initialize_options(self)
-        self.facility_name = facility_name
+        self.facility_name = None
 
     def finalize_options(self):
         """"""
