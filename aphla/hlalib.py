@@ -128,6 +128,20 @@ def getLifetimeCurrent(name='dcct', unitsys=None):
     tau = _current[0].get("tau", unitsys=unitsys)
     return tau, I
 
+def getRfFrequencyUnit(name = 'rfcavity', field = 'f', unitsys=None, handle="readback"):
+    """
+    Return the unit strings for the output of getRfFrequency()
+    """
+
+    if not CONFIG['unitless_quantities']:
+        print('WARNING: A Pint Quantity object is being returned by getRfFrequency().')
+        print('Hence, the unit strings returned by this function getRfFrequencyUnit()')
+        print('are meaningless.')
+
+    _rf = getElements(name)
+    if _rf: return _rf[0].getUnit(field, unitsys=unitsys, handle=handle)
+    else: return None
+
 # rf
 def getRfFrequency(name = 'rfcavity', field = 'f', unitsys=None, handle="readback"):
     """
@@ -139,6 +153,19 @@ def getRfFrequency(name = 'rfcavity', field = 'f', unitsys=None, handle="readbac
     if _rf: return _rf[0].get(field, unitsys=unitsys, handle=handle)
     else: return None
 
+def putRfFrequencyUnit(name = 'rfcavity', field = 'f', unitsys=None):
+    """
+    Return the unit strings for the input frequency of putRfFrequency()
+    """
+
+    if not CONFIG['unitless_quantities']:
+        print('WARNING: A Pint Quantity object should be passed to putRfFrequency().')
+        print('Hence, the unit strings returned by this function putRfFrequencyUnit()')
+        print('are meaningless.')
+
+    _rf = getElements(name)
+    if _rf: return _rf[0].getUnit(field, unitsys=unitsys, handle='setpoint')
+    else: raise RuntimeError("element '%s' not found" % name)
 
 def putRfFrequency(f, name = 'rfcavity', field = 'f', unitsys=None):
     """set the rf frequency for the first 'RFCAVITY' element"""
@@ -1066,7 +1093,7 @@ def getQuads():
 
 def getOrbitUnit(pat='', spos=False, unitsys='phy'):
     """
-    Return the unit string for the output of getOrbit()
+    Return the unit strings for the output of getOrbit()
     """
 
     if not CONFIG['unitless_quantities']:
