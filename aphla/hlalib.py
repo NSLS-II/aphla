@@ -66,17 +66,32 @@ def setEnergy(E_MeV):
 
     see also :func:`setEnergy`
     """
-    machines._lat.E_MeV = E_MeV
+
+    if not CONFIG['unitless_quantities']:
+        if not isinstance(E_MeV, Q_):
+            raise TypeError('Pint Quantity object is expected as the argument.')
+        machines._lat.E_MeV = E_MeV.to('MeV').magnitude
+    else:
+        machines._lat.E_MeV = E_MeV
 
 def getEnergy():
     """get current submachine beam energy (MeV)
 
     see also :func:`setEnergy`
     """
-    return machines._lat.E_MeV
+
+    if not CONFIG['unitless_quantities']:
+        return Q_(machines._lat.E_MeV, 'MeV')
+    else:
+        return machines._lat.E_MeV
 
 def getEnergyUnit():
     """"""
+
+    if not CONFIG['unitless_quantities']:
+        print('WARNING: A Pint Quantity object is being returned by getEnergy().')
+        print('Hence, the unit string returned by this function getEnergyUnit()')
+        print('is meaningless.')
 
     return 'MeV'
 
