@@ -356,7 +356,10 @@ class CaAction:
             raise ValueError(f'Invalid handle: {handle}')
 
         if unit:
-            return Q_(m, unit)
+            if isinstance(m, Q_):
+                return m.to(unit)
+            else:
+                return Q_(m, unit)
         else:
             return m
 
@@ -367,7 +370,7 @@ class CaAction:
         if lowhigh is None: return True
 
         low, high = lowhigh
-        if isinstance(v, (float, int)):
+        if isinstance(v, (float, int, Q_)):
             if low is None: return v <= high
             elif high is None: return v >= low
             elif high <= low: return True
@@ -516,8 +519,12 @@ class CaAction:
                 for i in range(len(self.pvsp)):
                     if self.pvlim[i] is None:
                         try:
-                            self.pvlim[i] = (rawret[i].lower_ctrl_limit,
-                                             rawret[i].upper_ctrl_limit)
+                            self.pvlim[i] = (
+                                self._unit_conv(rawret[i].lower_ctrl_limit,
+                                                None, unitsys, 'setpoint'),
+                                self._unit_conv(rawret[i].upper_ctrl_limit,
+                                                None, unitsys, 'setpoint')
+                            )
                         except:
                             pass
                 if len(self.pvsp) == 1:
@@ -559,7 +566,7 @@ class CaAction:
         if self.opflags & _READONLY: raise IOError("setting a readonly field")
 
         if OP_MODE.value == OperationMode.ONLINE:
-            if isinstance(val, (float, int, str)):
+            if isinstance(val, (float, int, str, Q_)):
                 #rawval = [self._unit_conv(val, unitsys, None, self.ucsp)] * \
                     #len(self.pvsp)
                 rawval = [self._unit_conv(val, unitsys, None, 'setpoint')] * \
@@ -604,7 +611,13 @@ class CaAction:
                     # keep the first for reset
                     self.sp.pop(1)
 
-            retlst = caput(self.pvsp, rawval, wait=wait, timeout=timeout)
+            if not CONFIG['unitless_quantities']:
+                rawval_wo_units = [v.m for v in rawval]
+            else:
+                rawval_wo_units = rawval
+
+            retlst = caput(self.pvsp, rawval_wo_units,
+                           wait=wait, timeout=timeout)
             for i,ret in enumerate(retlst):
                 if ret.ok: continue
                 raise RuntimeError("Failed at setting {0} to {1}".format(
