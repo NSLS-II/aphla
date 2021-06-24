@@ -1064,9 +1064,56 @@ def getQuads():
     return machines._lat.getGroupMembers('QUAD', op='union')
 
 
+def getOrbitUnit(pat='', spos=False, unitsys='phy'):
+    """
+    Return the unit string for the output of getOrbit()
+    """
+
+    if not CONFIG['unitless_quantities']:
+        print('WARNING: Pint Quantity objects are being returned by getOrbit().')
+        print('Hence, the unit strings returned by this function getOrbitUnit()')
+        print('are meaningless.')
+
+    if not pat:
+        bpm = machines._lat._find_exact_element(machines.HLA_VBPM)
+
+        unit_strs = {
+            fld: bpm.getUnit(fld, unitsys=unitsys) for fld in ['x', 'y']}
+
+    else:
+
+        if isinstance(pat, string_types):
+            elems = [e for e in getBpms()
+                    if fnmatch(e.name, pat) and e.isEnabled()]
+            if not elems: return None
+            ret = [[e.get('x', handle='readback', unitsys=unitsys),
+                    e.get('y', handle='readback', unitsys=unitsys),
+                    e.sb] for e in elems]
+        elif isinstance(pat, (list,)):
+            elems = machines._lat.getElementList(pat)
+            if not elems: return None
+            bpm = [e.name for e in getBpms() if e.isEnabled()]
+            ret = []
+            for e in elems:
+                if not e.name in bpm: ret.append([None, None, None])
+                else: ret.append([
+                    e.get('x', handle='readback', unitsys=unitsys),
+                    e.get('y', handle='readback', unitsys=unitsys),
+                    e.sb])
+
+        if not ret: return None
+
+        unit_strs = {
+            fld: elems[0].getUnit(fld, unitsys=unitsys) for fld in ['x', 'y']}
+
+    if spos:
+        unit_strs['spos'] = 'm'
+
+    return unit_strs
+
 def getOrbit(pat='', spos=False, unitsys='phy'):
     """
-    Return orbit
+    Return orbit (for BPM element fields: "x" & "y")
 
     :Example:
 
