@@ -18,7 +18,11 @@ class Default(object):
         self.value = value
 
     def __repr__(self):
-        return str(self.value)
+
+        if isinstance(self.value, str):
+            return f'"{self.value}"'
+        else:
+            return str(self.value)
 
 class DefaultObjLinkedDict(dict):
     def __init__(self, parent_key, *args, **kwargs):
