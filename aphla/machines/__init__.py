@@ -35,6 +35,7 @@ from ruamel import yaml
 
 from ..version import short_version
 from .. import facility_d
+from .. import defaults
 from ..unitconv import *
 from ..element import *
 from ..apdata import *
@@ -270,6 +271,10 @@ def load(machine, submachine = "*", **kwargs):
                     _logger.error(msg)
                 else:
                     # Loading from cache was successful.
+
+                    if 'default_func_args' in facility_d:
+                        defaults.initialize(Path(machdir).joinpath(facility_d['default_func_args']))
+
                     return
 
         print('* Constructing the machine lattice from the database files...')
@@ -484,6 +489,9 @@ def load(machine, submachine = "*", **kwargs):
     selected_lattice_name = [k for (k,v) in _lattice_dict.items()
                              if _lat == v][0]
     saveCache(machine, _lattice_dict, selected_lattice_name)
+
+    if 'default_func_args' in facility_d:
+        defaults.initialize(Path(machdir).joinpath(facility_d['default_func_args']))
 
     #if verbose:
     #    print "Default lattice:", lat0.name
@@ -943,4 +951,23 @@ def machines():
     from pkg_resources import resource_listdir, resource_isdir
     return [d for d in resource_listdir(__name__, ".")
             if resource_isdir(__name__, d)]
+
+
+def getControlLimits():
+    """ Returns a dict that contains the facility-specific control-related
+    limits for the currently loaded machine that are not retrievable from PVs.
+
+    An example of such limit information at NSLS-II includes the maximum allowed
+    frequency change per step.
+
+    This dict is defined in the YAML file "your_facility_name.yaml" under
+    the "facility_configs" folder in the source code. This file is copied into
+    the aphla installation root folder at the time of installation, with the
+    file name changed into "facility.yaml".
+    """
+
+    if 'control_limits' not in facility_d:
+        return {}
+    else:
+        return facility_d['control_limits'].get(getMachineName(), {})
 

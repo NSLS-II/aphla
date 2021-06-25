@@ -11,3 +11,12 @@ models:
       available: ['bare', '3dw', '17ids']
       default: '17ids'
       N_KICKS: {CSBEND: 40, KQUAD: 40, KSEXT: 20}
+
+control_limits:
+  SR:
+    rf_freq:
+      change:
+        max_total: {value: 1e3, unit: Hz}
+        max_step: {value: 1e2, unit: Hz}
+
+default_func_args: nsls2_func_defaults.yaml

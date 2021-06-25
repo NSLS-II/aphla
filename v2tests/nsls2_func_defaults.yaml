@@ -1,0 +1,17 @@
+aphla.measChromaticity:
+  alphac: 3e-4
+  num_points: 4
+  wait: 0.5
+  #
+  #setUp:
+  #tearDown:
+  #fTuneMeas:
+    #- key: bxb
+      #index: 0
+      #func_path: None
+
+    #- key: tbt
+      #index: 1
+      #func_path: 'aphla.nsls2sr.measTbtTunes'
+      #args: []
+      #kwargs: {idrive: 7, ampl: [0.15, 0.2], sleep: 3.0, count: 5000}

@@ -15,8 +15,13 @@ from os.path import join
 from .catools import caget, caput
 import time
 import numpy as np
+
+from . import facility_d
+from . import defaults
+from .defaults import Default, set_defaults, getDynamicDefault
 from .hlalib import (getOrbit, getElements, getClosest, getNeighbors, getTunes,
                      waitStableOrbit, getRfFrequency, putRfFrequency)
+from .machines import getControlLimits
 
 __all__ = [ 'measBeta', 'measDispersion', 'measChromaticity' ]
 
@@ -198,10 +203,11 @@ def calcChromaticity(f0, freqlst, tunelst, deg = 2,
         print("Chrom:", chrom)
     return chrom, dpp, p
 
-
-def measChromaticity(dfmax = 2e-7, gamma = 3.0e3/0.511, alphac = 3.626e-4,
-                     num_points = 5, fMeasTunes = None, deg = 2,
-                     wait = 0.5, verbose=0):
+@set_defaults('aphla.measChromaticity')
+def measChromaticity(
+    dfmax = 2e-7, gamma = 3.0e3/0.511, alphac=Default("alphac", None),
+    num_points=Default("num_points", 5), fMeasTunes = None, deg = 2,
+    verbose=0, **kwargs):
     """Measure the chromaticity
 
     Parameters
@@ -231,6 +237,15 @@ def measChromaticity(dfmax = 2e-7, gamma = 3.0e3/0.511, alphac = 3.626e-4,
     If the dfmax is too large, dispersion induced orbit change may trip the
     beam due to RF vacuum (1khz for NSLS-II case).
     """
+
+    #wait = 0.5
+    wait = kwargs.get('wait', getDynamicDefault('wait'))
+
+    lim = getControlLimits()
+
+    return # Temporarily disable this function during testing of "set_defaults"
+           # decorator.
+
     obt = []
     f0 = getRfFrequency(handle="setpoint")
 
