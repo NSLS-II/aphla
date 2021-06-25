@@ -1,3 +1,15 @@
+aphla.putRfFrequency: &putRfFrequency
+  name: rfcavity
+  field: f
+  unitsys:
+aphla.getRfFrequency: &getRfFrequency
+  <<: *putRfFrequency
+  handle: readback
+aphla.putRfFrequencyUnit:
+  <<: *putRfFrequency
+aphla.getRfFrequencyUnit:
+  <<: *getRfFrequency
+
 aphla.measChromaticity:
   alphac: 3e-4
   num_points: 4

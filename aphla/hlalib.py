@@ -29,6 +29,9 @@ import itertools
 
 from . import CONFIG
 from . import ureg, Q_
+from . import facility_d
+from . import defaults
+from .defaults import Default, set_defaults, getDynamicDefault
 
 _logger = logging.getLogger("aphla.hlalib")
 
@@ -143,7 +146,13 @@ def getLifetimeCurrent(name='dcct', unitsys=None):
     tau = _current[0].get("tau", unitsys=unitsys)
     return tau, I
 
-def getRfFrequencyUnit(name = 'rfcavity', field = 'f', unitsys=None, handle="readback"):
+@set_defaults('aphla.getRfFrequencyUnit')
+def getRfFrequencyUnit(
+    name=Default('name', 'rfcavity'),
+    field=Default('field', 'f'),
+    handle=Default('handle', 'readback'),
+    **kwargs,
+):
     """
     Return the unit strings for the output of getRfFrequency()
     """
@@ -153,22 +162,43 @@ def getRfFrequencyUnit(name = 'rfcavity', field = 'f', unitsys=None, handle="rea
         print('Hence, the unit strings returned by this function getRfFrequencyUnit()')
         print('are meaningless.')
 
-    _rf = getElements(name)
-    if _rf: return _rf[0].getUnit(field, unitsys=unitsys, handle=handle)
-    else: return None
+    unitsys = kwargs.get('unitsys', getDynamicDefault('unitsys'))
 
-# rf
-def getRfFrequency(name = 'rfcavity', field = 'f', unitsys=None, handle="readback"):
+    _rf = getElements(name)
+    if _rf:
+        return _rf[0].getUnit(field, unitsys=unitsys, handle=handle)
+    else:
+        return None
+
+
+@set_defaults('aphla.getRfFrequency')
+def getRfFrequency(
+    name=Default('name', 'rfcavity'),
+    field=Default('field', 'f'),
+    handle=Default('handle', 'readback'),
+    **kwargs,
+):
     """
     Get the frequency from the first 'RFCAVITY' element.
 
     seealso :func:`eget`, :func:`getRfVoltage`, :func:`putRfFrequency`
     """
-    _rf = getElements(name)
-    if _rf: return _rf[0].get(field, unitsys=unitsys, handle=handle)
-    else: return None
 
-def putRfFrequencyUnit(name = 'rfcavity', field = 'f', unitsys=None):
+    unitsys = kwargs.get('unitsys', getDynamicDefault('unitsys'))
+
+    _rf = getElements(name)
+    if _rf:
+        return _rf[0].get(field, unitsys=unitsys, handle=handle)
+    else:
+        return None
+
+
+@set_defaults('aphla.putRfFrequencyUnit')
+def putRfFrequencyUnit(
+    name=Default('name', 'rfcavity'),
+    field=Default('field', 'f'),
+    **kwargs,
+):
     """
     Return the unit strings for the input frequency of putRfFrequency()
     """
@@ -178,15 +208,32 @@ def putRfFrequencyUnit(name = 'rfcavity', field = 'f', unitsys=None):
         print('Hence, the unit strings returned by this function putRfFrequencyUnit()')
         print('are meaningless.')
 
-    _rf = getElements(name)
-    if _rf: return _rf[0].getUnit(field, unitsys=unitsys, handle='setpoint')
-    else: raise RuntimeError("element '%s' not found" % name)
+    unitsys = kwargs.get('unitsys', getDynamicDefault('unitsys'))
 
-def putRfFrequency(f, name = 'rfcavity', field = 'f', unitsys=None):
-    """set the rf frequency for the first 'RFCAVITY' element"""
     _rf = getElements(name)
-    if _rf: return _rf[0].put(field, f, unitsys=unitsys)
-    else: raise RuntimeError("element '%s' not found" % name)
+    if _rf:
+        return _rf[0].getUnit(field, unitsys=unitsys, handle='setpoint')
+    else:
+        raise RuntimeError(f"element '{name}' not found")
+
+
+@set_defaults('aphla.putRfFrequency')
+def putRfFrequency(
+    f,
+    name=Default('name', 'rfcavity'),
+    field=Default('field', 'f'),
+    **kwargs,
+):
+    """set the rf frequency for the first 'RFCAVITY' element"""
+
+    unitsys = kwargs.get('unitsys', getDynamicDefault('unitsys'))
+
+    _rf = getElements(name)
+    if _rf:
+        return _rf[0].put(field, f, unitsys=unitsys)
+    else:
+        raise RuntimeError(f"element '{name}' not found")
+
 
 def getRfVoltage(name = 'rfcavity', field='v', unitsys=None):
     """
@@ -215,8 +262,6 @@ def stepRfFrequency(df = 0.010):
     f0 = getRfFrequency()
     putRfFrequency(f0 + df)
 
-#
-#
 
 def _reset_trims(verbose=False):
     """reset all trims in group *HCOR* and *VCOR* """
