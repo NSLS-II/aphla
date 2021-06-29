@@ -34,6 +34,7 @@ import warnings
 from ruamel import yaml
 
 from ..version import short_version
+from .. import Q_
 from .. import facility_d
 from .. import defaults
 from ..unitconv import *
@@ -969,5 +970,28 @@ def getControlLimits():
     if 'control_limits' not in facility_d:
         return {}
     else:
-        return facility_d['control_limits'].get(getMachineName(), {})
+        if not hasattr(getControlLimits, '_cached'):
+            getControlLimits._cached = {}
 
+        # Get currently loaded machine name
+        name = getMachineName()
+
+        if name not in getControlLimits._cached:
+            raw_d = facility_d['control_limits'].get(name, {})
+            getControlLimits._cached[name] = _recursively_unitfy(raw_d)
+
+        return getControlLimits._cached[name]
+
+
+def _recursively_unitfy(d):
+    """"""
+
+    new_d = {}
+
+    for k, v in d.items():
+        if isinstance(v, dict):
+            new_d[k] = _recursively_unitfy(v)
+        else:
+            return Q_(d['value'], d['unit'])
+
+    return new_d

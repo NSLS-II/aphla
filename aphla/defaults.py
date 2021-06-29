@@ -1,15 +1,29 @@
 # Based on https://gist.github.com/tmr232/9354077
 
-from functools import wraps
+from functools import wraps, partial
 import importlib
 import inspect
 from pathlib import Path
 
 from ruamel import yaml
 
+from . import Q_
+
 _DYNAMIC_DEF_FUNC_PATHS = []
 _DEF_DICTS = {}
 _DEF_OBJ_DICTS = {}
+
+
+def _construct_func_from_func_path(func_path):
+    """"""
+
+    *parent, func_name = func_path.split('.')
+    mod_name = '.'.join(parent)
+    m = importlib.import_module(mod_name)
+    func = getattr(m, func_name)
+
+    return func
+
 
 class Default(object):
     def __init__(self, key, value=None):
@@ -19,10 +33,37 @@ class Default(object):
 
     def __repr__(self):
 
-        if isinstance(self.value, str):
-            return f'"{self.value}"'
+        if isinstance(self._value, str):
+            return f'"{self._value}"'
+        elif isinstance(self._value, Q_):
+            return self._value.__repr__()
         else:
-            return str(self.value)
+            return str(self._value)
+
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, new_value):
+
+        if isinstance(new_value, dict):
+            key_set = set(new_value)
+            if key_set == {'value', 'unit'}:
+                self._value = Q_(new_value['value'], new_value['unit'])
+            elif 'func_path' in key_set:
+                try:
+                    func = _construct_func_from_func_path(new_value['func_path'])
+                    self._value = partial(
+                        func, *new_value.get('args', ()), **new_value.get('kwargs', {})
+                    )
+                except:
+                    self._value = new_value
+            else:
+                self._value = new_value
+        else:
+            self._value = new_value
+
 
 class DefaultObjLinkedDict(dict):
     def __init__(self, parent_key, *args, **kwargs):
@@ -38,13 +79,15 @@ class DefaultObjLinkedDict(dict):
 
         _DEF_OBJ_DICTS[self.parent][item].value = value
 
-def getDynamicDefault(key):
+
+def getDynamicDefault(key, undefined_default_value):
     """
     Useful when you want to change the default values specified in "**kwargs"
     that can change for different facilities.
     """
 
-    return _DEF_DICTS[_DYNAMIC_DEF_FUNC_PATHS[-1]][key]
+    return _DEF_DICTS[_DYNAMIC_DEF_FUNC_PATHS[-1]].get(key, undefined_default_value)
+
 
 def set_defaults(func_path):
     def decorator(f):
@@ -80,19 +123,20 @@ def set_defaults(func_path):
 
     return decorator
 
+
 def initialize(yaml_filepath=''):
     """"""
 
     if yaml_filepath:
-        for k, v in yaml.YAML().load(Path(yaml_filepath).read_text()).items():
+        yd = yaml.YAML(typ='safe').load(Path(yaml_filepath).read_text())
+        # ^ "typ='safe'" is needed to convert the loaded YAML objects into a
+        #   Python dict so that Default class initialization works properly.
+        for k, v in yd.items():
             _DEF_DICTS[k] = v
 
     for func_path, d in _DEF_DICTS.items():
 
-        *parent, func_name = func_path.split('.')
-        mod_name = '.'.join(parent)
-        m = importlib.import_module(mod_name)
-        func = getattr(m, func_name)
+        func = _construct_func_from_func_path(func_path)
 
         spec = inspect.getfullargspec(func.__wrapped__)
 

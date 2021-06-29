@@ -9,6 +9,17 @@ aphla.putRfFrequencyUnit:
   <<: *putRfFrequency
 aphla.getRfFrequencyUnit:
   <<: *getRfFrequency
+aphla.rampRfFrequency:
+  <<: *putRfFrequency
+  get_handle: readback
+  tol_freq: {value: 1e-3, unit: Hz}
+  step_wait: {value: 3.0, unit: s}
+  max_wait: {value: 5.0, unit: min}
+  freq_motion_max_num_trials: 3
+  freq_motion_init_check_wait: {value: 1.0, unit: s}
+  freq_motion_check_wait: {value: 3.0, unit: s}
+  freq_target_check_wait: {value: 1.0, unit: s}
+
 
 aphla.measChromaticity:
   alphac: 3e-4

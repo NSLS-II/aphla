@@ -30,7 +30,6 @@ import itertools
 from . import CONFIG
 from . import ureg, Q_
 from . import facility_d
-from . import defaults
 from .defaults import Default, set_defaults, getDynamicDefault
 
 _logger = logging.getLogger("aphla.hlalib")
@@ -162,7 +161,7 @@ def getRfFrequencyUnit(
         print('Hence, the unit strings returned by this function getRfFrequencyUnit()')
         print('are meaningless.')
 
-    unitsys = kwargs.get('unitsys', getDynamicDefault('unitsys'))
+    unitsys = kwargs.get('unitsys', getDynamicDefault('unitsys', None))
 
     _rf = getElements(name)
     if _rf:
@@ -184,7 +183,7 @@ def getRfFrequency(
     seealso :func:`eget`, :func:`getRfVoltage`, :func:`putRfFrequency`
     """
 
-    unitsys = kwargs.get('unitsys', getDynamicDefault('unitsys'))
+    unitsys = kwargs.get('unitsys', getDynamicDefault('unitsys', None))
 
     _rf = getElements(name)
     if _rf:
@@ -208,7 +207,7 @@ def putRfFrequencyUnit(
         print('Hence, the unit strings returned by this function putRfFrequencyUnit()')
         print('are meaningless.')
 
-    unitsys = kwargs.get('unitsys', getDynamicDefault('unitsys'))
+    unitsys = kwargs.get('unitsys', getDynamicDefault('unitsys', None))
 
     _rf = getElements(name)
     if _rf:
@@ -226,7 +225,7 @@ def putRfFrequency(
 ):
     """set the rf frequency for the first 'RFCAVITY' element"""
 
-    unitsys = kwargs.get('unitsys', getDynamicDefault('unitsys'))
+    unitsys = kwargs.get('unitsys', getDynamicDefault('unitsys', None))
 
     _rf = getElements(name)
     if _rf:
@@ -261,6 +260,349 @@ def stepRfFrequency(df = 0.010):
     """
     f0 = getRfFrequency()
     putRfFrequency(f0 + df)
+
+
+@set_defaults('aphla.rampRfFrequency')
+def rampRfFrequency(
+    target_freq,
+    name=Default('name', 'rfcavity'),
+    field=Default('field', 'f'),
+    get_handle=Default('get_handle', 'readback'),
+    tol_freq=Default('tol_freq', Q_(1e-3, 'Hz')),
+    max_step_freq=Default('max_step_freq', None),
+    step_wait=Default('step_wait', Q_(1.0, 's')),
+    max_wait=Default('max_wait', Q_(5.0, 'min')),
+    **kwargs,
+):
+    """Ramp up or down the main RF frequency
+
+    Ramp up or down the main RF frequency to `target_freq` with multiple steps
+    while satisfying a facility-specific limit for one-step as well as total
+    frequncy change.
+
+    Parameters
+    ----------
+    target_freq : float ([Hz] in unitless & units mode) or Pint Quantity \
+            object (in units mode)
+        The final frequency you want to set.
+
+    name : str, default='rfcavity' (facility dependent)
+        The name of the RF cavity element.
+
+    field : str, default='f' (facility dependent)
+        The name of the "frequency" field for the RF cavity element.
+
+    get_handle : {'readback', 'setpoint'}, default='readback' (facility dependent)
+        The handle from which the current frequency "f0" will be defined.
+        The frequency steps will be determined by "f0" and `target_freq`. There
+        may be situations where the readback and setpoint are very far apart.
+        In these cases, using "readback" should avoid unnecessarily large initial
+        step, as long the readback is reliable. If the readback is not to be
+        trusted, then "setpoint" can be used for "f0".
+
+    tol_freq : float ([Hz] in unitless & units mode) or Pint Quantity object \
+            (in units mode), default=1e-3 [Hz] (facility dependent)
+        Tolerance for discrepancy between the setpoint and readback frequency
+        values. This value is used to determine whether the frequency has started
+        moving and whether the target frequency has been reached.
+
+    max_step_freq : float ([Hz] in unitless & units mode) or Pint Quantity \
+            object (in units mode), default=None (facility dependent)
+        Maximum size for each frequency step change. If None, and (a) if a
+        facility-specific limit exists (output of `machines.getControlLimits()`),
+        that limit will be used; (b) if no such limit exists, the frequncy change
+        will be done in a single step. If the value specified by this argument
+        is larger than the facility-specific limit, if any, the limit overrides
+        the user-specified step size.
+
+    step_wait : float ([s] in unitless & units mode) or Pint Quantity object \
+            (in units mode), default=1.0 [s] (facility dependent)
+        Time to wait between each frequncy step change.
+
+    max_wait : float ([s] in unitless & units mode) or Pint Quantity object \
+            (in units mode), default=5.0 [min] (facility dependent)
+        This function terminates itself if the frequency does not reach
+        the target within this amount of time.
+
+    Other Parameters
+    ----------------
+
+    freq_motion_max_num_trials : int, default=3 (facility dependent)
+        This function checks whether the "put" action actually worked or not at
+        each step by monitoring the frequency readback has changed more than
+        `tol_freq`. This check is performed initially `freq_motion_init_check_wait`
+        seconds after the first "put". If the frequency has not started moving
+        yet, it will apply another "put", then wait for `freq_motion_check_wait`
+        seoncds and check again, until it detects frequency motion, up to
+        `freq_motion_max_num_trials` times. If it fails to detect motion after
+        the maximum number of trials, it raise RuntimeError.
+
+    freq_motion_init_check_wait : float ([s] in unitless & units mode) or Pint \
+            Quantity object (in units mode), default=1.0 [s] (facility dependent)
+        See explanation for `freq_motion_max_num_trials`.
+
+    freq_motion_check_wait : float ([s] in unitless & units mode) or Pint \
+            Quantity object (in units mode), default=3.0 [s] (facility dependent)
+        See explanation for `freq_motion_max_num_trials`
+
+    freq_target_check_wait : float ([s] in unitless & units mode) or Pint \
+            Quantity object (in units mode), default=1.0 [s] (facility dependent)
+        It will check every "freq_target_check_wait" second to see if the target
+        frequency has been reached after frequency motion is confirmed.
+
+    Notes
+    -----
+    In the unitless mode, for all the input arguments with units specified,
+    users must provide either (a) pure numerical values exactly in the specified
+    units or (b) Pint Quantity objects with the corresponding dimensions. In the
+    units mode, users must provide Pint Quantity objects.
+    """
+
+    freq_motion_max_num_trials = kwargs.get(
+        'freq_motion_max_num_trials', getDynamicDefault('freq_motion_max_num_trials', 3)
+    )
+    freq_motion_init_check_wait = kwargs.get(
+        'freq_motion_init_check_wait',
+        getDynamicDefault('freq_motion_init_check_wait', Q_(1.0, 's')),
+    )
+    freq_motion_check_wait = kwargs.get(
+        'freq_motion_check_wait',
+        getDynamicDefault('freq_motion_check_wait', Q_(3.0, 's')),
+    )
+    freq_target_check_wait = kwargs.get(
+        'freq_target_check_wait',
+        getDynamicDefault('freq_target_check_wait', Q_(1.0, 's')),
+    )
+
+    if not CONFIG['unitless_quantities']:
+        _kwargs_put_freq = dict(name=name, field=field)
+        _kwargs_get_freq = dict(name=name, field=field, handle=get_handle)
+        _kwargs_get_readback_freq = dict(name=name, field=field, handle='readback')
+        init_freq = getRfFrequency(**_kwargs_get_freq)
+    else:
+        if not isinstance(target_freq, Q_):
+            target_freq = Q_(target_freq, 'Hz')
+        if not isinstance(tol_freq, Q_):
+            tol_freq = Q_(tol_freq, 'Hz')
+        if (max_step_freq is not None) and (not isinstance(max_step_freq, Q_)):
+            max_step_freq = Q_(max_step_freq, 'Hz')
+        if not isinstance(step_wait, Q_):
+            step_wait = Q_(step_wait, 's')
+        if not isinstance(max_wait, Q_):
+            max_wait = Q_(max_wait, 's')
+
+        if not isinstance(freq_motion_init_check_wait, Q_):
+            freq_motion_init_check_wait = Q_(freq_motion_init_check_wait, 's')
+        if not isinstance(freq_motion_check_wait, Q_):
+            freq_motion_check_wait = Q_(freq_motion_check_wait, 's')
+        if not isinstance(freq_target_check_wait, Q_):
+            freq_target_check_wait = Q_(freq_target_check_wait, 's')
+
+        unitsys = kwargs.get('unitsys', getDynamicDefault('unitsys'))
+
+        _kwargs_put_freq = dict(name=name, field=field, unitsys=unitsys)
+        _kwargs_get_freq = dict(
+            name=name, field=field, handle=get_handle, unitsys=unitsys
+        )
+        _kwargs_get_setpoint_freq = dict(
+            name=name, field=field, handle='setpoint', unitsys=unitsys
+        )
+        _kwargs_get_readback_freq = dict(
+            name=name, field=field, handle='readback', unitsys=unitsys
+        )
+        init_freq = getRfFrequency(**_kwargs_get_freq)
+
+        unit_str = {}
+        for k, func, _kwargs in [
+            ('get', getRfFrequencyUnit, _kwargs_get_freq),
+            ('get_setpoint', getRfFrequencyUnit, _kwargs_get_setpoint_freq),
+            ('get_readback', getRfFrequencyUnit, _kwargs_get_readback_freq),
+            ('put', putRfFrequencyUnit, _kwargs_put_freq),
+        ]:
+            unit_str[k] = func(**_kwargs)
+
+        init_freq = Q_(init_freq, unit_str['get'])
+    print(f'Initial RF Frequency = {init_freq.to("Hz"):,.3f~P}')
+
+    dfreq = target_freq - init_freq
+
+    # Check if requested freq change is too small
+    if dfreq <= tol_freq:
+        msg = (
+            f'Requested frequency change ({dfreq.to("Hz"):,.3f~P}) smaller than '
+            f'the "tol_freq" ({tol_freq.to("Hz"):,.3f~P})'
+        )
+        raise ValueError(msg)
+
+    lim = machines.getControlLimits()
+
+    # If specified, check the total frequency change is within the facility-
+    # speicific limit.
+    try:
+        max_total_freq = lim['rf_freq']['change']['max_total'].to('Hz')
+    except KeyError:
+        print(
+            'Facility-specific limit NOT found for max total change for RF Frequency.'
+        )
+        print('So, no check for this limit is performed.')
+        max_total_freq = None
+
+    if max_total_freq is not None:
+        if abs(dfreq) > max_total_freq:
+            msg = (
+                f'Requested total frequency change ({dfreq.to("Hz"):,.3f~P}) '
+                f'larger than the limit ({max_total_freq.to("Hz"):,.3f~P})'
+            )
+            raise ValueError(msg)
+        else:
+            msg = (
+                f'Requested total frequency change ({dfreq.to("Hz"):,.3f~P}) '
+                f'within the limit ({max_total_freq.to("Hz"):,.3f~P})'
+            )
+            print(msg)
+
+    # Limit the frequency step size to the facility-speicific limit, if specified.
+    try:
+        max_step_freq_limit = lim['rf_freq']['change']['max_step'].to('Hz')
+    except KeyError:
+        max_step_freq_limit = None
+
+    if max_step_freq is None:
+        if max_step_freq_limit is None:
+            print(
+                'Facility-specific limit NOT found for max step change for RF frequency.'
+            )
+            nSteps = 1
+        else:
+            print(
+                (
+                    f'Using facility-specific limit for max step change for RF '
+                    f'frequency: {max_step_freq_limit.to("Hz"):,.3f~P}.'
+                )
+            )
+            nSteps = int(np.ceil(abs(dfreq) / max_step_freq_limit))
+    else:
+        if max_step_freq_limit is None:
+            print(
+                'Facility-specific limit NOT found for max step change for RF frequency.'
+            )
+            print('So, no check for this limit is performed.')
+        else:
+            if max_step_freq > max_step_freq_limit:
+                print(
+                    (
+                        f'User-specified frequency step size '
+                        f'({max_step_freq.to("Hz"):,.3f~P}) exceeds the facility'
+                        f'-specific limit ({max_step_freq_limit.to("Hz"):,.3f~P}).'
+                    )
+                )
+                max_step_freq = max_step_freq_limit
+        print((f'Using step size for RF frequency: {max_step_freq.to("Hz"):,.3f~P}.'))
+        nSteps = int(np.ceil(abs(dfreq) / max_step_freq))
+
+    print(f'Frequency will be changed in {nSteps:d} step(s).')
+
+    if isinstance(step_wait, Q_):
+        step_wait_m = step_wait.to('s').magnitude
+
+    print('Ramping RF frequency...')
+
+    t0 = time.perf_counter()
+
+    for iStep in range(nSteps):
+        curr_freq = getRfFrequency(**_kwargs_get_readback_freq)
+        if CONFIG['unitless_quantities']:
+            curr_freq = Q_(curr_freq, unit_str['get_readback'])
+
+        new_freq = init_freq + (iStep + 1) * dfreq / nSteps
+        if CONFIG['unitless_quantities']:
+            new_freq_m = new_freq.to(unit_str['put']).magnitude
+
+        if not CONFIG['unitless_quantities']:
+            putRfFrequency(new_freq, _kwargs_put_freq)
+        else:
+            putRfFrequency(new_freq_m, _kwargs_put_freq)
+
+        time.sleep(freq_motion_init_check_wait.to('s').magnitude)
+
+        if not CONFIG['unitless_quantities']:
+
+            # Check whether the frequency readback has started moving. If not,
+            # try to "put" the target frequency again.
+            counter = 0
+            while (
+                abs(getRfFrequency(**_kwargs_get_readback_freq) - curr_freq) <= tol_freq
+            ):
+                if counter >= freq_motion_max_num_trials:
+                    raise RuntimeError('Frequency could not be changed.')
+                putRfFrequency(new_freq, _kwargs_put_freq)
+                counter += 1
+                time.sleep(freq_motion_check_wait.to('s').magnitude)
+
+            # Once the frequency motion is confirmed, wait until the frequency
+            # readback reaches the target within the tolerance.
+            while (
+                abs(getRfFrequency(**_kwargs_get_readback_freq) - new_freq) > tol_freq
+            ):
+                if time.perf_counter() - t0 > max_wait:
+                    raise TimeoutError(
+                        f'Exceeded max time allowed to ramp RF frequency'
+                    )
+                time.sleep(freq_target_check_wait.to('s').magnitude)
+
+        else:
+            # Check whether the frequency readback has started moving. If not,
+            # try to "put" the target frequency again.
+            counter = 0
+            while (
+                abs(
+                    Q_(
+                        getRfFrequency(**_kwargs_get_readback_freq),
+                        unit_str['get_readback'],
+                    )
+                    - curr_freq
+                )
+                <= tol_freq
+            ):
+                if counter >= freq_motion_max_num_trials:
+                    raise RuntimeError('Frequency could not be changed.')
+                putRfFrequency(new_freq_m, _kwargs_put_freq)
+                counter += 1
+                time.sleep(freq_motion_check_wait.to('s').magnitude)
+
+            # Once the frequency motion is confirmed, wait until the frequency
+            # readback reaches the target within the tolerance.
+            while (
+                abs(
+                    Q_(
+                        getRfFrequency(**_kwargs_get_readback_freq),
+                        unit_str['get_readback'],
+                    )
+                    - new_freq
+                )
+                > tol_freq
+            ):
+                if time.perf_counter() - t0 > max_wait:
+                    raise TimeoutError(
+                        f'Exceeded max time allowed to ramp RF frequency'
+                    )
+                time.sleep(freq_target_check_wait.to('s').magnitude)
+
+        if iStep != nSteps - 1:
+            time.sleep(step_wait_m)
+
+    setpoint = getRfFrequency(**_kwargs_get_setpoint_freq)
+    readback = getRfFrequency(**_kwargs_get_readback_freq)
+    if CONFIG['unitless_quantities']:
+        setpoint = Q_(setpoint, unit_str['get_setpoint'])
+        readback = Q_(readback, unit_str['get_readback'])
+
+    print(
+        (
+            f'* Final RF Frequency: setpoint = {setpoint.to("Hz"):,.3f~P}; '
+            f'readback = {readback.to("Hz"):,.3f~P})'
+        )
+    )
 
 
 def _reset_trims(verbose=False):

@@ -238,8 +238,7 @@ def measChromaticity(
     beam due to RF vacuum (1khz for NSLS-II case).
     """
 
-    #wait = 0.5
-    wait = kwargs.get('wait', getDynamicDefault('wait'))
+    wait = kwargs.get('wait', getDynamicDefault('wait', 0.5))
 
     lim = getControlLimits()
 
