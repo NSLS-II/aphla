@@ -722,7 +722,10 @@ class CaAction:
             v = caget(self.pvsp[i], timeout=self.timeout, format=FORMAT_CTRL)
             if isinstance(v, str): return
             if v.ok:
-                self.pvlim[i] = (v.lower_ctrl_limit, v.upper_ctrl_limit)
+                #self.pvlim[i] = (v.lower_ctrl_limit, v.upper_ctrl_limit)
+                self.pvlim[i] = (
+                    self._unit_conv(v.lower_ctrl_limit, None, None, 'setpoint'),
+                    self._unit_conv(v.upper_ctrl_limit, None, None, 'setpoint'))
                 if v.is_integer(): self.pvh[i] = 1
                 else: self.pvh[i] = (self.pvlim[i][1] - self.pvlim[0])/r
         except:

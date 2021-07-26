@@ -375,10 +375,23 @@ def rampRfFrequency(
     )
 
     if not CONFIG['unitless_quantities']:
+        assert isinstance(target_freq, Q_)
+        assert isinstance(tol_freq, Q_)
+        assert max_step_freq is None or isinstance(max_step_freq, Q_)
+        assert isinstance(step_wait, Q_)
+        assert isinstance(max_wait, Q_)
+
+        assert isinstance(freq_motion_init_check_wait, Q_)
+        assert isinstance(freq_motion_check_wait, Q_)
+        assert isinstance(freq_target_check_wait, Q_)
+
+    if not CONFIG['unitless_quantities']:
         _kwargs_put_freq = dict(name=name, field=field)
         _kwargs_get_freq = dict(name=name, field=field, handle=get_handle)
+        _kwargs_get_setpoint_freq = dict(name=name, field=field, handle='setpoint')
         _kwargs_get_readback_freq = dict(name=name, field=field, handle='readback')
         init_freq = getRfFrequency(**_kwargs_get_freq)
+
     else:
         if not isinstance(target_freq, Q_):
             target_freq = Q_(target_freq, 'Hz')
@@ -427,7 +440,7 @@ def rampRfFrequency(
     dfreq = target_freq - init_freq
 
     # Check if requested freq change is too small
-    if dfreq <= tol_freq:
+    if np.abs(dfreq) <= tol_freq:
         msg = (
             f'Requested frequency change ({dfreq.to("Hz"):,.3f~P}) smaller than '
             f'the "tol_freq" ({tol_freq.to("Hz"):,.3f~P})'
@@ -480,7 +493,7 @@ def rampRfFrequency(
                     f'frequency: {max_step_freq_limit.to("Hz"):,.3f~P}.'
                 )
             )
-            nSteps = int(np.ceil(abs(dfreq) / max_step_freq_limit))
+            nSteps = int(np.ceil((abs(dfreq) / max_step_freq_limit).to_reduced_units()))
     else:
         if max_step_freq_limit is None:
             print(
@@ -498,7 +511,7 @@ def rampRfFrequency(
                 )
                 max_step_freq = max_step_freq_limit
         print((f'Using step size for RF frequency: {max_step_freq.to("Hz"):,.3f~P}.'))
-        nSteps = int(np.ceil(abs(dfreq) / max_step_freq))
+        nSteps = int(np.ceil((abs(dfreq) / max_step_freq).to_reduced_units()))
 
     print(f'Frequency will be changed in {nSteps:d} step(s).')
 
@@ -519,9 +532,9 @@ def rampRfFrequency(
             new_freq_m = new_freq.to(unit_str['put']).magnitude
 
         if not CONFIG['unitless_quantities']:
-            putRfFrequency(new_freq, _kwargs_put_freq)
+            putRfFrequency(new_freq, **_kwargs_put_freq)
         else:
-            putRfFrequency(new_freq_m, _kwargs_put_freq)
+            putRfFrequency(new_freq_m, **_kwargs_put_freq)
 
         time.sleep(freq_motion_init_check_wait.to('s').magnitude)
 
