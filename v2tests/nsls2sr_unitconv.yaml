@@ -442,7 +442,7 @@ SR:
     coeffs: [1e-3, 0.0]
 
   ID_orb_cor_channel_type1: &ID_orb_cor_channel_type1
-    elements: [dw100g1c28u, dw100g1c28d, epu49g1c23u, epu49g1c23d]
+    elements: [dw100g1c28u, dw100g1c28d, epu49g1c23d]
     fields: [
       cch0, cch1, cch2, cch3, cch4, cch5,
       orbff0_m0_I, orbff1_m0_I, orbff2_m0_I, orbff3_m0_I, orbff4_m0_I,
@@ -475,7 +475,10 @@ SR:
                ivu20g1c11c, ivu23g1c12d, ivu23g1c16c, ivu21g1c17u, ivu21g1c17d,
                ivu18g1c19u,
                dw100g1c08u, dw100g1c08d, dw100g1c18u, dw100g1c18d,
+               epu49g1c23u,
                _phaserg1c23c]
+    # *) Only ivu20g1c03c has cch6, cch7, cch8, cch9, which were introduced when
+    #    its ID correctors couldn't be used. 
     fields: [
       cch0, cch1, cch2, cch3, cch4, cch5, cch6, cch7, cch8, cch9,
       orbff0_m0_I, orbff1_m0_I, orbff2_m0_I, orbff3_m0_I, orbff4_m0_I,
