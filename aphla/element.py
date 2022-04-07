@@ -590,7 +590,7 @@ class CaAction:
 
                 if bc == 'exception':
                     raise OverflowError(
-                        "value {0} is outside of boundary {1}".format(val, lowhigh))
+                        "value {0} is outside of boundary {1}".format(rawval[i], lowhigh))
                 elif bc == 'boundary':
                     _logger.info("setting {0} to its boundary {1} instead of {2}".\
                                      format(self.pvsp[i], lowhigh, rawval[i]))
