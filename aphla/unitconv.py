@@ -7,7 +7,7 @@ Unit Conversion
 
 # :author: Lingyun Yang <lyyang@bnl.gov>
 
-from collections import Iterable
+from collections.abc import Iterable
 import logging
 import re
 import os

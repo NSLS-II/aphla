@@ -586,7 +586,7 @@ class LatSnapshotDelegate(QtGui.QStyledItemDelegate):
             return QtGui.QStyledItemDelegate.createEditor(self, parent, option,
                                                     index)
         # a list value (waveform)
-        if isinstance(model._value[row][col-1], collections.Iterable):
+        if isinstance(model._value[row][col-1], collections.abc.Iterable):
             #_logger.warn("Ignore list type values for (%d,%d)" % (row, col))
             return QtGui.QStyledItemDelegate.createEditor(self, parent, option,
                                                     index)

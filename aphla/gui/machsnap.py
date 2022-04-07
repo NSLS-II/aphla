@@ -117,7 +117,7 @@ class SnapshotTableModel(QAbstractTableModel):
         if isinstance(val, (str, unicode)):
             if len(val) < 8: return QVariant(str(val) + unit)
             return QVariant(str(val)[:8]+"... "+unit)
-        elif isinstance(val, collections.Iterable):
+        elif isinstance(val, collections.abc.Iterable):
             return QVariant(str(val)[:8]+"... "+unit)
         else:
             return QVariant("{0:.4g} {1}".format(val, unit))

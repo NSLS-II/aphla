@@ -8,7 +8,7 @@ from rampimage import RampImage
 
 def flatten(l):
     for el in l:
-        if isinstance(el, collections.Iterable) and not isinstance(el, basestring) and not isinstance(el, tuple):
+        if isinstance(el, collections.abc.Iterable) and not isinstance(el, basestring) and not isinstance(el, tuple):
             for sub in flatten(el):
                 yield sub
         else:

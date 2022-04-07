@@ -15,7 +15,7 @@ import copy
 import logging
 import warnings
 from .catools import caget, caput, FORMAT_CTRL, FORMAT_TIME
-from collections import Iterable
+from collections.abc import Iterable
 from functools import partial
 from itertools import permutations
 
