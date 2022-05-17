@@ -10243,12 +10243,271 @@ def switch_C23u_ID_orbcor_PV_unitconv():
                                 e.convertUnit(fld, raw_val, None, 'phy', handle=hdl),
                                 decimal=12
                             )
-            
-
-
 
     plt.show()
 
+#----------------------------------------------------------------------
+def switch_C23d_ID_orbcor_PVs_to_new_BNL_PSI_PVs():
+    """"""
+
+    tags = ['aphla.sys.SR']
+
+    for elemName, new_pv_prefix, ch_inds in [
+        ('epu49g1c23d', 'SR:C22-MG{PS:EPU_9}', list(range(6))),        
+        ]:
+        for iCh in ch_inds:
+
+            # For setpoint fields: "cch0", "cch1", "cch2", ...
+            fld, hdl = 'cch{0:d}'.format(iCh), 'put'
+            pv = new_pv_prefix + ('U%d-I-SP' % (iCh + 1))
+            ap.apdata.updateDbPv(DBFILE, pv, elemName, fld,
+                                 elemHandle=hdl, tags=tags, quiet=True, epsilon=0.05)
+
+            # For readback fields: "cch0", "cch1", "cch2", ...
+            fld, hdl = 'cch{0:d}'.format(iCh), 'get'
+            pv = new_pv_prefix + ('U%d-I-I' % (iCh + 1))
+            ap.apdata.updateDbPv(DBFILE, pv, elemName, fld,
+                                 elemHandle=hdl, tags=tags, quiet=True, epsilon=0.0)
+
+            # For actual readback fields: "cch0rb1", "cch1rb1", "cch2rb1", ...
+            fld, hdl = 'cch{0:d}rb1'.format(iCh), 'get'
+            pv = new_pv_prefix + ('U%d-I-I' % (iCh + 1))
+            ap.apdata.updateDbPv(DBFILE, pv, elemName, fld,
+                                 elemHandle=hdl, tags=tags, quiet=True, epsilon=0.0)
+
+            # For the "cch" readback array PV
+            fld, hdl = 'cch[{0:d}]'.format(iCh), 'get'
+            pv = new_pv_prefix + ('U%d-I-I' % (iCh + 1))
+            ap.apdata.updateDbPv(DBFILE, pv, elemName, fld,
+                                 elemHandle=hdl, tags=tags, quiet=True, epsilon=0.0)
+
+            # For setpoint fields for Orbit Feedforward output:
+            #     "orbff0_output", "orbff1_output", "orbff2_output", ...
+            fld, hdl = 'orbff{0:d}_output'.format(iCh), 'put'
+            pv = new_pv_prefix + ('U%d-I-SP' % (iCh + 1))
+            ap.apdata.updateDbPv(DBFILE, pv, elemName, fld,
+                                 elemHandle=hdl, tags=tags, quiet=True, epsilon=0.05)
+
+
+#----------------------------------------------------------------------
+def switch_C23d_ID_orbcor_PV_unitconv():
+    """
+    """
+
+    if True: # This section can only run once, as HDF5 file does not
+              # allow overwrite of existing datasets
+
+        kw = dict(compression='gzip')
+
+        _temp_unitconv_file = UNITCONV_FILE + '.tmp'
+
+        fnew = h5py.File(_temp_unitconv_file, 'w')
+        fold = h5py.File(UNITCONV_FILE, 'r')
+
+        excl_ds_names = \
+            ['ID_cch{0:d}_v1'.format(iCh) for iCh in range(6)] + \
+            ['ID_cch{0:d}_v2'.format(iCh) for iCh in range(6)] + \
+            ['ID_cch{0:d}rb1_v1'.format(iCh) for iCh in range(6)] + \
+            ['ID_cch{0:d}rb1_v2'.format(iCh) for iCh in range(6)]
+        for mode_i in range(4):
+            excl_ds_names += ['epu_orbff{0:d}_m{1:d}_I_type0'.format(iCh, mode_i)
+                              for iCh in range(6)]
+            excl_ds_names += ['epu_orbff{0:d}_m{1:d}_I_type1'.format(iCh, mode_i)
+                              for iCh in range(6)]
+
+        # First copy existing unit conversion data
+        gold = fold['UnitConversion']
+        gnew = fnew.create_group('UnitConversion')
+        for k, v in gold.items():
+
+            if False: # This will end up with bigger file size
+                d = gnew.create_dataset(k, data=v[()], **kw)
+            else: # This will end up with smaller file size, so use this one!
+                gnew[k] = v[()]
+                d = gnew[k]
+
+            if k in excl_ds_names:
+                continue
+            else:
+                for ak, av in v.attrs.items():
+                    put_h5py_attr(d, ak, av)
+
+        # Updating to new unit conversions
+        for iCh in range(6):
+
+            k = 'ID_cch{0:d}_v1'.format(iCh)
+            #
+            v = gold[k]
+            d = gnew[k]
+            #
+            for ak, av in v.attrs.items():
+                if ak == 'elements':
+                    elem_names = av.astype(str).tolist()
+                    elem_names.remove('epu49g1c23d')
+                    av = np.array(elem_names)
+                put_h5py_attr(d, ak, av)
+
+
+            k = 'ID_cch{0:d}_v2'.format(iCh)
+            #
+            v = gold[k]
+            d = gnew[k]
+            #
+            for ak, av in v.attrs.items():
+                if ak == 'elements':
+                    elem_names = av.astype(str).tolist()
+                    elem_names += ['epu49g1c23d']
+                    av = np.array(elem_names)
+                put_h5py_attr(d, ak, av)
+
+
+
+            k = 'ID_cch{0:d}rb1_v1'.format(iCh)
+            #
+            v = gold[k]
+            d = gnew[k]
+            #
+            for ak, av in v.attrs.items():
+                if ak == 'elements':
+                    elem_names = av.astype(str).tolist()
+                    elem_names.remove('epu49g1c23d')
+                    av = np.array(elem_names)
+                put_h5py_attr(d, ak, av)
+
+
+            k = 'ID_cch{0:d}rb1_v2'.format(iCh)
+            #
+            v = gold[k]
+            d = gnew[k]
+            #
+            for ak, av in v.attrs.items():
+                if ak == 'elements':
+                    elem_names = av.astype(str).tolist()
+                    elem_names += ['epu49g1c23d']
+                    av = np.array(elem_names)
+                put_h5py_attr(d, ak, av)
+
+
+        # Updating to new unit conversions
+        for mode_i in range(4):
+            for iCh in range(6):
+                
+                k = 'epu_orbff{0:d}_m{1:d}_I_type0'.format(iCh, mode_i)
+                #
+                v = gold[k]
+                d = gnew[k]
+                #
+                for ak, av in v.attrs.items():
+                    if ak == 'elements':
+                        elem_names = av.astype(str).tolist()
+                        elem_names.remove('epu49g1c23d')
+                        av = np.array(elem_names)
+                    put_h5py_attr(d, ak, av)
+    
+    
+                k = 'epu_orbff{0:d}_m{1:d}_I_type1'.format(iCh, mode_i)
+                #
+                if k not in list(gold):
+                    d = gnew.create_dataset(k, data=np.array([1.0, 0.0]), **kw)
+                    uc = {'_class_': 'polynomial', 'dst_unit': 'A', 'dst_unit_sys': 'phy',
+                          'elements': ['epu49g1c23d'],
+                          'field': 'orbff{0:d}_m{1:d}_I'.format(iCh, mode_i),
+                          'handle': ['setpoint'],
+                          'invertible': 1, 'src_unit': 'A', 'src_unit_sys': ''}
+                    for k2, v2 in uc.items(): put_h5py_attr(d, k2, v2)
+                else:
+                    v = gold[k]
+                    d = gnew[k]
+                    #
+                    for ak, av in v.attrs.items():
+                        if ak == 'elements':
+                            elem_names = av.astype(str).tolist()
+                            elem_names += ['epu49g1c23d']
+                            av = np.array(elem_names)
+                        put_h5py_attr(d, ak, av)                
+
+        fold.close()
+        fnew.close()
+
+        # Make sure the new file has the correct permission
+        os.chmod(_temp_unitconv_file, 0o755)
+
+        shutil.move(_temp_unitconv_file, UNITCONV_FILE)
+
+    #
+    # Test if the unit conversion works
+    #
+
+    ap.machines.loadfast('nsls2', 'SR')
+
+    for e in sorted(ap.getElements('epu49g1c23d')):
+        print('## {0} ##'.format(e.name))
+
+        nCh = 6
+
+        for hdl_list, fld_list in [
+            (['readback', 'setpoint'], ['cch{0:d}'.format(iCh) for iCh in range(nCh)]),
+            (['readback',], ['cch{0:d}rb1'.format(iCh) for iCh in range(nCh)]),
+            ]:
+
+            for fld in fld_list:
+                for hdl in hdl_list:
+                    print('{0}/{1}: {2}, {3}'.format(
+                        fld, hdl, e.getUnit(fld, handle=hdl, unitsys=None),
+                        e.getUnit(fld, handle=hdl, unitsys='phy')))
+
+                    raw_val = 1.0
+                    np.testing.assert_almost_equal(
+                        raw_val,
+                        e.convertUnit(fld, raw_val, None, 'phy', handle=hdl),
+                        decimal=12
+                    )
+
+        if e.name.startswith('dw'):
+            nCh = 6 + 6 + 2
+        else:
+            nCh = 6
+
+        if not e.name.endswith(('c23u', 'c23d')):
+            for hdl_list, fld_list in [
+                (['setpoint',], ['orbff{0:d}_m0_I'.format(iCh) for iCh in range(nCh)]),
+                ]:
+    
+                for fld in fld_list:
+                    for hdl in hdl_list:
+                        print('{0}/{1}: {2}, {3}'.format(
+                            fld, hdl, e.getUnit(fld, handle=hdl, unitsys=None),
+                            e.getUnit(fld, handle=hdl, unitsys='phy')))
+    
+                        raw_val = 1.0
+                        np.testing.assert_almost_equal(
+                            raw_val,
+                            e.convertUnit(fld, raw_val, None, 'phy', handle=hdl),
+                            decimal=12
+                        )
+        else:
+            nModes = 4
+            for iMode in range(nModes):
+                for hdl_list, fld_list in [
+                    (['setpoint',], ['orbff{0:d}_m{1:d}_I'.format(iCh, iMode) 
+                                     for iCh in range(nCh)]),
+                    ]:
+        
+                    for fld in fld_list:
+                        for hdl in hdl_list:
+                            print('{0}/{1}: {2}, {3}'.format(
+                                fld, hdl, e.getUnit(fld, handle=hdl, unitsys=None),
+                                e.getUnit(fld, handle=hdl, unitsys='phy')))
+        
+                            raw_val = 1.0
+                            np.testing.assert_almost_equal(
+                                raw_val,
+                                e.convertUnit(fld, raw_val, None, 'phy', handle=hdl),
+                                decimal=12
+                            )
+
+    plt.show()
+    
 
 if __name__ == '__main__':
     
@@ -10590,8 +10849,17 @@ if __name__ == '__main__':
         # setpoint PVs (needed for the feedforward script to work), as well as
         # adjustment of DRVL & DRVH values to +/-8 A, have been done in 
         # "update_apv2_db.py".
-    elif True: # 01/14/2022
+    elif False: # 01/14/2022
         switch_C23u_ID_orbcor_PV_unitconv()
 
+    elif False: # 05/16/2022
+        switch_C23d_ID_orbcor_PVs_to_new_BNL_PSI_PVs()
+
+        # Manual confirmation of the presennce of .DRVL & .DRVH for these new 
+        # setpoint PVs (needed for the feedforward script to work), as well as
+        # adjustment of DRVL & DRVH values to +/-8 A, have been done in 
+        # "update_apv2_db.py".
+    elif True: # 05/16/2022
+        switch_C23d_ID_orbcor_PV_unitconv()
 
     plt.show()
