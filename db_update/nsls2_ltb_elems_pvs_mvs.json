@@ -1,0 +1,1859 @@
+{
+  "B1": {
+    "id": 1,
+    "devName": "B1",
+    "elemType": "BEND",
+    "elemLength": 0.35,
+    "elemPosition": 2.45475,
+    "elemIndex": 26,
+    "virtual": 0,
+    "map": {
+      "b0": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Bend:1}I:Sp1-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Bend:1}I:Ps1DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Bend:1}RpStart1-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB",
+      "aphla.sys.LTD2"
+    ]
+  },
+  "Q4": {
+    "id": 2,
+    "devName": "Q4",
+    "elemType": "QUAD",
+    "elemLength": 0.15,
+    "elemPosition": 3.36459,
+    "elemIndex": 28,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:4}I:Sp1-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:4}I:Ps1DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:4}RpStart1-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB",
+      "aphla.sys.LTD2"
+    ]
+  },
+  "Q5": {
+    "id": 3,
+    "devName": "Q5",
+    "elemType": "QUAD",
+    "elemLength": 0.15,
+    "elemPosition": 5.4043,
+    "elemIndex": 34,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:5}I:Sp1-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:5}I:Ps1DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:5}RpStart1-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB",
+      "aphla.sys.LTD2"
+    ]
+  },
+  "Q6": {
+    "id": 4,
+    "devName": "Q6",
+    "elemType": "QUAD",
+    "elemLength": 0.15,
+    "elemPosition": 7.34413,
+    "elemIndex": 46,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:6}I:Sp1-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:6}I:Ps1DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:6}RpStart1-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB",
+      "aphla.sys.LTD2"
+    ]
+  },
+  "CX3": {
+    "id": 5,
+    "devName": "C3",
+    "elemType": "HCOR",
+    "elemLength": 0.0,
+    "elemPosition": 4.76112,
+    "elemIndex": 31,
+    "virtual": 0,
+    "map": {
+      "x": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:3}I:Sp1-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:3}I:Ps1DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:3}RpStart1-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB",
+      "aphla.sys.LTD2"
+    ]
+  },
+  "CY3": {
+    "id": 6,
+    "devName": "C3",
+    "elemType": "VCOR",
+    "elemLength": 0.0,
+    "elemPosition": 4.76112,
+    "elemIndex": 32,
+    "virtual": 0,
+    "map": {
+      "y": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:3}I:Sp2-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:3}I:Ps2DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:3}RpStart2-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB",
+      "aphla.sys.LTD2"
+    ]
+  },
+  "CX4": {
+    "id": 7,
+    "devName": "C4",
+    "elemType": "HCOR",
+    "elemLength": 0.0,
+    "elemPosition": 7.76141,
+    "elemIndex": 49,
+    "virtual": 0,
+    "map": {
+      "x": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:4}I:Sp1-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:4}I:Ps1DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:4}RpStart1-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB",
+      "aphla.sys.LTD2"
+    ]
+  },
+  "CY4": {
+    "id": 8,
+    "devName": "C4",
+    "elemType": "VCOR",
+    "elemLength": 0.0,
+    "elemPosition": 7.76141,
+    "elemIndex": 50,
+    "virtual": 0,
+    "map": {
+      "y": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:4}I:Sp2-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:4}I:Ps2DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:4}RpStart2-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB",
+      "aphla.sys.LTD2"
+    ]
+  },
+  "P2": {
+    "id": 9,
+    "devName": "P2",
+    "elemType": "BPM",
+    "elemLength": 0.0,
+    "elemPosition": 5.85373,
+    "elemIndex": 39,
+    "virtual": 0,
+    "map": {
+      "goldenX": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{BPM:2}Pos:UsrXoffset-SP"
+        }
+      },
+      "goldenY": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{BPM:2}Pos:UsrYoffset-SP"
+        }
+      },
+      "I": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{BPM:2}I-I"
+        }
+      },
+      "x": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{BPM:2}Pos:X-I"
+        }
+      },
+      "y": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{BPM:2}Pos:Y-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB",
+      "aphla.sys.LTD2"
+    ]
+  },
+  "VF2": {
+    "id": 10,
+    "devName": "VF2",
+    "elemType": "FLAG",
+    "elemLength": 0.0,
+    "elemPosition": 6.11947,
+    "elemIndex": 42,
+    "virtual": 0,
+    "map": {
+      "position": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{VF:2}Pos-Sel"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:2}Pos-Sts"
+        }
+      },
+      "acquire": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{VF:2}cam1:Acquire"
+        }
+      },
+      "saveImage": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{VF:2}TIFF1:WriteFile"
+        }
+      },
+      "nCapture": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{VF:2}TIFF1:NumCapture"
+        }
+      },
+      "imageNumber": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:2}TIFF1:FileNumber_RBV"
+        }
+      },
+      "imageName": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:2}TIFF1:FullFileName_RBV"
+        }
+      },
+      "sigmaX": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:2}X-Gauss:Sigma-I"
+        }
+      },
+      "sigmaY": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:2}Y-Gauss:Sigma-I"
+        }
+      },
+      "centroidX": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:2}Stats1:CentroidX_RBV"
+        }
+      },
+      "centroidY": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:2}Stats1:CentroidY_RBV"
+        }
+      },
+      "sizeX": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:2}ROI1:SizeX_RBV"
+        }
+      },
+      "sizeY": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:2}ROI1:SizeY_RBV"
+        }
+      },
+      "minX": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:2}ROI1:MinX_RBV"
+        }
+      },
+      "minY": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:2}ROI1:MinY_RBV"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB",
+      "aphla.sys.LTD2"
+    ]
+  },
+  "FCT1": {
+    "id": 11,
+    "devName": "FCT1",
+    "elemType": "FCT",
+    "elemLength": 0.0,
+    "elemPosition": 6.37322,
+    "elemIndex": 44,
+    "virtual": 0,
+    "map": {
+      "nBunches": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{FCT:1}NbrBunches-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB",
+      "aphla.sys.LTD2"
+    ]
+  },
+  "Q1": {
+    "id": 12,
+    "devName": "Q1",
+    "elemType": "QUAD",
+    "elemLength": 0.15,
+    "elemPosition": 0.839362,
+    "elemIndex": 13,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:1}I:Sp1-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:1}I:Ps1DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:1}RpStart1-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB",
+      "aphla.sys.LTD1",
+      "aphla.sys.LTD2"
+    ]
+  },
+  "Q2": {
+    "id": 13,
+    "devName": "Q2",
+    "elemType": "QUAD",
+    "elemLength": 0.15,
+    "elemPosition": 1.233562,
+    "elemIndex": 17,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:2}I:Sp1-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:2}I:Ps1DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:2}RpStart1-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB",
+      "aphla.sys.LTD1",
+      "aphla.sys.LTD2"
+    ]
+  },
+  "Q3": {
+    "id": 14,
+    "devName": "Q3",
+    "elemType": "QUAD",
+    "elemLength": 0.15,
+    "elemPosition": 1.627498,
+    "elemIndex": 19,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:3}I:Sp1-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:3}I:Ps1DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:3}RpStart1-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB",
+      "aphla.sys.LTD1",
+      "aphla.sys.LTD2"
+    ]
+  },
+  "CX1": {
+    "id": 15,
+    "devName": "C1",
+    "elemType": "HCOR",
+    "elemLength": 0.0,
+    "elemPosition": 0.567092,
+    "elemIndex": 10,
+    "virtual": 0,
+    "map": {
+      "x": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:1}I:Sp1-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:1}I:Ps1DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:1}RpStart1-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB",
+      "aphla.sys.LTD1",
+      "aphla.sys.LTD2"
+    ]
+  },
+  "CY1": {
+    "id": 16,
+    "devName": "C1",
+    "elemType": "VCOR",
+    "elemLength": 0.0,
+    "elemPosition": 0.567092,
+    "elemIndex": 11,
+    "virtual": 0,
+    "map": {
+      "y": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:1}I:Sp2-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:1}I:Ps2DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:1}RpStart2-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB",
+      "aphla.sys.LTD1",
+      "aphla.sys.LTD2"
+    ]
+  },
+  "CX2": {
+    "id": 17,
+    "devName": "C2",
+    "elemType": "HCOR",
+    "elemLength": 0.0,
+    "elemPosition": 1.7436,
+    "elemIndex": 22,
+    "virtual": 0,
+    "map": {
+      "x": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:2}I:Sp1-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:2}I:Ps1DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:2}RpStart1-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB",
+      "aphla.sys.LTD1",
+      "aphla.sys.LTD2"
+    ]
+  },
+  "CY2": {
+    "id": 18,
+    "devName": "C2",
+    "elemType": "VCOR",
+    "elemLength": 0.0,
+    "elemPosition": 1.7436,
+    "elemIndex": 23,
+    "virtual": 0,
+    "map": {
+      "y": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:2}I:Sp2-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:2}I:Ps2DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:2}RpStart2-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB",
+      "aphla.sys.LTD1",
+      "aphla.sys.LTD2"
+    ]
+  },
+  "P1": {
+    "id": 19,
+    "devName": "P1",
+    "elemType": "BPM",
+    "elemLength": 0.0,
+    "elemPosition": 0.178044,
+    "elemIndex": 4,
+    "virtual": 0,
+    "map": {
+      "goldenX": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{BPM:1}Pos:UsrXoffset-SP"
+        }
+      },
+      "goldenY": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{BPM:1}Pos:UsrYoffset-SP"
+        }
+      },
+      "I": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{BPM:1}I-I"
+        }
+      },
+      "x": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{BPM:1}Pos:X-I"
+        }
+      },
+      "y": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{BPM:1}Pos:Y-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB",
+      "aphla.sys.LTD1",
+      "aphla.sys.LTD2"
+    ]
+  },
+  "VF1": {
+    "id": 20,
+    "devName": "VF1",
+    "elemType": "FLAG",
+    "elemLength": 0.0,
+    "elemPosition": 0.362839,
+    "elemIndex": 7,
+    "virtual": 0,
+    "map": {
+      "position": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{VF:1}Pos-Sel"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:1}Pos-Sts"
+        }
+      },
+      "acquire": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{VF:1}cam1:Acquire"
+        }
+      },
+      "saveImage": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{VF:1}TIFF1:WriteFile"
+        }
+      },
+      "nCapture": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{VF:1}TIFF1:NumCapture"
+        }
+      },
+      "imageNumber": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:1}TIFF1:FileNumber_RBV"
+        }
+      },
+      "imageName": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:1}TIFF1:FullFileName_RBV"
+        }
+      },
+      "sigmaX": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:1}X-Gauss:Sigma-I"
+        }
+      },
+      "sigmaY": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:1}Y-Gauss:Sigma-I"
+        }
+      },
+      "centroidX": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:1}Stats1:CentroidX_RBV"
+        }
+      },
+      "centroidY": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:1}Stats1:CentroidY_RBV"
+        }
+      },
+      "sizeX": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:1}ROI1:SizeX_RBV"
+        }
+      },
+      "sizeY": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:1}ROI1:SizeY_RBV"
+        }
+      },
+      "minX": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:1}ROI1:MinX_RBV"
+        }
+      },
+      "minY": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:1}ROI1:MinY_RBV"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB",
+      "aphla.sys.LTD1",
+      "aphla.sys.LTD2"
+    ]
+  },
+  "ICT1": {
+    "id": 21,
+    "devName": "ICT1",
+    "elemType": "ICT",
+    "elemLength": 0.0,
+    "elemPosition": 0.961554,
+    "elemIndex": 15,
+    "virtual": 0,
+    "map": {
+      "Q": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{ICT:1}AveQOverINOS-I"
+        }
+      },
+      "Qerr": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{ICT:1}StdQOverINOS-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB",
+      "aphla.sys.LTD1",
+      "aphla.sys.LTD2"
+    ]
+  },
+  "Q7": {
+    "id": 22,
+    "devName": "Q7",
+    "elemType": "QUAD",
+    "elemLength": 0.15,
+    "elemPosition": 9.4818,
+    "elemIndex": 55,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:7}I:Sp1-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:7}I:Ps1DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:7}RpStart1-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB"
+    ]
+  },
+  "Q8": {
+    "id": 23,
+    "devName": "Q8",
+    "elemType": "QUAD",
+    "elemLength": 0.15,
+    "elemPosition": 10.0358,
+    "elemIndex": 57,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:8}I:Sp1-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:8}I:Ps1DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:8}RpStart1-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB"
+    ]
+  },
+  "Q9": {
+    "id": 24,
+    "devName": "Q9",
+    "elemType": "QUAD",
+    "elemLength": 0.15,
+    "elemPosition": 11.0265,
+    "elemIndex": 61,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:9}I:Sp1-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:9}I:Ps1DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:9}RpStart1-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB"
+    ]
+  },
+  "Q10": {
+    "id": 25,
+    "devName": "Q10",
+    "elemType": "QUAD",
+    "elemLength": 0.15,
+    "elemPosition": 14.6631,
+    "elemIndex": 84,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:10}I:Sp1-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:10}I:Ps1DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:10}RpStart1-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB"
+    ]
+  },
+  "Q11": {
+    "id": 26,
+    "devName": "Q11",
+    "elemType": "QUAD",
+    "elemLength": 0.15,
+    "elemPosition": 16.7483,
+    "elemIndex": 96,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:11}I:Sp1-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:11}I:Ps1DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:11}RpStart1-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB"
+    ]
+  },
+  "Q12": {
+    "id": 27,
+    "devName": "Q12",
+    "elemType": "QUAD",
+    "elemLength": 0.15,
+    "elemPosition": 17.6653,
+    "elemIndex": 98,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:12}I:Sp1-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:12}I:Ps1DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:12}RpStart1-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB"
+    ]
+  },
+  "Q13": {
+    "id": 28,
+    "devName": "Q13",
+    "elemType": "QUAD",
+    "elemLength": 0.15,
+    "elemPosition": 18.5824,
+    "elemIndex": 104,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:13}I:Sp1-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:13}I:Ps1DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:13}RpStart1-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB"
+    ]
+  },
+  "Q14": {
+    "id": 29,
+    "devName": "Q14",
+    "elemType": "QUAD",
+    "elemLength": 0.15,
+    "elemPosition": 19.4994,
+    "elemIndex": 106,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:14}I:Sp1-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:14}I:Ps1DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:14}RpStart1-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB"
+    ]
+  },
+  "Q15": {
+    "id": 30,
+    "devName": "Q15",
+    "elemType": "QUAD",
+    "elemLength": 0.15,
+    "elemPosition": 20.3564,
+    "elemIndex": 114,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:15}I:Sp1-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:15}I:Ps1DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Quad:15}RpStart1-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB"
+    ]
+  },
+  "CX5": {
+    "id": 31,
+    "devName": "C5",
+    "elemType": "HCOR",
+    "elemLength": 0.0,
+    "elemPosition": 11.1398,
+    "elemIndex": 64,
+    "virtual": 0,
+    "map": {
+      "x": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:5}I:Sp1-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:5}I:Ps1DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:5}RpStart1-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB"
+    ]
+  },
+  "CY5": {
+    "id": 32,
+    "devName": "C5",
+    "elemType": "VCOR",
+    "elemLength": 0.0,
+    "elemPosition": 11.1398,
+    "elemIndex": 65,
+    "virtual": 0,
+    "map": {
+      "y": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:5}I:Sp2-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:5}I:Ps2DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:5}RpStart2-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB"
+    ]
+  },
+  "CX6": {
+    "id": 33,
+    "devName": "C6",
+    "elemType": "HCOR",
+    "elemLength": 0.0,
+    "elemPosition": 16.362,
+    "elemIndex": 93,
+    "virtual": 0,
+    "map": {
+      "x": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:6}I:Sp1-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:6}I:Ps1DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:6}RpStart1-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB"
+    ]
+  },
+  "CY6": {
+    "id": 34,
+    "devName": "C6",
+    "elemType": "VCOR",
+    "elemLength": 0.0,
+    "elemPosition": 16.362,
+    "elemIndex": 94,
+    "virtual": 0,
+    "map": {
+      "y": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:6}I:Sp2-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:6}I:Ps2DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:6}RpStart2-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB"
+    ]
+  },
+  "CX7": {
+    "id": 35,
+    "devName": "C7",
+    "elemType": "HCOR",
+    "elemLength": 0.0,
+    "elemPosition": 18.0382,
+    "elemIndex": 101,
+    "virtual": 0,
+    "map": {
+      "x": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:7}I:Sp1-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:7}I:Ps1DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:7}RpStart1-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB"
+    ]
+  },
+  "CY7": {
+    "id": 36,
+    "devName": "C7",
+    "elemType": "VCOR",
+    "elemLength": 0.0,
+    "elemPosition": 18.0382,
+    "elemIndex": 102,
+    "virtual": 0,
+    "map": {
+      "y": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:7}I:Sp2-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:7}I:Ps2DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:7}RpStart2-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB"
+    ]
+  },
+  "CX8": {
+    "id": 37,
+    "devName": "C8",
+    "elemType": "HCOR",
+    "elemLength": 0.0,
+    "elemPosition": 20.5161,
+    "elemIndex": 117,
+    "virtual": 0,
+    "map": {
+      "x": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:8}I:Sp1-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:8}I:Ps1DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:8}RpStart1-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB"
+    ]
+  },
+  "CY8": {
+    "id": 38,
+    "devName": "C8",
+    "elemType": "VCOR",
+    "elemLength": 0.0,
+    "elemPosition": 20.5161,
+    "elemIndex": 118,
+    "virtual": 0,
+    "map": {
+      "y": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:8}I:Sp2-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:8}I:Ps2DCCT1-I"
+        }
+      },
+      "ramping": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-MG{Cor:8}RpStart2-Cmd"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB"
+    ]
+  },
+  "P3": {
+    "id": 39,
+    "devName": "P3",
+    "elemType": "BPM",
+    "elemLength": 0.0,
+    "elemPosition": 11.353,
+    "elemIndex": 68,
+    "virtual": 0,
+    "map": {
+      "goldenX": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{BPM:3}Pos:UsrXoffset-SP"
+        }
+      },
+      "goldenY": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{BPM:3}Pos:UsrYoffset-SP"
+        }
+      },
+      "I": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{BPM:3}I-I"
+        }
+      },
+      "x": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{BPM:3}Pos:X-I"
+        }
+      },
+      "y": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{BPM:3}Pos:Y-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB"
+    ]
+  },
+  "P4": {
+    "id": 40,
+    "devName": "P4",
+    "elemType": "BPM",
+    "elemLength": 0.0,
+    "elemPosition": 13.9128,
+    "elemIndex": 79,
+    "virtual": 0,
+    "map": {
+      "goldenX": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{BPM:4}Pos:UsrXoffset-SP"
+        }
+      },
+      "goldenY": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{BPM:4}Pos:UsrYoffset-SP"
+        }
+      },
+      "I": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{BPM:4}I-I"
+        }
+      },
+      "x": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{BPM:4}Pos:X-I"
+        }
+      },
+      "y": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{BPM:4}Pos:Y-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB"
+    ]
+  },
+  "P5": {
+    "id": 41,
+    "devName": "P5",
+    "elemType": "BPM",
+    "elemLength": 0.0,
+    "elemPosition": 16.0618,
+    "elemIndex": 89,
+    "virtual": 0,
+    "map": {
+      "goldenX": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{BPM:5}Pos:UsrXoffset-SP"
+        }
+      },
+      "goldenY": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{BPM:5}Pos:UsrYoffset-SP"
+        }
+      },
+      "I": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{BPM:5}I-I"
+        }
+      },
+      "x": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{BPM:5}Pos:X-I"
+        }
+      },
+      "y": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{BPM:5}Pos:Y-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB"
+    ]
+  },
+  "P6": {
+    "id": 42,
+    "devName": "P6",
+    "elemType": "BPM",
+    "elemLength": 0.0,
+    "elemPosition": 21.6023,
+    "elemIndex": 121,
+    "virtual": 0,
+    "map": {
+      "goldenX": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{BPM:6}Pos:UsrXoffset-SP"
+        }
+      },
+      "goldenY": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{BPM:6}Pos:UsrYoffset-SP"
+        }
+      },
+      "I": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{BPM:6}I-I"
+        }
+      },
+      "x": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{BPM:6}Pos:X-I"
+        }
+      },
+      "y": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{BPM:6}Pos:Y-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB"
+    ]
+  },
+  "VF3": {
+    "id": 43,
+    "devName": "VF3",
+    "elemType": "FLAG",
+    "elemLength": 0.0,
+    "elemPosition": 12.8671,
+    "elemIndex": 73,
+    "virtual": 0,
+    "map": {
+      "position": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{VF:3}Pos-Sel"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:3}Pos-Sts"
+        }
+      },
+      "acquire": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{VF:3}cam1:Acquire"
+        }
+      },
+      "save": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{VF:3}TIFF1:WriteFile"
+        }
+      },
+      "nCapture": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{VF:3}TIFF1:NumCapture"
+        }
+      },
+      "imageNumber": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:3}TIFF1:FileNumber_RBV"
+        }
+      },
+      "imageName": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:3}TIFF1:FullFileName_RBV"
+        }
+      },
+      "sigmaX": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:3}X-Gauss:Sigma-I"
+        }
+      },
+      "sigmaY": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:3}Y-Gauss:Sigma-I"
+        }
+      },
+      "centerX": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:3}Stats1:CentroidX_RBV"
+        }
+      },
+      "centerY": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:3}Stats1:CentroidY_RBV"
+        }
+      },
+      "sizeX": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:3}ROI1:SizeX_RBV"
+        }
+      },
+      "sizeY": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:3}ROI1:SizeY_RBV"
+        }
+      },
+      "minX": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:3}ROI1:MinX_RBV"
+        }
+      },
+      "minY": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:3}ROI1:MinY_RBV"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB"
+    ]
+  },
+  "VF4": {
+    "id": 44,
+    "devName": "VF4",
+    "elemType": "FLAG",
+    "elemLength": 0.0,
+    "elemPosition": 14.0974,
+    "elemIndex": 82,
+    "virtual": 0,
+    "map": {
+      "position": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{VF:4}Pos-Sel"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:4}Pos-Sts"
+        }
+      },
+      "acquire": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{VF:4}cam1:Acquire"
+        }
+      },
+      "save": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{VF:4}TIFF1:WriteFile"
+        }
+      },
+      "nCapture": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{VF:4}TIFF1:NumCapture"
+        }
+      },
+      "imageNumber": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:4}TIFF1:FileNumber_RBV"
+        }
+      },
+      "imageName": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:4}TIFF1:FullFileName_RBV"
+        }
+      },
+      "sigmaX": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:4}X-Gauss:Sigma-I"
+        }
+      },
+      "sigmaY": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:4}Y-Gauss:Sigma-I"
+        }
+      },
+      "centerX": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:4}Stats1:CentroidX_RBV"
+        }
+      },
+      "centerY": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:4}Stats1:CentroidY_RBV"
+        }
+      },
+      "sizeX": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:4}ROI1:SizeX_RBV"
+        }
+      },
+      "sizeY": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:4}ROI1:SizeY_RBV"
+        }
+      },
+      "minX": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:4}ROI1:MinX_RBV"
+        }
+      },
+      "minY": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:4}ROI1:MinY_RBV"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB"
+    ]
+  },
+  "VF5": {
+    "id": 45,
+    "devName": "VF5",
+    "elemType": "FLAG",
+    "elemLength": 0.0,
+    "elemPosition": 20.0333,
+    "elemIndex": 112,
+    "virtual": 0,
+    "map": {
+      "position": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{VF:5}Pos-Sel"
+        },
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:5}Pos-Sts"
+        }
+      },
+      "acquire": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{VF:5}cam1:Acquire"
+        }
+      },
+      "save": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{VF:5}TIFF1:WriteFile"
+        }
+      },
+      "nCapture": {
+        "put": {
+          "mv": {},
+          "pv": "LTB-BI{VF:5}TIFF1:NumCapture"
+        }
+      },
+      "imageNumber": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:5}TIFF1:FileNumber_RBV"
+        }
+      },
+      "imageName": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:5}TIFF1:FullFileName_RBV"
+        }
+      },
+      "sigmaX": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:5}X-Gauss:Sigma-I"
+        }
+      },
+      "sigmaY": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:5}Y-Gauss:Sigma-I"
+        }
+      },
+      "centerX": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:5}Stats1:CentroidX_RBV"
+        }
+      },
+      "centerY": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:5}Stats1:CentroidY_RBV"
+        }
+      },
+      "sizeX": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:5}ROI1:SizeX_RBV"
+        }
+      },
+      "sizeY": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:5}ROI1:SizeY_RBV"
+        }
+      },
+      "minX": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:5}ROI1:MinX_RBV"
+        }
+      },
+      "minY": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{VF:5}ROI1:MinY_RBV"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB"
+    ]
+  },
+  "ICT2": {
+    "id": 46,
+    "devName": "ICT2",
+    "elemType": "ICT",
+    "elemLength": 0.0,
+    "elemPosition": 19.7953,
+    "elemIndex": 110,
+    "virtual": 0,
+    "map": {
+      "Q": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{ICT:2}AveQOverINOS-I"
+        }
+      },
+      "Qerr": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{ICT:2}StdQOverINOS-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB"
+    ]
+  },
+  "FCT2": {
+    "id": 47,
+    "devName": "FCT2",
+    "elemType": "FCT",
+    "elemLength": 0.0,
+    "elemPosition": 19.6029,
+    "elemIndex": 108,
+    "virtual": 0,
+    "map": {
+      "nBunches": {
+        "get": {
+          "mv": {},
+          "pv": "LTB-BI{FCT:2}NbrBunches-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.LTB"
+    ]
+  }
+}

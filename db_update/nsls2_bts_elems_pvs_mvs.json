@@ -1,0 +1,1609 @@
+{
+  "B1": {
+    "id": 18,
+    "elemType": "BEND",
+    "elemLength": 1.4,
+    "elemPosition": 9.777294,
+    "elemIndex": 3700,
+    "virtual": 0,
+    "map": {
+      "b0": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Bend:1}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Bend:1}I:Sp1-SP"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "B2": {
+    "id": 21,
+    "elemType": "BEND",
+    "elemLength": 1.4,
+    "elemPosition": 12.45051,
+    "elemIndex": 4300,
+    "virtual": 0,
+    "map": {
+      "b0": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Bend:2}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Bend:2}I:Sp1-SP"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "B3": {
+    "id": 36,
+    "elemType": "BEND",
+    "elemLength": 1.4,
+    "elemPosition": 24.30441,
+    "elemIndex": 7600,
+    "virtual": 0,
+    "map": {
+      "b0": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Bend:3}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Bend:3}I:Sp1-SP"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "B4": {
+    "id": 41,
+    "elemType": "BEND",
+    "elemLength": 1.4,
+    "elemPosition": 28.21077,
+    "elemIndex": 8600,
+    "virtual": 0,
+    "map": {
+      "b0": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Bend:4}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Bend:4}I:Sp1-SP"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "C1": {
+    "id": 14,
+    "elemType": "COR",
+    "elemLength": 0.1,
+    "elemPosition": 6.66763,
+    "elemIndex": 2900,
+    "elemGroups": "HCOR;VCOR",
+    "virtual": 0,
+    "map": {
+      "x": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:1}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:1}I:Sp1-SP"
+        }
+      },
+      "y": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:1}I:Ps2DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:1}I:Sp2-SP"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "C2": {
+    "id": 20,
+    "elemType": "COR",
+    "elemLength": 0.1,
+    "elemPosition": 10.65083,
+    "elemIndex": 4100,
+    "elemGroups": "HCOR;VCOR",
+    "virtual": 0,
+    "map": {
+      "x": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:2}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:2}I:Sp1-SP"
+        }
+      },
+      "y": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:2}I:Ps2DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:2}I:Sp2-SP"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "C3": {
+    "id": 24,
+    "elemType": "COR",
+    "elemLength": 0.1,
+    "elemPosition": 15.19123,
+    "elemIndex": 4900,
+    "elemGroups": "HCOR;VCOR",
+    "virtual": 0,
+    "map": {
+      "x": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:3}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:3}I:Sp1-SP"
+        }
+      },
+      "y": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:3}I:Ps2DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:3}I:Sp2-SP"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "C4": {
+    "id": 31,
+    "elemType": "COR",
+    "elemLength": 0.1,
+    "elemPosition": 18.52229,
+    "elemIndex": 6500,
+    "elemGroups": "HCOR;VCOR",
+    "virtual": 0,
+    "map": {
+      "x": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:4}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:4}I:Sp1-SP"
+        }
+      },
+      "y": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:4}I:Ps2DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:4}I:Sp2-SP"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "C5": {
+    "id": 38,
+    "elemType": "COR",
+    "elemLength": 0.1,
+    "elemPosition": 25.57173,
+    "elemIndex": 8000,
+    "elemGroups": "HCOR;VCOR",
+    "virtual": 0,
+    "map": {
+      "x": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:5}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:5}I:Sp1-SP"
+        }
+      },
+      "y": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:5}I:Ps2DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:5}I:Sp2-SP"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "C6": {
+    "id": 42,
+    "elemType": "COR",
+    "elemLength": 0.1,
+    "elemPosition": 29.07395,
+    "elemIndex": 8800,
+    "elemGroups": "HCOR;VCOR",
+    "virtual": 0,
+    "map": {
+      "x": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:6}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:6}I:Sp1-SP"
+        }
+      },
+      "y": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:6}I:Ps2DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:6}I:Sp2-SP"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "C7": {
+    "id": 48,
+    "elemType": "COR",
+    "elemLength": 0.1,
+    "elemPosition": 36.6709,
+    "elemIndex": 10000,
+    "elemGroups": "HCOR;VCOR",
+    "virtual": 0,
+    "map": {
+      "x": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:7}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:7}I:Sp1-SP"
+        }
+      },
+      "y": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:7}I:Ps2DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:7}I:Sp2-SP"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "C9": {
+    "id": 57,
+    "elemType": "VCOR",
+    "elemLength": 0.2,
+    "elemPosition": 41.88558,
+    "elemIndex": 11800,
+    "virtual": 0,
+    "map": {
+      "y": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:9V_8V}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:9V_8V}I:Sp1-SP"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "C8": {
+    "id": 55,
+    "elemType": "VCOR",
+    "elemLength": 0.2,
+    "elemPosition": 39.48558,
+    "elemIndex": 11400,
+    "virtual": 0,
+    "map": {
+      "y": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:9V_8V}I:Ps2DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:9V_8V}I:Sp2-SP"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "Q10": {
+    "id": 40,
+    "elemType": "QUAD",
+    "elemLength": 0.35,
+    "elemPosition": 26.52518,
+    "elemIndex": 8400,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Quad:10}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Quad:10}I:Sp1-SP"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "Q11": {
+    "id": 43,
+    "elemType": "QUAD",
+    "elemLength": 0.35,
+    "elemPosition": 29.59895,
+    "elemIndex": 9000,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Quad:11}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Quad:11}I:Sp1-SP"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "Q12": {
+    "id": 45,
+    "elemType": "QUAD",
+    "elemLength": 0.35,
+    "elemPosition": 30.67263,
+    "elemIndex": 9400,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Quad:12}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Quad:12}I:Sp1-SP"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "Q13": {
+    "id": 53,
+    "elemType": "QUAD",
+    "elemLength": 0.35,
+    "elemPosition": 38.01927,
+    "elemIndex": 11000,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Quad:13}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Quad:13}I:Sp1-SP"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "Q14": {
+    "id": 54,
+    "elemType": "QUAD",
+    "elemLength": 0.35,
+    "elemPosition": 38.66927,
+    "elemIndex": 11200,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Quad:14}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Quad:14}I:Sp1-SP"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "Q1": {
+    "id": 15,
+    "elemType": "QUAD",
+    "elemLength": 0.35,
+    "elemPosition": 7.154258,
+    "elemIndex": 3100,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Quad:1}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Quad:1}I:Sp1-SP"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "Q2": {
+    "id": 17,
+    "elemType": "QUAD",
+    "elemLength": 0.35,
+    "elemPosition": 8.033346,
+    "elemIndex": 3500,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Quad:2}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Quad:2}I:Sp1-SP"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "Q3": {
+    "id": 19,
+    "elemType": "QUAD",
+    "elemLength": 0.35,
+    "elemPosition": 10.44495,
+    "elemIndex": 3900,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Quad:3}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Quad:3}I:Sp1-SP"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "Q4": {
+    "id": 23,
+    "elemType": "QUAD",
+    "elemLength": 0.35,
+    "elemPosition": 13.72923,
+    "elemIndex": 4700,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Quad:4}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Quad:4}I:Sp1-SP"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "Q5": {
+    "id": 27,
+    "elemType": "QUAD",
+    "elemLength": 0.35,
+    "elemPosition": 16.42181,
+    "elemIndex": 5500,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Quad:5}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Quad:5}I:Sp1-SP"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "Q6": {
+    "id": 30,
+    "elemType": "QUAD",
+    "elemLength": 0.35,
+    "elemPosition": 18.28729,
+    "elemIndex": 6300,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Quad:6}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Quad:6}I:Sp1-SP"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "Q7": {
+    "id": 32,
+    "elemType": "QUAD",
+    "elemLength": 0.35,
+    "elemPosition": 20.38939,
+    "elemIndex": 6700,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Quad:7}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Quad:7}I:Sp1-SP"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "Q8": {
+    "id": 34,
+    "elemType": "QUAD",
+    "elemLength": 0.35,
+    "elemPosition": 22.63724,
+    "elemIndex": 7300,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Quad:8}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Quad:8}I:Sp1-SP"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "Q9": {
+    "id": 37,
+    "elemType": "QUAD",
+    "elemLength": 0.35,
+    "elemPosition": 24.9568,
+    "elemIndex": 7800,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Quad:9}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Quad:9}I:Sp1-SP"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "P1": {
+    "id": 11,
+    "elemType": "BPM",
+    "elemLength": 0.0,
+    "elemPosition": 4.465838,
+    "elemIndex": 2300,
+    "virtual": 0,
+    "map": {
+      "x": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{BPM:1}Pos:X-I"
+        }
+      },
+      "y": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{BPM:1}Pos:Y-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "P2": {
+    "id": 22,
+    "elemType": "BPM",
+    "elemLength": 0.16,
+    "elemPosition": 12.98919,
+    "elemIndex": 4500,
+    "virtual": 0,
+    "map": {
+      "x": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{BPM:2}Pos:X-I"
+        }
+      },
+      "y": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{BPM:2}Pos:Y-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "P3": {
+    "id": 25,
+    "elemType": "BPM",
+    "elemLength": 0.16,
+    "elemPosition": 15.5598,
+    "elemIndex": 5100,
+    "virtual": 0,
+    "map": {
+      "x": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{BPM:3}Pos:X-I"
+        }
+      },
+      "y": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{BPM:3}Pos:Y-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "P4": {
+    "id": 29,
+    "elemType": "BPM",
+    "elemLength": 0.16,
+    "elemPosition": 17.83006,
+    "elemIndex": 6100,
+    "virtual": 0,
+    "map": {
+      "x": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{BPM:4}Pos:X-I"
+        }
+      },
+      "y": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{BPM:4}Pos:Y-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "P5": {
+    "id": 39,
+    "elemType": "BPM",
+    "elemLength": 0.16,
+    "elemPosition": 26.08512,
+    "elemIndex": 8200,
+    "virtual": 0,
+    "map": {
+      "x": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{BPM:5}Pos:X-I"
+        }
+      },
+      "y": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{BPM:5}Pos:Y-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "P6": {
+    "id": 46,
+    "elemType": "BPM",
+    "elemLength": 0.16,
+    "elemPosition": 31.03425,
+    "elemIndex": 9600,
+    "virtual": 0,
+    "map": {
+      "x": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{BPM:6}Pos:X-I"
+        }
+      },
+      "y": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{BPM:6}Pos:Y-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "P7": {
+    "id": 51,
+    "elemType": "BPM",
+    "elemLength": 0.16,
+    "elemPosition": 37.29867,
+    "elemIndex": 10600,
+    "virtual": 0,
+    "map": {
+      "x": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{BPM:7}Pos:X-I"
+        }
+      },
+      "y": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{BPM:7}Pos:Y-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "P8": {
+    "id": 58,
+    "elemType": "BPM",
+    "elemLength": 0.16,
+    "elemPosition": 42.43506,
+    "elemIndex": 12000,
+    "virtual": 0,
+    "map": {
+      "x": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{BPM:8}Pos:X-I"
+        }
+      },
+      "y": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{BPM:8}Pos:Y-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "IS": {
+    "id": 59,
+    "elemType": "BEND",
+    "elemLength": 1.3,
+    "elemPosition": 44.36254,
+    "elemIndex": 12200,
+    "virtual": 0,
+    "map": {
+      "v": {
+        "put": {
+          "mv": {},
+          "pv": "SR:IS-PS{ACsept}V-Sp"
+        },
+        "get": {
+          "mv": {},
+          "pv": "SR:IS-PS{ACsept}Hvps-V-Rb.VALA"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "SP3": {
+    "id": 56,
+    "elemType": "BEND",
+    "elemLength": 1.2,
+    "elemPosition": 41.43558,
+    "elemIndex": 11600,
+    "virtual": 0,
+    "map": {
+      "b0": {
+        "put": {
+          "mv": {},
+          "pv": "BTS-MG{Septum:DC}I:Sp1-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Septum:DC}I:Ps1DCCT1-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "VF7": {
+    "id": 52,
+    "elemType": "FLAG",
+    "elemLength": 0.0,
+    "elemPosition": 37.40333,
+    "elemIndex": 10800,
+    "virtual": 0,
+    "map": {
+      "sigmaX": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:7}X-Gauss:Sigma-I"
+        }
+      },
+      "sigmaY": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:7}Y-Gauss:Sigma-I"
+        }
+      },
+      "centroidX": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:7}Stats1:CentroidX_RBV"
+        }
+      },
+      "centroidY": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:7}Stats1:CentroidY_RBV"
+        }
+      },
+      "image": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:7}image1:ArrayData"
+        }
+      },
+      "sizeX": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:7}image1:ArraySize0_RBV"
+        }
+      },
+      "sizeY": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:7}image1:ArraySize1_RBV"
+        }
+      },
+      "position": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:7}Pos-Sel"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "VF6": {
+    "id": 47,
+    "elemType": "FLAG",
+    "elemLength": 0.0,
+    "elemPosition": 31.13902,
+    "elemIndex": 9800,
+    "virtual": 0,
+    "map": {
+      "sigmaX": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:6}X-Gauss:Sigma-I"
+        }
+      },
+      "sigmaY": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:6}Y-Gauss:Sigma-I"
+        }
+      },
+      "centroidX": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:6}Stats1:CentroidX_RBV"
+        }
+      },
+      "centroidY": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:6}Stats1:CentroidY_RBV"
+        }
+      },
+      "image": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:6}image1:ArrayData"
+        }
+      },
+      "sizeX": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:6}image1:ArraySize0_RBV"
+        }
+      },
+      "sizeY": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:6}image1:ArraySize1_RBV"
+        }
+      },
+      "position": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:6}Pos-Sel"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "VF5": {
+    "id": 33,
+    "elemType": "FLAG",
+    "elemLength": 0.0,
+    "elemPosition": 20.71201,
+    "elemIndex": 6900,
+    "virtual": 0,
+    "map": {
+      "sigmaX": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:5}X-Gauss:Sigma-I"
+        }
+      },
+      "sigmaY": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:5}Y-Gauss:Sigma-I"
+        }
+      },
+      "centroidX": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:5}Stats1:CentroidX_RBV"
+        }
+      },
+      "centroidY": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:5}Stats1:CentroidY_RBV"
+        }
+      },
+      "image": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:5}image1:ArrayData"
+        }
+      },
+      "sizeX": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:5}image1:ArraySize0_RBV"
+        }
+      },
+      "sizeY": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:5}image1:ArraySize1_RBV"
+        }
+      },
+      "position": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:5}Pos-Sel"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "VF4": {
+    "id": 28,
+    "elemType": "FLAG",
+    "elemLength": 0.0,
+    "elemPosition": 17.56526,
+    "elemIndex": 5900,
+    "virtual": 0,
+    "map": {
+      "sigmaX": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:4}X-Gauss:Sigma-I"
+        }
+      },
+      "sigmaY": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:4}Y-Gauss:Sigma-I"
+        }
+      },
+      "centroidX": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:4}Stats1:CentroidX_RBV"
+        }
+      },
+      "centroidY": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:4}Stats1:CentroidY_RBV"
+        }
+      },
+      "image": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:4}image1:ArrayData"
+        }
+      },
+      "sizeX": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:4}image1:ArraySize0_RBV"
+        }
+      },
+      "sizeY": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:4}image1:ArraySize1_RBV"
+        }
+      },
+      "position": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:4}Pos-Sel"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "VF3": {
+    "id": 26,
+    "elemType": "FLAG",
+    "elemLength": 0.0,
+    "elemPosition": 15.66458,
+    "elemIndex": 5300,
+    "virtual": 0,
+    "map": {
+      "sigmaX": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:3}X-Gauss:Sigma-I"
+        }
+      },
+      "sigmaY": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:3}Y-Gauss:Sigma-I"
+        }
+      },
+      "centroidX": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:3}Stats1:CentroidX_RBV"
+        }
+      },
+      "centroidY": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:3}Stats1:CentroidY_RBV"
+        }
+      },
+      "image": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:3}image1:ArrayData"
+        }
+      },
+      "sizeX": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:3}image1:ArraySize0_RBV"
+        }
+      },
+      "sizeY": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:3}image1:ArraySize1_RBV"
+        }
+      },
+      "position": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:3}Pos-Sel"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "VF2": {
+    "id": 16,
+    "elemType": "FLAG",
+    "elemLength": 0.0,
+    "elemPosition": 7.36867,
+    "elemIndex": 3300,
+    "virtual": 0,
+    "map": {
+      "sigmaX": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:2}X-Gauss:Sigma-I"
+        }
+      },
+      "sigmaY": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:2}Y-Gauss:Sigma-I"
+        }
+      },
+      "centroidX": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:2}Stats1:CentroidX_RBV"
+        }
+      },
+      "centroidY": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:2}Stats1:CentroidY_RBV"
+        }
+      },
+      "image": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:2}image1:ArrayData"
+        }
+      },
+      "sizeX": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:2}image1:ArraySize0_RBV"
+        }
+      },
+      "sizeY": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:2}image1:ArraySize1_RBV"
+        }
+      },
+      "position": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:2}Pos-Sel"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "VF1": {
+    "id": 9,
+    "elemType": "FLAG",
+    "elemLength": 0.0,
+    "elemPosition": 3.300205,
+    "elemIndex": 1900,
+    "virtual": 0,
+    "map": {
+      "sigmaX": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:1}X-Gauss:Sigma-I"
+        }
+      },
+      "sigmaY": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:1}Y-Gauss:Sigma-I"
+        }
+      },
+      "centroidX": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:1}Stats1:CentroidX_RBV"
+        }
+      },
+      "centroidY": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:1}Stats1:CentroidY_RBV"
+        }
+      },
+      "image": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:1}image1:ArrayData"
+        }
+      },
+      "sizeX": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:1}image1:ArraySize0_RBV"
+        }
+      },
+      "sizeY": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:1}image1:ArraySize1_RBV"
+        }
+      },
+      "position": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{VF:1}Pos-Sel"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "ISVF1": {
+    "id": 60,
+    "elemType": "FLAG",
+    "elemLength": 0.0,
+    "elemPosition": 44.54004,
+    "elemIndex": 12400,
+    "virtual": 0,
+    "map": {
+      "sigmaX": {
+        "get": {
+          "mv": {},
+          "pv": "SR:C29-BI{VF:1}X-Gauss:Sigma-I"
+        }
+      },
+      "sigmaY": {
+        "get": {
+          "mv": {},
+          "pv": "SR:C29-BI{VF:1}Y-Gauss:Sigma-I"
+        }
+      },
+      "centroidX": {
+        "get": {
+          "mv": {},
+          "pv": "SR:C29-BI{VF:1}Stats1:CentroidX_RBV"
+        }
+      },
+      "centroidY": {
+        "get": {
+          "mv": {},
+          "pv": "SR:C29-BI{VF:1}Stats1:CentroidY_RBV"
+        }
+      },
+      "image": {
+        "get": {
+          "mv": {},
+          "pv": "SR:C29-BI{VF:1}image1:ArrayData"
+        }
+      },
+      "sizeX": {
+        "get": {
+          "mv": {},
+          "pv": "SR:C29-BI{VF:1}image1:ArraySize0_RBV"
+        }
+      },
+      "sizeY": {
+        "get": {
+          "mv": {},
+          "pv": "SR:C29-BI{VF:1}image1:ArraySize1_RBV"
+        }
+      },
+      "position": {
+        "get": {
+          "mv": {},
+          "pv": "SR:C29-BI{VF:1}Pos-Sel"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "SP2": {
+    "id": 12,
+    "elemType": "BEND",
+    "elemLength": 1.2,
+    "elemPosition": 5.890531,
+    "elemIndex": 2500,
+    "virtual": 0,
+    "map": {
+      "b0": {
+        "put": {
+          "mv": {},
+          "pv": "BR-PS{PS:SMD1}I-SP"
+        },
+        "get": {
+          "mv": {},
+          "pv": "BR-PS{PS:SMD1}I-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTS"
+    ]
+  },
+  "BRCX1SE": {
+    "id": 1,
+    "elemType": "COR",
+    "elemLength": 0.134,
+    "elemPosition": 0.227,
+    "elemIndex": 300,
+    "virtual": 0
+  },
+  "BRBU1SE": {
+    "id": 2,
+    "elemType": "BEND",
+    "elemLength": 0.166,
+    "elemPosition": 0.453,
+    "elemIndex": 500,
+    "virtual": 0
+  },
+  "BRK1SE": {
+    "id": 3,
+    "elemType": "BEND",
+    "elemLength": 0.200638,
+    "elemPosition": 0.833643,
+    "elemIndex": 700,
+    "virtual": 0
+  },
+  "BRK2SE": {
+    "id": 4,
+    "elemType": "BEND",
+    "elemLength": 0.200641,
+    "elemPosition": 1.20366,
+    "elemIndex": 900,
+    "virtual": 0
+  },
+  "BRK3SE": {
+    "id": 5,
+    "elemType": "BEND",
+    "elemLength": 0.200644,
+    "elemPosition": 1.573682,
+    "elemIndex": 1100,
+    "virtual": 0
+  },
+  "BRK4SE": {
+    "id": 6,
+    "elemType": "BEND",
+    "elemLength": 0.200648,
+    "elemPosition": 1.943711,
+    "elemIndex": 1300,
+    "virtual": 0
+  },
+  "BRP1SE": {
+    "id": 7,
+    "elemType": "MONI",
+    "elemLength": 0.0,
+    "elemPosition": 2.345117,
+    "elemIndex": 1500,
+    "virtual": 0
+  },
+  "BRBU2SE": {
+    "id": 8,
+    "elemType": "BEND",
+    "elemLength": 0.166,
+    "elemPosition": 2.658131,
+    "elemIndex": 1700,
+    "virtual": 0
+  },
+  "BRSP1SE": {
+    "id": 10,
+    "elemType": "BEND",
+    "elemLength": 0.6,
+    "elemPosition": 4.060144,
+    "elemIndex": 2100,
+    "virtual": 0
+  },
+  "FT1": {
+    "id": 13,
+    "elemType": "WATCH",
+    "elemLength": 0.0,
+    "elemPosition": 6.399974,
+    "elemIndex": 2700,
+    "virtual": 0
+  },
+  "M1": {
+    "id": 35,
+    "elemType": "MARK",
+    "elemLength": 0.0,
+    "elemPosition": 22.90441,
+    "elemIndex": 7500,
+    "virtual": 0
+  },
+  "ESLIT": {
+    "id": 44,
+    "elemType": "WATCH",
+    "elemLength": 0.0,
+    "elemPosition": 29.88569,
+    "elemIndex": 9200,
+    "virtual": 0
+  },
+  "FT2": {
+    "id": 49,
+    "elemType": "WATCH",
+    "elemLength": 0.0,
+    "elemPosition": 36.82744,
+    "elemIndex": 10200,
+    "virtual": 0
+  },
+  "IT1": {
+    "id": 50,
+    "elemType": "WATCH",
+    "elemLength": 0.0,
+    "elemPosition": 37.01984,
+    "elemIndex": 10400,
+    "virtual": 0
+  },
+  "ISP3": {
+    "id": 61,
+    "elemType": "MONI",
+    "elemLength": 0.0,
+    "elemPosition": 44.61924,
+    "elemIndex": 12600,
+    "virtual": 0
+  },
+  "ISP4": {
+    "id": 62,
+    "elemType": "MONI",
+    "elemLength": 0.0,
+    "elemPosition": 44.67639,
+    "elemIndex": 12800,
+    "virtual": 0
+  },
+  "ISBU3": {
+    "id": 63,
+    "elemType": "BEND",
+    "elemLength": 0.65,
+    "elemPosition": 45.67389,
+    "elemIndex": 13000,
+    "virtual": 0
+  },
+  "ISP5": {
+    "id": 64,
+    "elemType": "MONI",
+    "elemLength": 0.0,
+    "elemPosition": 45.98152,
+    "elemIndex": 13200,
+    "virtual": 0
+  },
+  "ISBU4": {
+    "id": 65,
+    "elemType": "BEND",
+    "elemLength": 0.65,
+    "elemPosition": 47.55389,
+    "elemIndex": 13400,
+    "virtual": 0
+  }
+}

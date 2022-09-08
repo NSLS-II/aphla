@@ -1,0 +1,366 @@
+{
+  "P1": {
+    "id": 1,
+    "hostName": "diagioc-bst-rga",
+    "devName": "P1",
+    "iocName": "diagioc-bst-rga-bpm1",
+    "elemType": "BPM",
+    "elemLength": 0.0,
+    "elemPosition": 4.46584,
+    "elemIndex": 22,
+    "virtual": 0,
+    "map": {
+      "I": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{BPM:1}I-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTD",
+      "aphla.sys.BTS"
+    ]
+  },
+  "FC1": {
+    "id": 2,
+    "hostName": "diag-bst-cpci1",
+    "devName": "FC1",
+    "iocName": "bts-fct-fc",
+    "elemType": "FC",
+    "elemLength": 0.0,
+    "elemPosition": 20.0085,
+    "elemIndex": 55,
+    "virtual": 0,
+    "map": {
+      "Q": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{FC:1}AveQOverINOS-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTD"
+    ]
+  },
+  "FCT1": {
+    "id": 3,
+    "hostName": "diag-bst-cpci1",
+    "devName": "FCT1",
+    "iocName": "bts-fct-fc",
+    "elemType": "FCT",
+    "elemLength": 0.0,
+    "elemPosition": 16.9902,
+    "elemIndex": 51,
+    "virtual": 0,
+    "map": {
+      "nBunches": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-BI{FCT:1}NbrBunches-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTD"
+    ]
+  },
+  "VF2": {
+    "id": 4,
+    "hostName": "camioc-bst",
+    "devName": "VF2",
+    "iocName": "bts-cam-vf2",
+    "elemType": "FLAG",
+    "elemLength": 0.0,
+    "elemPosition": 7.36867,
+    "elemIndex": 32,
+    "virtual": 0,
+    "map": {
+      "acquire": {
+        "put": {
+          "mv": {},
+          "pv": "BTS-BI{VF:2}cam1:Acquire"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTD",
+      "aphla.sys.BTS"
+    ]
+  },
+  "CX1BD": {
+    "id": 5,
+    "hostName": "psioc-bst-rgj",
+    "devName": "C1BD",
+    "iocName": "ps-BTS1c",
+    "elemType": "HCOR",
+    "elemLength": 0.05,
+    "elemPosition": 16.0837,
+    "elemIndex": 49,
+    "virtual": 0,
+    "map": {
+      "x": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG:BD{Cor:1}I:Ps1DCCT1-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTD"
+    ]
+  },
+  "CY1BD": {
+    "id": 6,
+    "hostName": "psioc-bst-rgj",
+    "devName": "C1BD",
+    "iocName": "ps-BTS1c",
+    "elemType": "VCOR",
+    "elemLength": 0.05,
+    "elemPosition": 16.0837,
+    "elemIndex": 50,
+    "virtual": 0,
+    "map": {
+      "y": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG:BD{Cor:1}I:Ps2DCCT1-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTD"
+    ]
+  },
+  "Q1BD": {
+    "id": 7,
+    "hostName": "psioc-bst-rgj",
+    "devName": "Q1BD",
+    "iocName": "ps-BTS1m",
+    "elemType": "QUAD",
+    "elemLength": 0.35,
+    "elemPosition": 14.1721,
+    "elemIndex": 45,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG:BD{Quad:1}I:Ps1DCCT1-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTD",
+      "aphla.sys.BTS"
+    ]
+  },
+  "Q2BD": {
+    "id": 8,
+    "hostName": "psioc-bst-rgj",
+    "devName": "Q2BD",
+    "iocName": "ps-BTS1m",
+    "elemType": "QUAD",
+    "elemLength": 0.35,
+    "elemPosition": 14.7721,
+    "elemIndex": 47,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG:BD{Quad:2}I:Ps1DCCT1-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTD",
+      "aphla.sys.BTS"
+    ]
+  },
+  "B1": {
+    "id": 9,
+    "hostName": "psioc-bst-rgj",
+    "devName": "B1",
+    "iocName": "ps-BTS1m",
+    "elemType": "BEND",
+    "elemLength": 1.4,
+    "elemPosition": 9.77729,
+    "elemIndex": 36,
+    "virtual": 0,
+    "map": {
+      "b0": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Bend:1}I:Ps1DCCT1-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTD",
+      "aphla.sys.BTS"
+    ]
+  },
+  "CX1": {
+    "id": 10,
+    "hostName": "psioc-bst-rgj",
+    "devName": "C1",
+    "iocName": "ps-BTS1c",
+    "elemType": "HCOR",
+    "elemLength": 0.05,
+    "elemPosition": 6.66763,
+    "elemIndex": 27,
+    "virtual": 0,
+    "map": {
+      "x": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:1}I:Ps1DCCT1-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTD",
+      "aphla.sys.BTS"
+    ]
+  },
+  "CY1": {
+    "id": 11,
+    "hostName": "psioc-bst-rgj",
+    "devName": "C1",
+    "iocName": "ps-BTS1c",
+    "elemType": "VCOR",
+    "elemLength": 0.05,
+    "elemPosition": 6.66763,
+    "elemIndex": 28,
+    "virtual": 0,
+    "map": {
+      "y": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:1}I:Ps2DCCT1-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTD",
+      "aphla.sys.BTS"
+    ]
+  },
+  "CX2": {
+    "id": 12,
+    "hostName": "psioc-bst-rgj",
+    "devName": "C2",
+    "iocName": "ps-BTS1c",
+    "elemType": "HCOR",
+    "elemLength": 0.05,
+    "elemPosition": 10.6508,
+    "elemIndex": 40,
+    "virtual": 0,
+    "map": {
+      "x": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:2}I:Ps1DCCT1-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTD",
+      "aphla.sys.BTS"
+    ]
+  },
+  "CY2": {
+    "id": 13,
+    "hostName": "psioc-bst-rgj",
+    "devName": "C2",
+    "iocName": "ps-BTS1c",
+    "elemType": "VCOR",
+    "elemLength": 0.05,
+    "elemPosition": 10.6508,
+    "elemIndex": 41,
+    "virtual": 0,
+    "map": {
+      "y": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Cor:2}I:Ps2DCCT1-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTD",
+      "aphla.sys.BTS"
+    ]
+  },
+  "Q1": {
+    "id": 14,
+    "hostName": "psioc-bst-rgj",
+    "devName": "Q1",
+    "iocName": "ps-BTS1m",
+    "elemType": "QUAD",
+    "elemLength": 0.35,
+    "elemPosition": 7.15426,
+    "elemIndex": 30,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Quad:1}I:Ps1DCCT1-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTD",
+      "aphla.sys.BTS"
+    ]
+  },
+  "Q2": {
+    "id": 15,
+    "hostName": "psioc-bst-rgj",
+    "devName": "Q2",
+    "iocName": "ps-BTS1m",
+    "elemType": "QUAD",
+    "elemLength": 0.35,
+    "elemPosition": 8.03335,
+    "elemIndex": 34,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Quad:2}I:Ps1DCCT1-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTD",
+      "aphla.sys.BTS"
+    ]
+  },
+  "Q3": {
+    "id": 16,
+    "hostName": "psioc-bst-rgj",
+    "devName": "Q3",
+    "iocName": "ps-BTS1m",
+    "elemType": "QUAD",
+    "elemLength": 0.35,
+    "elemPosition": 10.445,
+    "elemIndex": 38,
+    "virtual": 0,
+    "map": {
+      "b1": {
+        "get": {
+          "mv": {},
+          "pv": "BTS-MG{Quad:3}I:Ps1DCCT1-I"
+        }
+      }
+    },
+    "tags": [
+      "aphla.sys.BTD",
+      "aphla.sys.BTS"
+    ]
+  }
+}
