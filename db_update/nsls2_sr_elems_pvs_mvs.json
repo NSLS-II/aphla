@@ -64115,6 +64115,11 @@
           },
           "pv": "SR:C26-MG{PS:QL1B}RpStart1-Cmd"
         }
+      },
+      "b1_2nd": {
+        "put": {
+          "pv": "SR:C26-MG{PS:QL1B}I:Sp1_2-SP"
+        }
       }
     },
     "tags": [
@@ -64208,6 +64213,11 @@
           },
           "pv": "SR:C26-MG{PS:QL2B}RpStart1-Cmd"
         }
+      },
+      "b1_2nd": {
+        "put": {
+          "pv": "SR:C26-MG{PS:QL2B}I:Sp1_2-SP"
+        }
       }
     },
     "tags": [
@@ -64300,6 +64310,11 @@
             }
           },
           "pv": "SR:C26-MG{PS:QL3B}RpStart1-Cmd"
+        }
+      },
+      "b1_2nd": {
+        "put": {
+          "pv": "SR:C26-MG{PS:QL3B}I:Sp1_2-SP"
         }
       }
     },
@@ -65045,6 +65060,11 @@
           },
           "pv": "SR:C27-MG{PS:QL1A}RpStart1-Cmd"
         }
+      },
+      "b1_2nd": {
+        "put": {
+          "pv": "SR:C27-MG{PS:QL1A}I:Sp1_2-SP"
+        }
       }
     },
     "tags": [
@@ -65138,6 +65158,11 @@
           },
           "pv": "SR:C27-MG{PS:QL2A}RpStart1-Cmd"
         }
+      },
+      "b1_2nd": {
+        "put": {
+          "pv": "SR:C27-MG{PS:QL2A}I:Sp1_2-SP"
+        }
       }
     },
     "tags": [
@@ -65230,6 +65255,11 @@
             }
           },
           "pv": "SR:C27-MG{PS:QL3A}RpStart1-Cmd"
+        }
+      },
+      "b1_2nd": {
+        "put": {
+          "pv": "SR:C27-MG{PS:QL3A}I:Sp1_2-SP"
         }
       }
     },
@@ -183899,5 +183929,1102 @@
     "tags": [
       "aphla.sys.SR"
     ]
+  },
+  "pu1g1c27a": {
+    "id": 1293,
+    "archive": 0,
+    "size": 0,
+    "virtual": 0,
+    "elemType": "UBPM_",
+    "cell": "C27",
+    "girder": "G1",
+    "symmetry": "A",
+    "elemLength": 0.0,
+    "elemPosition": 710.4445,
+    "elemIndex": 260262,
+    "elemGroups": "UBPM;PU1",
+    "tags": [
+      "aphla.sys.SR"
+    ],
+    "devName": "C27-BPM7",
+    "map": {
+      "x0": {
+        "get": {
+          "pv": "SR:C27-BI{BPM:7}Pos:X-I",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C27A",
+              "property": "x0"
+            }
+          }
+        }
+      },
+      "y0": {
+        "get": {
+          "pv": "SR:C27-BI{BPM:7}Pos:Y-I",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C27A",
+              "property": "y0"
+            }
+          }
+        }
+      },
+      "x": {
+        "get": {
+          "pv": "SR:C27-BI{BPM:7}Pos:XwUsrOff-Calc",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C27A",
+              "property": "x"
+            }
+          }
+        }
+      },
+      "y": {
+        "get": {
+          "pv": "SR:C27-BI{BPM:7}Pos:YwUsrOff-Calc",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C27A",
+              "property": "y"
+            }
+          }
+        }
+      },
+      "xref1": {
+        "put": {
+          "pv": "SR:C27-BI{BPM:7}Pos:Href-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C27A",
+              "property": "xref1"
+            }
+          }
+        }
+      },
+      "yref1": {
+        "put": {
+          "pv": "SR:C27-BI{BPM:7}Pos:Vref-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C27A",
+              "property": "yref1"
+            }
+          }
+        }
+      },
+      "xref2": {
+        "put": {
+          "pv": "SR:C27-BI{BPM:7}Pos:UsrXoffset-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C27A",
+              "property": "xref2"
+            }
+          }
+        }
+      },
+      "yref2": {
+        "put": {
+          "pv": "SR:C27-BI{BPM:7}Pos:UsrYoffset-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C27A",
+              "property": "yref2"
+            }
+          }
+        }
+      },
+      "ampl": {
+        "get": {
+          "pv": "SR:C27-BI{BPM:7}Ampl:SSA-Calc",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C27A",
+              "property": "ampl"
+            }
+          }
+        }
+      },
+      "xtbt": {
+        "get": {
+          "pv": "SR:C27-BI{BPM:7}TBT-X",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C27A",
+              "property": "xtbt"
+            }
+          }
+        }
+      },
+      "ytbt": {
+        "get": {
+          "pv": "SR:C27-BI{BPM:7}TBT-Y",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C27A",
+              "property": "ytbt"
+            }
+          }
+        }
+      },
+      "Itbt": {
+        "get": {
+          "pv": "SR:C27-BI{BPM:7}TBT-S",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C27A",
+              "property": "Itbt"
+            }
+          }
+        }
+      },
+      "xfa": {
+        "get": {
+          "pv": "SR:C27-BI{BPM:7}FA-X",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C27A",
+              "property": "xfa"
+            }
+          }
+        }
+      },
+      "yfa": {
+        "get": {
+          "pv": "SR:C27-BI{BPM:7}FA-Y",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C27A",
+              "property": "yfa"
+            }
+          }
+        }
+      },
+      "Ifa": {
+        "get": {
+          "pv": "SR:C27-BI{BPM:7}FA-S",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C27A",
+              "property": "Ifa"
+            }
+          }
+        }
+      },
+      "xbba": {
+        "get": {
+          "pv": "SR:C27-BI{BPM:7}BBA:X-I",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C27A",
+              "property": "xbba"
+            }
+          }
+        },
+        "put": {
+          "pv": "SR:C27-BI{BPM:7}BbaXOff-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C27A",
+              "property": "xbba"
+            }
+          }
+        }
+      },
+      "ybba": {
+        "get": {
+          "pv": "SR:C27-BI{BPM:7}BBA:Y-I",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C27A",
+              "property": "ybba"
+            }
+          }
+        },
+        "put": {
+          "pv": "SR:C27-BI{BPM:7}BbaYOff-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C27A",
+              "property": "ybba"
+            }
+          }
+        }
+      }
+    }
+  },
+  "pu4g1c27a": {
+    "id": 1294,
+    "archive": 0,
+    "size": 0,
+    "virtual": 0,
+    "elemType": "UBPM_",
+    "cell": "C27",
+    "girder": "G1",
+    "symmetry": "A",
+    "elemLength": 0.0,
+    "elemPosition": 714.9141,
+    "elemIndex": 260802,
+    "elemGroups": "UBPM;PU4",
+    "tags": [
+      "aphla.sys.SR"
+    ],
+    "devName": "C27-BPM8",
+    "map": {
+      "x0": {
+        "get": {
+          "pv": "SR:C27-BI{BPM:8}Pos:X-I",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C27A",
+              "property": "x0"
+            }
+          }
+        }
+      },
+      "y0": {
+        "get": {
+          "pv": "SR:C27-BI{BPM:8}Pos:Y-I",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C27A",
+              "property": "y0"
+            }
+          }
+        }
+      },
+      "x": {
+        "get": {
+          "pv": "SR:C27-BI{BPM:8}Pos:XwUsrOff-Calc",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C27A",
+              "property": "x"
+            }
+          }
+        }
+      },
+      "y": {
+        "get": {
+          "pv": "SR:C27-BI{BPM:8}Pos:YwUsrOff-Calc",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C27A",
+              "property": "y"
+            }
+          }
+        }
+      },
+      "xref1": {
+        "put": {
+          "pv": "SR:C27-BI{BPM:8}Pos:Href-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C27A",
+              "property": "xref1"
+            }
+          }
+        }
+      },
+      "yref1": {
+        "put": {
+          "pv": "SR:C27-BI{BPM:8}Pos:Vref-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C27A",
+              "property": "yref1"
+            }
+          }
+        }
+      },
+      "xref2": {
+        "put": {
+          "pv": "SR:C27-BI{BPM:8}Pos:UsrXoffset-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C27A",
+              "property": "xref2"
+            }
+          }
+        }
+      },
+      "yref2": {
+        "put": {
+          "pv": "SR:C27-BI{BPM:8}Pos:UsrYoffset-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C27A",
+              "property": "yref2"
+            }
+          }
+        }
+      },
+      "ampl": {
+        "get": {
+          "pv": "SR:C27-BI{BPM:8}Ampl:SSA-Calc",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C27A",
+              "property": "ampl"
+            }
+          }
+        }
+      },
+      "xtbt": {
+        "get": {
+          "pv": "SR:C27-BI{BPM:8}TBT-X",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C27A",
+              "property": "xtbt"
+            }
+          }
+        }
+      },
+      "ytbt": {
+        "get": {
+          "pv": "SR:C27-BI{BPM:8}TBT-Y",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C27A",
+              "property": "ytbt"
+            }
+          }
+        }
+      },
+      "Itbt": {
+        "get": {
+          "pv": "SR:C27-BI{BPM:8}TBT-S",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C27A",
+              "property": "Itbt"
+            }
+          }
+        }
+      },
+      "xfa": {
+        "get": {
+          "pv": "SR:C27-BI{BPM:8}FA-X",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C27A",
+              "property": "xfa"
+            }
+          }
+        }
+      },
+      "yfa": {
+        "get": {
+          "pv": "SR:C27-BI{BPM:8}FA-Y",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C27A",
+              "property": "yfa"
+            }
+          }
+        }
+      },
+      "Ifa": {
+        "get": {
+          "pv": "SR:C27-BI{BPM:8}FA-S",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C27A",
+              "property": "Ifa"
+            }
+          }
+        }
+      },
+      "xbba": {
+        "get": {
+          "pv": "SR:C27-BI{BPM:8}BBA:X-I",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C27A",
+              "property": "xbba"
+            }
+          }
+        },
+        "put": {
+          "pv": "SR:C27-BI{BPM:8}BbaXOff-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C27A",
+              "property": "xbba"
+            }
+          }
+        }
+      },
+      "ybba": {
+        "get": {
+          "pv": "SR:C27-BI{BPM:8}BBA:Y-I",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C27A",
+              "property": "ybba"
+            }
+          }
+        },
+        "put": {
+          "pv": "SR:C27-BI{BPM:8}BbaYOff-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C27A",
+              "property": "ybba"
+            }
+          }
+        }
+      }
+    }
+  },
+  "scw70g1c27d": {
+    "id": 1295,
+    "archive": 0,
+    "size": 0,
+    "virtual": 0,
+    "elemType": "SCW",
+    "cell": "C27",
+    "girder": "G1",
+    "symmetry": "D",
+    "elemLength": 1.19,
+    "elemPosition": 714.3572,
+    "elemIndex": 260663,
+    "elemGroups": "ID;SCW70;HEX",
+    "tags": [
+      "aphla.sys.SR"
+    ],
+    "map": {
+      "mainI": {
+        "get": {
+          "pv": "SR:C26-MG{PS:HEX-Main}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "pv": "SR:C26-MG{PS:HEX-Main}I:Sp1-SP"
+        }
+      },
+      "By": {
+        "get": {
+          "pv": "SR:C26-MG{PS:HEX-Main}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "pv": "SR:C26-MG{PS:HEX-Main}I:Sp1-SP"
+        }
+      },
+      "mainI_expert": {
+        "get": {
+          "pv": "SR:C26-MG{PS:HEX-Main}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "pv": "SR:C26-MG{PS:HEX-Main}I:Sp1-SPHW"
+        }
+      },
+      "By_expert": {
+        "get": {
+          "pv": "SR:C26-MG{PS:HEX-Main}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "pv": "SR:C26-MG{PS:HEX-Main}I:Sp1-SPHW"
+        }
+      },
+      "dcct1": {
+        "get": {
+          "pv": "SR:C26-MG{PS:HEX-Main}I:Ps1DCCT1-I"
+        }
+      },
+      "dcct2": {
+        "get": {
+          "pv": "SR:C26-MG{PS:HEX-Main}I:Ps1DCCT2-I"
+        }
+      },
+      "loopback": {
+        "get": {
+          "pv": "SR:C26-MG{PS:HEX-Main}I:Ps1DAC-I"
+        }
+      },
+      "qd_status": {
+        "get": {
+          "pv": "SR:C26-MG{PS:QD}QDOut-Sts"
+        }
+      },
+      "mainI_ps_status": {
+        "get": {
+          "pv": "SR:C26-MG{PS:HEX-Main}PsOnOff-Sts"
+        }
+      },
+      "cryo_status": {
+        "get": {
+          "pv": "SR:C26-MG{PS:QD}CryoInt-Sts"
+        }
+      },
+      "mainI_ramping": {
+        "get": {
+          "pv": "SR:C26-MG{PS:HEX-Main}RpStart1-Cmd"
+        }
+      },
+      "mainI_speed": {
+        "put": {
+          "pv": "SR:C26-MG{PS:HEX-Main}Rate:Rmp1-SP"
+        }
+      },
+      "mainI_on": {
+        "put": {
+          "pv": "SR:C26-MG{PS:HEX-Main}PsOnOff-Sel"
+        }
+      },
+      "mainI_seq_sel": {
+        "put": {
+          "pv": "SR:C26-MG{PS:HEX-Main}SequencerSel"
+        }
+      },
+      "cch0": {
+        "get": {
+          "pv": "SR:C26-MG{PS:HEX-IDMPS}U1-I-I",
+          "epsilon": 0.05
+        },
+        "put": {
+          "pv": "SR:C26-MG{PS:HEX-IDMPS}U1-I-SP",
+          "epsilon": 0.05
+        }
+      },
+      "cch[0]": {
+        "get": {
+          "pv": "SR:C26-MG{PS:HEX-IDMPS}U1-I-I",
+          "epsilon": 0.05
+        }
+      },
+      "cch1": {
+        "get": {
+          "pv": "SR:C26-MG{PS:HEX-IDMPS}U2-I-I",
+          "epsilon": 0.05
+        },
+        "put": {
+          "pv": "SR:C26-MG{PS:HEX-IDMPS}U2-I-SP",
+          "epsilon": 0.05
+        }
+      },
+      "cch[1]": {
+        "get": {
+          "pv": "SR:C26-MG{PS:HEX-IDMPS}U2-I-I",
+          "epsilon": 0.05
+        }
+      },
+      "cch2": {
+        "get": {
+          "pv": "SR:C26-MG{PS:HEX-IDMPS}U3-I-I",
+          "epsilon": 0.05
+        },
+        "put": {
+          "pv": "SR:C26-MG{PS:HEX-IDMPS}U3-I-SP",
+          "epsilon": 0.05
+        }
+      },
+      "cch[2]": {
+        "get": {
+          "pv": "SR:C26-MG{PS:HEX-IDMPS}U3-I-I",
+          "epsilon": 0.05
+        }
+      },
+      "cch3": {
+        "get": {
+          "pv": "SR:C26-MG{PS:HEX-IDMPS}U4-I-I",
+          "epsilon": 0.05
+        },
+        "put": {
+          "pv": "SR:C26-MG{PS:HEX-IDMPS}U4-I-SP",
+          "epsilon": 0.05
+        }
+      },
+      "cch[3]": {
+        "get": {
+          "pv": "SR:C26-MG{PS:HEX-IDMPS}U4-I-I",
+          "epsilon": 0.05
+        }
+      },
+      "cch4": {
+        "get": {
+          "pv": "SR:C26-MG{PS:HEX-IDMPS}U5-I-I",
+          "epsilon": 0.05
+        },
+        "put": {
+          "pv": "SR:C26-MG{PS:HEX-IDMPS}U5-I-SP",
+          "epsilon": 0.05
+        }
+      },
+      "cch[4]": {
+        "get": {
+          "pv": "SR:C26-MG{PS:HEX-IDMPS}U5-I-I",
+          "epsilon": 0.05
+        }
+      },
+      "cch5": {
+        "get": {
+          "pv": "SR:C26-MG{PS:HEX-IDMPS}U6-I-I",
+          "epsilon": 0.05
+        },
+        "put": {
+          "pv": "SR:C26-MG{PS:HEX-IDMPS}U6-I-SP",
+          "epsilon": 0.05
+        }
+      },
+      "cch[5]": {
+        "get": {
+          "pv": "SR:C26-MG{PS:HEX-IDMPS}U6-I-I",
+          "epsilon": 0.05
+        }
+      },
+      "cch6": {
+        "get": {
+          "pv": "SR:C26-MG{PS:CL1B}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "pv": "SR:C26-MG{PS:CL1B}I:Sp1_2-SP"
+        }
+      },
+      "cch[6]": {
+        "get": {
+          "pv": "SR:C26-MG{PS:CL1B}I:Ps1DCCT1-I"
+        }
+      },
+      "cch7": {
+        "get": {
+          "pv": "SR:C26-MG{PS:CL1B}I:Ps2DCCT1-I"
+        },
+        "put": {
+          "pv": "SR:C26-MG{PS:CL1B}I:Sp2_2-SP"
+        }
+      },
+      "cch[7]": {
+        "get": {
+          "pv": "SR:C26-MG{PS:CL1B}I:Ps2DCCT1-I"
+        }
+      },
+      "cch8": {
+        "get": {
+          "pv": "SR:C27-MG{PS:CL1A}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "pv": "SR:C27-MG{PS:CL1A}I:Sp1_2-SP"
+        }
+      },
+      "cch[8]": {
+        "get": {
+          "pv": "SR:C27-MG{PS:CL1A}I:Ps1DCCT1-I"
+        }
+      },
+      "cch9": {
+        "get": {
+          "pv": "SR:C27-MG{PS:CL1A}I:Ps2DCCT1-I"
+        },
+        "put": {
+          "pv": "SR:C27-MG{PS:CL1A}I:Sp2_2-SP"
+        }
+      },
+      "cch[9]": {
+        "get": {
+          "pv": "SR:C27-MG{PS:CL1A}I:Ps2DCCT1-I"
+        }
+      },
+      "orbff0_on": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Orbit-FF:0}Ena-Sel"
+        }
+      },
+      "orbff0_m0_mainI": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Orbit-FF:0}L2-Calc_.C"
+        }
+      },
+      "orbff0_m0_I": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Orbit-FF:0}L2-Calc_.D"
+        }
+      },
+      "orbff0_output": {
+        "put": {
+          "pv": "SR:C26-MG{PS:HEX-IDMPS}U1-I-SP"
+        }
+      },
+      "orbff1_on": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Orbit-FF:1}Ena-Sel"
+        }
+      },
+      "orbff1_m0_mainI": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Orbit-FF:1}L2-Calc_.C"
+        }
+      },
+      "orbff1_m0_I": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Orbit-FF:1}L2-Calc_.D"
+        }
+      },
+      "orbff1_output": {
+        "put": {
+          "pv": "SR:C26-MG{PS:HEX-IDMPS}U2-I-SP"
+        }
+      },
+      "orbff2_on": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Orbit-FF:2}Ena-Sel"
+        }
+      },
+      "orbff2_m0_mainI": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Orbit-FF:2}L2-Calc_.C"
+        }
+      },
+      "orbff2_m0_I": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Orbit-FF:2}L2-Calc_.D"
+        }
+      },
+      "orbff2_output": {
+        "put": {
+          "pv": "SR:C26-MG{PS:HEX-IDMPS}U3-I-SP"
+        }
+      },
+      "orbff3_on": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Orbit-FF:3}Ena-Sel"
+        }
+      },
+      "orbff3_m0_mainI": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Orbit-FF:3}L2-Calc_.C"
+        }
+      },
+      "orbff3_m0_I": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Orbit-FF:3}L2-Calc_.D"
+        }
+      },
+      "orbff3_output": {
+        "put": {
+          "pv": "SR:C26-MG{PS:HEX-IDMPS}U4-I-SP"
+        }
+      },
+      "orbff4_on": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Orbit-FF:4}Ena-Sel"
+        }
+      },
+      "orbff4_m0_mainI": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Orbit-FF:4}L2-Calc_.C"
+        }
+      },
+      "orbff4_m0_I": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Orbit-FF:4}L2-Calc_.D"
+        }
+      },
+      "orbff4_output": {
+        "put": {
+          "pv": "SR:C26-MG{PS:HEX-IDMPS}U5-I-SP"
+        }
+      },
+      "orbff5_on": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Orbit-FF:5}Ena-Sel"
+        }
+      },
+      "orbff5_m0_mainI": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Orbit-FF:5}L2-Calc_.C"
+        }
+      },
+      "orbff5_m0_I": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Orbit-FF:5}L2-Calc_.D"
+        }
+      },
+      "orbff5_output": {
+        "put": {
+          "pv": "SR:C26-MG{PS:HEX-IDMPS}U6-I-SP"
+        }
+      },
+      "orbff6_on": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Orbit-FF:6}Ena-Sel"
+        }
+      },
+      "orbff6_m0_mainI": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Orbit-FF:6}L2-Calc_.C"
+        }
+      },
+      "orbff6_m0_I": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Orbit-FF:6}L2-Calc_.D"
+        }
+      },
+      "orbff6_output": {
+        "put": {
+          "pv": "SR:C26-MG{PS:CL1B}I:Sp1_2-SP"
+        }
+      },
+      "orbff7_on": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Orbit-FF:7}Ena-Sel"
+        }
+      },
+      "orbff7_m0_mainI": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Orbit-FF:7}L2-Calc_.C"
+        }
+      },
+      "orbff7_m0_I": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Orbit-FF:7}L2-Calc_.D"
+        }
+      },
+      "orbff7_output": {
+        "put": {
+          "pv": "SR:C26-MG{PS:CL1B}I:Sp2_2-SP"
+        }
+      },
+      "orbff8_on": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Orbit-FF:8}Ena-Sel"
+        }
+      },
+      "orbff8_m0_mainI": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Orbit-FF:8}L2-Calc_.C"
+        }
+      },
+      "orbff8_m0_I": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Orbit-FF:8}L2-Calc_.D"
+        }
+      },
+      "orbff8_output": {
+        "put": {
+          "pv": "SR:C27-MG{PS:CL1A}I:Sp1_2-SP"
+        }
+      },
+      "orbff9_on": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Orbit-FF:9}Ena-Sel"
+        }
+      },
+      "orbff9_m0_mainI": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Orbit-FF:9}L2-Calc_.C"
+        }
+      },
+      "orbff9_m0_I": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Orbit-FF:9}L2-Calc_.D"
+        }
+      },
+      "orbff9_output": {
+        "put": {
+          "pv": "SR:C27-MG{PS:CL1A}I:Sp2_2-SP"
+        }
+      },
+      "qch0": {
+        "get": {
+          "pv": "SR:C26-MG{PS:QL1B}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "pv": "SR:C26-MG{PS:QL1B}I:Sp1_2-SP"
+        }
+      },
+      "qch[0]": {
+        "get": {
+          "pv": "SR:C26-MG{PS:QL1B}I:Ps1DCCT1-I"
+        }
+      },
+      "qch1": {
+        "get": {
+          "pv": "SR:C26-MG{PS:QL2B}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "pv": "SR:C26-MG{PS:QL2B}I:Sp1_2-SP"
+        }
+      },
+      "qch[1]": {
+        "get": {
+          "pv": "SR:C26-MG{PS:QL2B}I:Ps1DCCT1-I"
+        }
+      },
+      "qch2": {
+        "get": {
+          "pv": "SR:C26-MG{PS:QL3B}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "pv": "SR:C26-MG{PS:QL3B}I:Sp1_2-SP"
+        }
+      },
+      "qch[2]": {
+        "get": {
+          "pv": "SR:C26-MG{PS:QL3B}I:Ps1DCCT1-I"
+        }
+      },
+      "qch3": {
+        "get": {
+          "pv": "SR:C27-MG{PS:QL1A}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "pv": "SR:C27-MG{PS:QL1A}I:Sp1_2-SP"
+        }
+      },
+      "qch[3]": {
+        "get": {
+          "pv": "SR:C27-MG{PS:QL1A}I:Ps1DCCT1-I"
+        }
+      },
+      "qch4": {
+        "get": {
+          "pv": "SR:C27-MG{PS:QL2A}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "pv": "SR:C27-MG{PS:QL2A}I:Sp1_2-SP"
+        }
+      },
+      "qch[4]": {
+        "get": {
+          "pv": "SR:C27-MG{PS:QL2A}I:Ps1DCCT1-I"
+        }
+      },
+      "qch5": {
+        "get": {
+          "pv": "SR:C27-MG{PS:QL3A}I:Ps1DCCT1-I"
+        },
+        "put": {
+          "pv": "SR:C27-MG{PS:QL3A}I:Sp1_2-SP"
+        }
+      },
+      "qch[5]": {
+        "get": {
+          "pv": "SR:C27-MG{PS:QL3A}I:Ps1DCCT1-I"
+        }
+      },
+      "linoptff0_on": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Tune-FF:0}Ena-Sel"
+        }
+      },
+      "linoptff0_m0_mainI": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Tune-FF:0}L2-Calc_.C"
+        }
+      },
+      "linoptff0_m0_I": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Tune-FF:0}L2-Calc_.D"
+        }
+      },
+      "linoptff0_output": {
+        "put": {
+          "pv": "SR:C26-MG{PS:QL1B}I:Sp1_2-SP"
+        }
+      },
+      "linoptff1_on": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Tune-FF:1}Ena-Sel"
+        }
+      },
+      "linoptff1_m0_mainI": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Tune-FF:1}L2-Calc_.C"
+        }
+      },
+      "linoptff1_m0_I": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Tune-FF:1}L2-Calc_.D"
+        }
+      },
+      "linoptff1_output": {
+        "put": {
+          "pv": "SR:C26-MG{PS:QL2B}I:Sp1_2-SP"
+        }
+      },
+      "linoptff2_on": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Tune-FF:2}Ena-Sel"
+        }
+      },
+      "linoptff2_m0_mainI": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Tune-FF:2}L2-Calc_.C"
+        }
+      },
+      "linoptff2_m0_I": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Tune-FF:2}L2-Calc_.D"
+        }
+      },
+      "linoptff2_output": {
+        "put": {
+          "pv": "SR:C26-MG{PS:QL3B}I:Sp1_2-SP"
+        }
+      },
+      "linoptff3_on": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Tune-FF:3}Ena-Sel"
+        }
+      },
+      "linoptff3_m0_mainI": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Tune-FF:3}L2-Calc_.C"
+        }
+      },
+      "linoptff3_m0_I": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Tune-FF:3}L2-Calc_.D"
+        }
+      },
+      "linoptff3_output": {
+        "put": {
+          "pv": "SR:C27-MG{PS:QL1A}I:Sp1_2-SP"
+        }
+      },
+      "linoptff4_on": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Tune-FF:4}Ena-Sel"
+        }
+      },
+      "linoptff4_m0_mainI": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Tune-FF:4}L2-Calc_.C"
+        }
+      },
+      "linoptff4_m0_I": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Tune-FF:4}L2-Calc_.D"
+        }
+      },
+      "linoptff4_output": {
+        "put": {
+          "pv": "SR:C27-MG{PS:QL2A}I:Sp1_2-SP"
+        }
+      },
+      "linoptff5_on": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Tune-FF:5}Ena-Sel"
+        }
+      },
+      "linoptff5_m0_mainI": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Tune-FF:5}L2-Calc_.C"
+        }
+      },
+      "linoptff5_m0_I": {
+        "put": {
+          "pv": "SR:C26-MG{HEX:Tune-FF:5}L2-Calc_.D"
+        }
+      },
+      "linoptff5_output": {
+        "put": {
+          "pv": "SR:C27-MG{PS:QL3A}I:Sp1_2-SP"
+        }
+      }
+    }
   }
 }

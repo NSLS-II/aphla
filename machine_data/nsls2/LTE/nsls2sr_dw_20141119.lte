@@ -1,0 +1,3007 @@
+! === Convert from Yongjun Li's pylatt input
+! === Caution: kickmaps need to be adjusted manually
+! - DW definition
+!   dw100g1c08d: ukickmap, l=3.4, input_file="./W100_DF_asbuilt_3o4m_T2m2.sdds", n_kicks=34, periods=34, kref=16.5
+
+! === Element definition:
+hscraper1n: scraper, L = 0, INSERT_FROM = -x
+hscraper1p: scraper, L = 0, INSERT_FROM = +x
+hscraper2n: scraper, L = 0, INSERT_FROM = -x
+hscraper2p: scraper, L = 0, INSERT_FROM = +x
+hscraperxn: scraper, L = 0, INSERT_FROM = -x
+hscraperxp: scraper, L = 0, INSERT_FROM = +x
+vscraper1n: scraper, L = 0, INSERT_FROM = -y
+vscraper1p: scraper, L = 0, INSERT_FROM = +y
+vscraper2n: scraper, L = 0, INSERT_FROM = -y
+vscraper2p: scraper, L = 0, INSERT_FROM = +y
+b1g3c01a: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g3c02a: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g3c04a: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g3c05a: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g3c06a: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g3c07a: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g3c08a: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g3c09a: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g3c10a: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g3c11a: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g3c12a: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g3c14a: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g3c15a: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g3c16a: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g3c17a: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g3c18a: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g3c19a: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g3c20a: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g3c21a: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g3c22a: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g3c24a: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g3c25a: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g3c26a: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g3c27a: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g3c28a: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g3c29a: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g3c30a: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g5c01b: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g5c02b: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g5c04b: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g5c05b: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g5c06b: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g5c07b: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g5c08b: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g5c09b: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g5c10b: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g5c11b: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g5c12b: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g5c14b: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g5c15b: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g5c16b: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g5c17b: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g5c18b: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g5c19b: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g5c20b: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g5c21b: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g5c22b: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g5c24b: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g5c25b: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g5c26b: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g5c27b: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g5c28b: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g5c29b: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b1g5c30b: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b2g3c03a: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b2g3c13a: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b2g3c23a: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b2g5c03b: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b2g5c13b: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+b2g5c23b: csbend, L = 2.62, angle =      0.10471976, e1 =      0.05236000, e2 =      0.05236000
+btsp9: drif, L = 0
+cu1xg1c01id1: drif, L = 0
+cu1xg1c01id2: drif, L = 0
+cu1xg1c02id2: drif, L = 0
+cu1xg1c04id1: drif, L = 0
+cu1xg1c04id2: drif, L = 0
+cu1xg1c05id1: drif, L = 0
+cu1xg1c06id1: drif, L = 0
+cu1xg1c06id2: drif, L = 0
+cu1xg1c07id1: drif, L = 0
+cu1xg1c07id2: drif, L = 0
+cu1xg1c09id1: drif, L = 0
+cu1xg1c09id2: drif, L = 0
+cu1xg1c12id1: drif, L = 0
+cu1xg1c12id2: drif, L = 0
+cu1xg1c13id1: drif, L = 0
+cu1xg1c13id2: drif, L = 0
+cu1xg1c14id1: drif, L = 0
+cu1xg1c14id2: drif, L = 0
+cu1xg1c15id1: drif, L = 0
+cu1xg1c15id2: drif, L = 0
+cu1xg1c16id1: drif, L = 0
+cu1xg1c16id2: drif, L = 0
+cu1xg1c17id1: drif, L = 0
+cu1xg1c17id2: drif, L = 0
+cu1xg1c19id1: drif, L = 0
+cu1xg1c19id2: drif, L = 0
+cu1xg1c20id1: drif, L = 0
+cu1xg1c20id2: drif, L = 0
+cu1xg1c21id2: drif, L = 0
+cu1xg1c22id1: drif, L = 0
+cu1xg1c22id2: drif, L = 0
+cu1xg1c24id1: drif, L = 0
+cu1xg1c24id2: drif, L = 0
+cu1xg1c25id1: drif, L = 0
+cu1xg1c25id2: drif, L = 0
+cu1xg1c26id1: drif, L = 0
+cu1xg1c26id2: drif, L = 0
+cu1xg1c27id1: drif, L = 0
+cu1xg1c27id2: drif, L = 0
+cu1xg1c29id1: drif, L = 0
+cu1xg1c29id2: drif, L = 0
+cu1yg1c01id1: drif, L = 0
+cu1yg1c01id2: drif, L = 0
+cu1yg1c02id2: drif, L = 0
+cu1yg1c04id1: drif, L = 0
+cu1yg1c04id2: drif, L = 0
+cu1yg1c05id1: drif, L = 0
+cu1yg1c06id1: drif, L = 0
+cu1yg1c06id2: drif, L = 0
+cu1yg1c07id1: drif, L = 0
+cu1yg1c07id2: drif, L = 0
+cu1yg1c09id1: drif, L = 0
+cu1yg1c09id2: drif, L = 0
+cu1yg1c12id1: drif, L = 0
+cu1yg1c12id2: drif, L = 0
+cu1yg1c13id1: drif, L = 0
+cu1yg1c13id2: drif, L = 0
+cu1yg1c14id1: drif, L = 0
+cu1yg1c14id2: drif, L = 0
+cu1yg1c15id1: drif, L = 0
+cu1yg1c15id2: drif, L = 0
+cu1yg1c16id1: drif, L = 0
+cu1yg1c16id2: drif, L = 0
+cu1yg1c17id1: drif, L = 0
+cu1yg1c17id2: drif, L = 0
+cu1yg1c19id1: drif, L = 0
+cu1yg1c19id2: drif, L = 0
+cu1yg1c20id1: drif, L = 0
+cu1yg1c20id2: drif, L = 0
+cu1yg1c21id2: drif, L = 0
+cu1yg1c22id1: drif, L = 0
+cu1yg1c22id2: drif, L = 0
+cu1yg1c24id1: drif, L = 0
+cu1yg1c24id2: drif, L = 0
+cu1yg1c25id1: drif, L = 0
+cu1yg1c25id2: drif, L = 0
+cu1yg1c26id1: drif, L = 0
+cu1yg1c26id2: drif, L = 0
+cu1yg1c27id1: drif, L = 0
+cu1yg1c27id2: drif, L = 0
+cu1yg1c29id1: drif, L = 0
+cu1yg1c29id2: drif, L = 0
+cu2xg1c01id1: drif, L = 0
+cu2xg1c01id2: drif, L = 0
+cu2xg1c02id1: drif, L = 0
+cu2xg1c04id1: drif, L = 0
+cu2xg1c04id2: drif, L = 0
+cu2xg1c05id1: drif, L = 0
+cu2xg1c06id1: drif, L = 0
+cu2xg1c06id2: drif, L = 0
+cu2xg1c07id1: drif, L = 0
+cu2xg1c07id2: drif, L = 0
+cu2xg1c09id1: drif, L = 0
+cu2xg1c09id2: drif, L = 0
+cu2xg1c12id1: drif, L = 0
+cu2xg1c12id2: drif, L = 0
+cu2xg1c13id1: drif, L = 0
+cu2xg1c13id2: drif, L = 0
+cu2xg1c14id1: drif, L = 0
+cu2xg1c14id2: drif, L = 0
+cu2xg1c15id1: drif, L = 0
+cu2xg1c15id2: drif, L = 0
+cu2xg1c16id1: drif, L = 0
+cu2xg1c16id2: drif, L = 0
+cu2xg1c17id1: drif, L = 0
+cu2xg1c17id2: drif, L = 0
+cu2xg1c19id1: drif, L = 0
+cu2xg1c19id2: drif, L = 0
+cu2xg1c20id1: drif, L = 0
+cu2xg1c20id2: drif, L = 0
+cu2xg1c21id1: drif, L = 0
+cu2xg1c22id1: drif, L = 0
+cu2xg1c22id2: drif, L = 0
+cu2xg1c24id1: drif, L = 0
+cu2xg1c24id2: drif, L = 0
+cu2xg1c25id1: drif, L = 0
+cu2xg1c25id2: drif, L = 0
+cu2xg1c26id1: drif, L = 0
+cu2xg1c26id2: drif, L = 0
+cu2xg1c27id1: drif, L = 0
+cu2xg1c27id2: drif, L = 0
+cu2xg1c29id1: drif, L = 0
+cu2xg1c29id2: drif, L = 0
+cu2yg1c01id1: drif, L = 0
+cu2yg1c01id2: drif, L = 0
+cu2yg1c02id1: drif, L = 0
+cu2yg1c04id1: drif, L = 0
+cu2yg1c04id2: drif, L = 0
+cu2yg1c05id1: drif, L = 0
+cu2yg1c06id1: drif, L = 0
+cu2yg1c06id2: drif, L = 0
+cu2yg1c07id1: drif, L = 0
+cu2yg1c07id2: drif, L = 0
+cu2yg1c09id1: drif, L = 0
+cu2yg1c09id2: drif, L = 0
+cu2yg1c12id1: drif, L = 0
+cu2yg1c12id2: drif, L = 0
+cu2yg1c13id1: drif, L = 0
+cu2yg1c13id2: drif, L = 0
+cu2yg1c14id1: drif, L = 0
+cu2yg1c14id2: drif, L = 0
+cu2yg1c15id1: drif, L = 0
+cu2yg1c15id2: drif, L = 0
+cu2yg1c16id1: drif, L = 0
+cu2yg1c16id2: drif, L = 0
+cu2yg1c17id1: drif, L = 0
+cu2yg1c17id2: drif, L = 0
+cu2yg1c19id1: drif, L = 0
+cu2yg1c19id2: drif, L = 0
+cu2yg1c20id1: drif, L = 0
+cu2yg1c20id2: drif, L = 0
+cu2yg1c21id1: drif, L = 0
+cu2yg1c22id1: drif, L = 0
+cu2yg1c22id2: drif, L = 0
+cu2yg1c24id1: drif, L = 0
+cu2yg1c24id2: drif, L = 0
+cu2yg1c25id1: drif, L = 0
+cu2yg1c25id2: drif, L = 0
+cu2yg1c26id1: drif, L = 0
+cu2yg1c26id2: drif, L = 0
+cu2yg1c27id1: drif, L = 0
+cu2yg1c27id2: drif, L = 0
+cu2yg1c29id1: drif, L = 0
+cu2yg1c29id2: drif, L = 0
+dbpm01: drif, L = 0.081
+dbpm02: drif, L = 0.08998
+dbpm03: drif, L = 0.0844
+dbpm04: drif, L = 0.08924
+dbpm05: drif, L = 0.07822
+dbpm06: drif, L = 0.0877
+dbpm07: drif, L = 0.076
+dbpm08: drif, L = 0.07592
+dbpm09: drif, L = 0.0844
+dbpm10: drif, L = 0.08924
+dbpm11: drif, L = 0.0764
+dbpm12: drif, L = 0.08541
+dfch: drif, L = 0.15
+dft: drif, L = 0.022
+dft1: drif, L = 0.2332
+dft2: drif, L = 0.051
+dh01g1c02a: drif, L = 2.4151
+dh01g1c04a: drif, L = 4.1651
+dh01g1c06a: drif, L = 4.1651
+dh01g1c08a: drif, L = 0.50285
+dh01g1c10a: drif, L = 0.26632
+dh01g1c12a: drif, L = 4.1651
+dh01g1c14a: drif, L = 4.1651
+dh01g1c16a: drif, L = 4.1651
+dh01g1c18a: drif, L = 0.50285
+dh01g1c20a: drif, L = 4.1651
+dh01g1c22a: drif, L = 2.8533
+dh01g1c24a: drif, L = 4.1651
+dh01g1c26a: drif, L = 4.1651
+dh01g1c28a: drif, L = 0.50285
+dh02g1c02a: drif, L = 0
+dh02g1c04a: drif, L = 0
+dh02g1c06a: drif, L = 0
+dh02g1c08a: drif, L = 0.07175
+dh02g1c10a: drif, L = 2.39878
+dh02g1c12a: drif, L = 0
+dh02g1c14a: drif, L = 0
+dh02g1c16a: drif, L = 0
+dh02g1c18a: drif, L = 0.07175
+dh02g1c20a: drif, L = 0
+dh02g1c22a: drif, L = 0.3691
+dh02g1c24a: drif, L = 0
+dh02g1c26a: drif, L = 0
+dh02g1c28a: drif, L = 0.07175
+dh03g1c04a: drif, L = 0
+dh03g1c06a: drif, L = 0
+dh03g1c08a: drif, L = 0
+dh03g1c12a: drif, L = 0
+dh03g1c14a: drif, L = 0
+dh03g1c16a: drif, L = 0
+dh03g1c18a: drif, L = 0
+dh03g1c20a: drif, L = 0
+dh03g1c22a: drif, L = 0
+dh03g1c24a: drif, L = 0
+dh03g1c26a: drif, L = 0
+dh03g1c28a: drif, L = 0
+dh04g1c04a: drif, L = 0
+dh04g1c06a: drif, L = 0
+dh04g1c08a: drif, L = 0.1905
+dh04g1c12a: drif, L = 0
+dh04g1c14a: drif, L = 0
+dh04g1c16a: drif, L = 0
+dh04g1c18a: drif, L = 0.1905
+dh04g1c20a: drif, L = 0
+dh04g1c22a: drif, L = 0
+dh04g1c24a: drif, L = 0
+dh04g1c26a: drif, L = 0
+dh04g1c28a: drif, L = 0.1905
+dh05g1c02a: drif, L = 0
+dh05g1c04a: drif, L = 4.29379
+dh05g1c06a: drif, L = 4.29379
+dh05g1c08a: drif, L = 0.1905
+dh05g1c12a: drif, L = 4.29379
+dh05g1c14a: drif, L = 4.29379
+dh05g1c16a: drif, L = 4.29379
+dh05g1c18a: drif, L = 0.1905
+dh05g1c20a: drif, L = 4.29379
+dh05g1c22a: drif, L = 4.29379
+dh05g1c24a: drif, L = 4.29379
+dh05g1c26a: drif, L = 4.29379
+dh05g1c28a: drif, L = 0.1905
+dh06g1c02a: drif, L = 0
+dh06g1c04a: drif, L = 0
+dh06g1c06a: drif, L = 0
+dh06g1c08a: drif, L = 0
+dh06g1c12a: drif, L = 0
+dh06g1c14a: drif, L = 0
+dh06g1c16a: drif, L = 0
+dh06g1c18a: drif, L = 0
+dh06g1c20a: drif, L = 0
+dh06g1c22a: drif, L = 0
+dh06g1c24a: drif, L = 0
+dh06g1c26a: drif, L = 0
+dh06g1c28a: drif, L = 0
+dh07g1c02a: drif, L = 2.54379
+dh07g1c04a: drif, L = 0
+dh07g1c06a: drif, L = 0
+dh07g1c08a: drif, L = 0.0872
+dh07g1c10a: drif, L = 2.52858
+dh07g1c12a: drif, L = 0
+dh07g1c14a: drif, L = 0
+dh07g1c16a: drif, L = 0
+dh07g1c18a: drif, L = 0.0872
+dh07g1c20a: drif, L = 0
+dh07g1c22a: drif, L = 0
+dh07g1c24a: drif, L = 0
+dh07g1c26a: drif, L = 0
+dh07g1c28a: drif, L = 0.0872
+dh08g1c02a: drif, L = 0
+dh08g1c04a: drif, L = 0
+dh08g1c06a: drif, L = 0
+dh08g1c08a: drif, L = 0.61609
+dh08g1c10a: drif, L = 0.26521
+dh08g1c12a: drif, L = 0
+dh08g1c14a: drif, L = 0
+dh08g1c16a: drif, L = 0
+dh08g1c18a: drif, L = 0.61609
+dh08g1c20a: drif, L = 0
+dh08g1c22a: drif, L = 0
+dh08g1c24a: drif, L = 0
+dh08g1c26a: drif, L = 0
+dh08g1c28a: drif, L = 0.61609
+dh1ag2a: drif, L = 0.085
+dh1ag6b: drif, L = 0.08059
+dh1g1a: drif, L = 0.31221
+dh2ag2a: drif, L = 0.1485
+dh2ag6b: drif, L = 0.1235
+dh2bg2a: drif, L = 0.4535
+dh2bg2a1: drif, L = 0.1255
+dh2bg2a2: drif, L = 0.328
+dh2bg6b: drif, L = 0.4785
+dh2g1a: drif, L = 0.4409
+dh3ag2a: drif, L = 0.184
+dh3ag6b: drif, L = 0.184
+dh3bg2a: drif, L = 0.186
+dh3bg6b: drif, L = 0.186
+dh4ag2a: drif, L = 0.07602
+dh4ag6b: drif, L = 0.0896
+dh4bg2a: drif, L = 0.2485
+dh4bg2a1: drif, L = 0.1137
+dh4bg2a2: drif, L = 0.1348
+dh4bg6b: drif, L = 0.06366
+dh4cg3a: drif, L = 0.0315
+dh4cg6b: drif, L = 0.21634
+dhi1: drif, L = 0.30545
+dhi10: drif, L = 0.307636
+dhi11: drif, L = 0.922364
+dhi12: drif, L = 0.303206
+dhi2: drif, L = 0.896979
+dhi3: drif, L = 0.333021
+dhi4: drif, L = 0.361592
+dhi5: drif, L = 0.467571
+dhi6: drif, L = 0.177225
+dhi7: drif, L = 0.079197
+dhi8: drif, L = 0.05715
+dhi9: drif, L = 0.347499
+dhp0g1c22a: drif, L = 0.2677
+dhp1g1c22a: drif, L = 0.075
+dl01g1c01a: drif, L = 2.66348
+dl01g1c03a: drif, L = 0.1207
+dl01g1c05a: drif, L = 0
+dl01g1c07a: drif, L = 2.66348
+dl01g1c09a: drif, L = 2.66348
+dl01g1c11a: drif, L = 0.1207
+dl01g1c13a: drif, L = 2.66348
+dl01g1c15a: drif, L = 2.66348
+dl01g1c17a: drif, L = 2.66348
+dl01g1c19a: drif, L = 2.66348
+dl01g1c21a: drif, L = 0.43348
+dl01g1c23a: drif, L = 0.39048
+dl01g1c25a: drif, L = 2.66348
+dl01g1c27a: drif, L = 2.66348
+dl01g1c29a: drif, L = 2.66348
+dl02g1c01a: drif, L = 0
+dl02g1c03a: drif, L = 1.04278
+dl02g1c05a: drif, L = 2.66348
+dl02g1c07a: drif, L = 0
+dl02g1c09a: drif, L = 0
+dl02g1c11a: drif, L = 1.04278
+dl02g1c13a: drif, L = 0
+dl02g1c15a: drif, L = 0
+dl02g1c17a: drif, L = 0
+dl02g1c19a: drif, L = 0
+dl02g1c21a: drif, L = 0.104
+dl02g1c23a: drif, L = 0.068
+dl02g1c25a: drif, L = 0
+dl02g1c27a: drif, L = 0
+dl02g1c29a: drif, L = 0
+dl03g1c01a: drif, L = 0
+dl03g1c05a: drif, L = 0
+dl03g1c07a: drif, L = 0
+dl03g1c09a: drif, L = 0
+dl03g1c13a: drif, L = 0
+dl03g1c15a: drif, L = 0
+dl03g1c17a: drif, L = 0
+dl03g1c19a: drif, L = 0
+dl03g1c21a: drif, L = 0.202
+dl03g1c23a: drif, L = 0
+dl03g1c25a: drif, L = 0
+dl03g1c27a: drif, L = 0
+dl03g1c29a: drif, L = 0
+dl04g1c01a: drif, L = 0
+dl04g1c05a: drif, L = 0
+dl04g1c07a: drif, L = 0
+dl04g1c09a: drif, L = 0
+dl04g1c13a: drif, L = 0
+dl04g1c15a: drif, L = 0
+dl04g1c17a: drif, L = 0
+dl04g1c19a: drif, L = 0
+dl04g1c23a: drif, L = 0.205
+dl04g1c25a: drif, L = 0
+dl04g1c27a: drif, L = 0
+dl04g1c29a: drif, L = 0
+dl05g1c01a: drif, L = 2.79768
+dl05g1c05a: drif, L = 0.55551
+dl05g1c07a: drif, L = 2.79768
+dl05g1c09a: drif, L = 2.79768
+dl05g1c13a: drif, L = 2.79768
+dl05g1c15a: drif, L = 2.79768
+dl05g1c17a: drif, L = 2.79768
+dl05g1c19a: drif, L = 2.79768
+dl05g1c23a: drif, L = 0.204
+dl05g1c25a: drif, L = 2.79768
+dl05g1c27a: drif, L = 2.79768
+dl05g1c29a: drif, L = 2.79768
+dl06g1c01a: drif, L = 0
+dl06g1c05a: drif, L = 0
+dl06g1c07a: drif, L = 0
+dl06g1c09a: drif, L = 0
+dl06g1c13a: drif, L = 0
+dl06g1c15a: drif, L = 0
+dl06g1c17a: drif, L = 0
+dl06g1c19a: drif, L = 0
+dl06g1c23a: drif, L = 0.076
+dl06g1c25a: drif, L = 0
+dl06g1c27a: drif, L = 0
+dl06g1c29a: drif, L = 0
+dl07g1c01a: drif, L = 0
+dl07g1c03a: drif, L = 1.17863
+dl07g1c05a: drif, L = 0.74217
+dl07g1c07a: drif, L = 0
+dl07g1c09a: drif, L = 0
+dl07g1c11a: drif, L = 1.17863
+dl07g1c13a: drif, L = 0
+dl07g1c15a: drif, L = 0
+dl07g1c17a: drif, L = 0
+dl07g1c19a: drif, L = 0
+dl07g1c21a: drif, L = 0.132
+dl07g1c23a: drif, L = 0.128
+dl07g1c25a: drif, L = 0
+dl07g1c27a: drif, L = 0
+dl07g1c29a: drif, L = 0
+dl08g1c01a: drif, L = 0
+dl08g1c03a: drif, L = 0.11905
+dl08g1c05a: drif, L = 0
+dl08g1c07a: drif, L = 0
+dl08g1c09a: drif, L = 0
+dl08g1c11a: drif, L = 0.11905
+dl08g1c13a: drif, L = 0
+dl08g1c15a: drif, L = 0
+dl08g1c17a: drif, L = 0
+dl08g1c19a: drif, L = 0
+dl08g1c21a: drif, L = 0.38968
+dl08g1c23a: drif, L = 0.38968
+dl08g1c25a: drif, L = 0
+dl08g1c27a: drif, L = 0
+dl08g1c29a: drif, L = 0
+dl0ag1a: drif, L = 0.31232
+dl0bg1a: drif, L = 0.44652
+dl1ag2a: drif, L = 0.09
+dl1ag6b: drif, L = 0.0783
+dl2ag2a: drif, L = 0.13475
+dl2ag6b: drif, L = 0.13475
+dl2bg2a: drif, L = 0.13125
+dl2bg6b: drif, L = 0.13125
+dl2cg2a: drif, L = 0.244
+dl2cg6b: drif, L = 0.244
+dl3ag2a: drif, L = 0.2021
+dl3ag6b: drif, L = 0.2021
+dl3bg2a: drif, L = 0.1575
+dl3bg6b: drif, L = 0.1575
+dl3cg2a: drif, L = 0.09008
+dl3cg6b: drif, L = 0.08778
+dl4ag2a: drif, L = 0.5727
+dl4ag6b: drif, L = 0.3732
+dl4bg3a: drif, L = 0.0183
+dl4bg6b: drif, L = 0.2178
+dldk: drif, L = 0.095
+dm1ag4a: drif, L = 0.501
+dm1bg4a: drif, L = 0.2755
+dm1cg5b1: drif, L = 0.266
+dm1cg5b2: drif, L = 0.266
+dm1cg5b2c03: drif, L = 0.291
+dm1cg5b2c13: drif, L = 0.291
+dm1cg5b2c23: drif, L = 0.291
+dm1dg5b1: drif, L = 0.1
+dm1dg5b2: drif, L = 0.1
+dm1dg5b2c03: drif, L = 0.075
+dm1dg5b2c13: drif, L = 0.075
+dm1dg5b2c23: drif, L = 0.075
+dm1eg4b: drif, L = 0.1105
+dm2a2g4a: drif, L = 0.2015
+dm2a2g4b: drif, L = 0.26226
+dm2ag4a: drif, L = 0.2015
+dm2ag4b: drif, L = 0.26226
+dm2b2g4a: drif, L = 0.2924
+dm2b2g4b: drif, L = 0.504
+dm2b2g4b1: drif, L = 0.328
+dm2b2g4b2: drif, L = 0.176
+dm2bg4a: drif, L = 0.2924
+dm2bg4b: drif, L = 0.504
+dm2bg4b1: drif, L = 0.328
+dm2bg4b2: drif, L = 0.176
+dm2cg4a: drif, L = 0.184
+dm2cg4b: drif, L = 0.184
+dpwg5b: drif, L = 0.2
+dpwg5b1: drif, L = 0.077011
+dpwg5b2: drif, L = 0.122989
+dsch: drif, L = 0.1
+epu49g1c23u: drif, L = 2
+geg1c01a: drif, L = 0
+geg1c02a: drif, L = 0
+geg1c03a: drif, L = 0
+geg1c04a: drif, L = 0
+geg1c05a: drif, L = 0
+geg1c06a: drif, L = 0
+geg1c07a: drif, L = 0
+geg1c08a: drif, L = 0
+geg1c09a: drif, L = 0
+geg1c10a: drif, L = 0
+geg1c11a: drif, L = 0
+geg1c12a: drif, L = 0
+geg1c13a: drif, L = 0
+geg1c14a: drif, L = 0
+geg1c15a: drif, L = 0
+geg1c16a: drif, L = 0
+geg1c17a: drif, L = 0
+geg1c18a: drif, L = 0
+geg1c19a: drif, L = 0
+geg1c20a: drif, L = 0
+geg1c21a: drif, L = 0
+geg1c22a: drif, L = 0
+geg1c23a: drif, L = 0
+geg1c24a: drif, L = 0
+geg1c25a: drif, L = 0
+geg1c26a: drif, L = 0
+geg1c27a: drif, L = 0
+geg1c28a: drif, L = 0
+geg1c29a: drif, L = 0
+geg1c30a: drif, L = 0
+geg2c01a: drif, L = 0
+geg2c02a: drif, L = 0
+geg2c03a: drif, L = 0
+geg2c04a: drif, L = 0
+geg2c05a: drif, L = 0
+geg2c06a: drif, L = 0
+geg2c07a: drif, L = 0
+geg2c08a: drif, L = 0
+geg2c09a: drif, L = 0
+geg2c10a: drif, L = 0
+geg2c11a: drif, L = 0
+geg2c12a: drif, L = 0
+geg2c13a: drif, L = 0
+geg2c14a: drif, L = 0
+geg2c15a: drif, L = 0
+geg2c16a: drif, L = 0
+geg2c17a: drif, L = 0
+geg2c18a: drif, L = 0
+geg2c19a: drif, L = 0
+geg2c20a: drif, L = 0
+geg2c21a: drif, L = 0
+geg2c22a: drif, L = 0
+geg2c23a: drif, L = 0
+geg2c24a: drif, L = 0
+geg2c25a: drif, L = 0
+geg2c26a: drif, L = 0
+geg2c27a: drif, L = 0
+geg2c28a: drif, L = 0
+geg2c29a: drif, L = 0
+geg2c30a: drif, L = 0
+geg3c01a: drif, L = 0
+geg3c02a: drif, L = 0
+geg3c03a: drif, L = 0
+geg3c04a: drif, L = 0
+geg3c05a: drif, L = 0
+geg3c06a: drif, L = 0
+geg3c07a: drif, L = 0
+geg3c08a: drif, L = 0
+geg3c09a: drif, L = 0
+geg3c10a: drif, L = 0
+geg3c11a: drif, L = 0
+geg3c12a: drif, L = 0
+geg3c13a: drif, L = 0
+geg3c14a: drif, L = 0
+geg3c15a: drif, L = 0
+geg3c16a: drif, L = 0
+geg3c17a: drif, L = 0
+geg3c18a: drif, L = 0
+geg3c19a: drif, L = 0
+geg3c20a: drif, L = 0
+geg3c21a: drif, L = 0
+geg3c22a: drif, L = 0
+geg3c23a: drif, L = 0
+geg3c24a: drif, L = 0
+geg3c25a: drif, L = 0
+geg3c26a: drif, L = 0
+geg3c27a: drif, L = 0
+geg3c28a: drif, L = 0
+geg3c29a: drif, L = 0
+geg3c30a: drif, L = 0
+geg4c01b: drif, L = 0
+geg4c02b: drif, L = 0
+geg4c03b: drif, L = 0
+geg4c04b: drif, L = 0
+geg4c05b: drif, L = 0
+geg4c06b: drif, L = 0
+geg4c07b: drif, L = 0
+geg4c08b: drif, L = 0
+geg4c09b: drif, L = 0
+geg4c10b: drif, L = 0
+geg4c11b: drif, L = 0
+geg4c12b: drif, L = 0
+geg4c13b: drif, L = 0
+geg4c14b: drif, L = 0
+geg4c15b: drif, L = 0
+geg4c16b: drif, L = 0
+geg4c17b: drif, L = 0
+geg4c18b: drif, L = 0
+geg4c19b: drif, L = 0
+geg4c20b: drif, L = 0
+geg4c21b: drif, L = 0
+geg4c22b: drif, L = 0
+geg4c23b: drif, L = 0
+geg4c24b: drif, L = 0
+geg4c25b: drif, L = 0
+geg4c26b: drif, L = 0
+geg4c27b: drif, L = 0
+geg4c28b: drif, L = 0
+geg4c29b: drif, L = 0
+geg4c30b: drif, L = 0
+geg5c01b: drif, L = 0
+geg5c02b: drif, L = 0
+geg5c03b: drif, L = 0
+geg5c04b: drif, L = 0
+geg5c05b: drif, L = 0
+geg5c06b: drif, L = 0
+geg5c07b: drif, L = 0
+geg5c08b: drif, L = 0
+geg5c09b: drif, L = 0
+geg5c10b: drif, L = 0
+geg5c11b: drif, L = 0
+geg5c12b: drif, L = 0
+geg5c13b: drif, L = 0
+geg5c14b: drif, L = 0
+geg5c15b: drif, L = 0
+geg5c16b: drif, L = 0
+geg5c17b: drif, L = 0
+geg5c18b: drif, L = 0
+geg5c19b: drif, L = 0
+geg5c20b: drif, L = 0
+geg5c21b: drif, L = 0
+geg5c22b: drif, L = 0
+geg5c23b: drif, L = 0
+geg5c24b: drif, L = 0
+geg5c25b: drif, L = 0
+geg5c26b: drif, L = 0
+geg5c27b: drif, L = 0
+geg5c28b: drif, L = 0
+geg5c29b: drif, L = 0
+geg5c30b: drif, L = 0
+geg6c01b: drif, L = 0
+geg6c02b: drif, L = 0
+geg6c03b: drif, L = 0
+geg6c04b: drif, L = 0
+geg6c05b: drif, L = 0
+geg6c06b: drif, L = 0
+geg6c07b: drif, L = 0
+geg6c08b: drif, L = 0
+geg6c09b: drif, L = 0
+geg6c10b: drif, L = 0
+geg6c11b: drif, L = 0
+geg6c12b: drif, L = 0
+geg6c13b: drif, L = 0
+geg6c14b: drif, L = 0
+geg6c15b: drif, L = 0
+geg6c16b: drif, L = 0
+geg6c17b: drif, L = 0
+geg6c18b: drif, L = 0
+geg6c19b: drif, L = 0
+geg6c20b: drif, L = 0
+geg6c21b: drif, L = 0
+geg6c22b: drif, L = 0
+geg6c23b: drif, L = 0
+geg6c24b: drif, L = 0
+geg6c25b: drif, L = 0
+geg6c26b: drif, L = 0
+geg6c27b: drif, L = 0
+geg6c28b: drif, L = 0
+geg6c29b: drif, L = 0
+geg6c30b: drif, L = 0
+gsg1c01a: drif, L = 0
+gsg1c02a: drif, L = 0
+gsg1c03a: drif, L = 0
+gsg1c04a: drif, L = 0
+gsg1c05a: drif, L = 0
+gsg1c06a: drif, L = 0
+gsg1c07a: drif, L = 0
+gsg1c08a: drif, L = 0
+gsg1c09a: drif, L = 0
+gsg1c10a: drif, L = 0
+gsg1c11a: drif, L = 0
+gsg1c12a: drif, L = 0
+gsg1c13a: drif, L = 0
+gsg1c14a: drif, L = 0
+gsg1c15a: drif, L = 0
+gsg1c16a: drif, L = 0
+gsg1c17a: drif, L = 0
+gsg1c18a: drif, L = 0
+gsg1c19a: drif, L = 0
+gsg1c20a: drif, L = 0
+gsg1c21a: drif, L = 0
+gsg1c22a: drif, L = 0
+gsg1c23a: drif, L = 0
+gsg1c24a: drif, L = 0
+gsg1c25a: drif, L = 0
+gsg1c26a: drif, L = 0
+gsg1c27a: drif, L = 0
+gsg1c28a: drif, L = 0
+gsg1c29a: drif, L = 0
+gsg1c30a: drif, L = 0
+gsg2c01a: drif, L = 0
+gsg2c02a: drif, L = 0
+gsg2c03a: drif, L = 0
+gsg2c04a: drif, L = 0
+gsg2c05a: drif, L = 0
+gsg2c06a: drif, L = 0
+gsg2c07a: drif, L = 0
+gsg2c08a: drif, L = 0
+gsg2c09a: drif, L = 0
+gsg2c10a: drif, L = 0
+gsg2c11a: drif, L = 0
+gsg2c12a: drif, L = 0
+gsg2c13a: drif, L = 0
+gsg2c14a: drif, L = 0
+gsg2c15a: drif, L = 0
+gsg2c16a: drif, L = 0
+gsg2c17a: drif, L = 0
+gsg2c18a: drif, L = 0
+gsg2c19a: drif, L = 0
+gsg2c20a: drif, L = 0
+gsg2c21a: drif, L = 0
+gsg2c22a: drif, L = 0
+gsg2c23a: drif, L = 0
+gsg2c24a: drif, L = 0
+gsg2c25a: drif, L = 0
+gsg2c26a: drif, L = 0
+gsg2c27a: drif, L = 0
+gsg2c28a: drif, L = 0
+gsg2c29a: drif, L = 0
+gsg2c30a: drif, L = 0
+gsg3c01a: drif, L = 0
+gsg3c02a: drif, L = 0
+gsg3c03a: drif, L = 0
+gsg3c04a: drif, L = 0
+gsg3c05a: drif, L = 0
+gsg3c06a: drif, L = 0
+gsg3c07a: drif, L = 0
+gsg3c08a: drif, L = 0
+gsg3c09a: drif, L = 0
+gsg3c10a: drif, L = 0
+gsg3c11a: drif, L = 0
+gsg3c12a: drif, L = 0
+gsg3c13a: drif, L = 0
+gsg3c14a: drif, L = 0
+gsg3c15a: drif, L = 0
+gsg3c16a: drif, L = 0
+gsg3c17a: drif, L = 0
+gsg3c18a: drif, L = 0
+gsg3c19a: drif, L = 0
+gsg3c20a: drif, L = 0
+gsg3c21a: drif, L = 0
+gsg3c22a: drif, L = 0
+gsg3c23a: drif, L = 0
+gsg3c24a: drif, L = 0
+gsg3c25a: drif, L = 0
+gsg3c26a: drif, L = 0
+gsg3c27a: drif, L = 0
+gsg3c28a: drif, L = 0
+gsg3c29a: drif, L = 0
+gsg3c30a: drif, L = 0
+gsg4c01a: drif, L = 0
+gsg4c02a: drif, L = 0
+gsg4c03a: drif, L = 0
+gsg4c04a: drif, L = 0
+gsg4c05a: drif, L = 0
+gsg4c06a: drif, L = 0
+gsg4c07a: drif, L = 0
+gsg4c08a: drif, L = 0
+gsg4c09a: drif, L = 0
+gsg4c10a: drif, L = 0
+gsg4c11a: drif, L = 0
+gsg4c12a: drif, L = 0
+gsg4c13a: drif, L = 0
+gsg4c14a: drif, L = 0
+gsg4c15a: drif, L = 0
+gsg4c16a: drif, L = 0
+gsg4c17a: drif, L = 0
+gsg4c18a: drif, L = 0
+gsg4c19a: drif, L = 0
+gsg4c20a: drif, L = 0
+gsg4c21a: drif, L = 0
+gsg4c22a: drif, L = 0
+gsg4c23a: drif, L = 0
+gsg4c24a: drif, L = 0
+gsg4c25a: drif, L = 0
+gsg4c26a: drif, L = 0
+gsg4c27a: drif, L = 0
+gsg4c28a: drif, L = 0
+gsg4c29a: drif, L = 0
+gsg4c30a: drif, L = 0
+gsg5c01b: drif, L = 0
+gsg5c02b: drif, L = 0
+gsg5c03b: drif, L = 0
+gsg5c04b: drif, L = 0
+gsg5c05b: drif, L = 0
+gsg5c06b: drif, L = 0
+gsg5c07b: drif, L = 0
+gsg5c08b: drif, L = 0
+gsg5c09b: drif, L = 0
+gsg5c10b: drif, L = 0
+gsg5c11b: drif, L = 0
+gsg5c12b: drif, L = 0
+gsg5c13b: drif, L = 0
+gsg5c14b: drif, L = 0
+gsg5c15b: drif, L = 0
+gsg5c16b: drif, L = 0
+gsg5c17b: drif, L = 0
+gsg5c18b: drif, L = 0
+gsg5c19b: drif, L = 0
+gsg5c20b: drif, L = 0
+gsg5c21b: drif, L = 0
+gsg5c22b: drif, L = 0
+gsg5c23b: drif, L = 0
+gsg5c24b: drif, L = 0
+gsg5c25b: drif, L = 0
+gsg5c26b: drif, L = 0
+gsg5c27b: drif, L = 0
+gsg5c28b: drif, L = 0
+gsg5c29b: drif, L = 0
+gsg5c30b: drif, L = 0
+gsg6c01b: drif, L = 0
+gsg6c02b: drif, L = 0
+gsg6c03b: drif, L = 0
+gsg6c04b: drif, L = 0
+gsg6c05b: drif, L = 0
+gsg6c06b: drif, L = 0
+gsg6c07b: drif, L = 0
+gsg6c08b: drif, L = 0
+gsg6c09b: drif, L = 0
+gsg6c10b: drif, L = 0
+gsg6c11b: drif, L = 0
+gsg6c12b: drif, L = 0
+gsg6c13b: drif, L = 0
+gsg6c14b: drif, L = 0
+gsg6c15b: drif, L = 0
+gsg6c16b: drif, L = 0
+gsg6c17b: drif, L = 0
+gsg6c18b: drif, L = 0
+gsg6c19b: drif, L = 0
+gsg6c20b: drif, L = 0
+gsg6c21b: drif, L = 0
+gsg6c22b: drif, L = 0
+gsg6c23b: drif, L = 0
+gsg6c24b: drif, L = 0
+gsg6c25b: drif, L = 0
+gsg6c26b: drif, L = 0
+gsg6c27b: drif, L = 0
+gsg6c28b: drif, L = 0
+gsg6c29b: drif, L = 0
+gsg6c30b: drif, L = 0
+idc01h1: drif, L = 0
+idc01h2: drif, L = 0
+idc02h1: drif, L = 1.75
+idc02h2: drif, L = 1.75
+idc04h1: drif, L = 0
+idc04h2: drif, L = 0
+idc05h1: drif, L = 0
+idc06h1: drif, L = 0
+idc06h2: drif, L = 0
+idc07h1: drif, L = 0
+idc07h2: drif, L = 0
+idc09h1: drif, L = 0
+idc09h2: drif, L = 0
+idc12h1: drif, L = 0
+idc12h2: drif, L = 0
+idc13h1: drif, L = 0
+idc13h2: drif, L = 0
+idc14h1: drif, L = 0
+idc14h2: drif, L = 0
+idc15h1: drif, L = 0
+idc15h2: drif, L = 0
+idc16h1: drif, L = 0
+idc16h2: drif, L = 0
+idc17h1: drif, L = 0
+idc17h2: drif, L = 0
+idc19h1: drif, L = 0
+idc19h2: drif, L = 0
+idc20h1: drif, L = 0
+idc20h2: drif, L = 0
+idc21h1: drif, L = 1.4
+idc21h2: drif, L = 2.8
+idc22h1: drif, L = 0
+idc22h2: drif, L = 0
+idc24h1: drif, L = 0
+idc24h2: drif, L = 0
+idc25h1: drif, L = 0
+idc25h2: drif, L = 0
+idc26h1: drif, L = 0
+idc26h2: drif, L = 0
+idc27h1: drif, L = 0
+idc27h2: drif, L = 0
+idc29h1: drif, L = 0
+idc29h2: drif, L = 0
+ivu20g1c03c: drif, L = 3
+ivu20g1c11c: drif, L = 3
+ivu21g1c05d: drif, L = 1.5
+ivu22g1c10c: drif, L = 3
+mk1g3c01a: drif, L = 0
+mk1g3c02a: drif, L = 0
+mk1g3c03a: drif, L = 0
+mk1g3c04a: drif, L = 0
+mk1g3c05a: drif, L = 0
+mk1g3c06a: drif, L = 0
+mk1g3c07a: drif, L = 0
+mk1g3c08a: drif, L = 0
+mk1g3c09a: drif, L = 0
+mk1g3c10a: drif, L = 0
+mk1g3c11a: drif, L = 0
+mk1g3c12a: drif, L = 0
+mk1g3c13a: drif, L = 0
+mk1g3c14a: drif, L = 0
+mk1g3c15a: drif, L = 0
+mk1g3c16a: drif, L = 0
+mk1g3c17a: drif, L = 0
+mk1g3c18a: drif, L = 0
+mk1g3c19a: drif, L = 0
+mk1g3c20a: drif, L = 0
+mk1g3c21a: drif, L = 0
+mk1g3c22a: drif, L = 0
+mk1g3c23a: drif, L = 0
+mk1g3c24a: drif, L = 0
+mk1g3c25a: drif, L = 0
+mk1g3c26a: drif, L = 0
+mk1g3c27a: drif, L = 0
+mk1g3c28a: drif, L = 0
+mk1g3c29a: drif, L = 0
+mk1g3c30a: drif, L = 0
+mk2g5c01b: drif, L = 0
+mk2g5c02b: drif, L = 0
+mk2g5c03b: drif, L = 0
+mk2g5c04b: drif, L = 0
+mk2g5c05b: drif, L = 0
+mk2g5c06b: drif, L = 0
+mk2g5c07b: drif, L = 0
+mk2g5c08b: drif, L = 0
+mk2g5c09b: drif, L = 0
+mk2g5c10b: drif, L = 0
+mk2g5c11b: drif, L = 0
+mk2g5c12b: drif, L = 0
+mk2g5c13b: drif, L = 0
+mk2g5c14b: drif, L = 0
+mk2g5c15b: drif, L = 0
+mk2g5c16b: drif, L = 0
+mk2g5c17b: drif, L = 0
+mk2g5c18b: drif, L = 0
+mk2g5c19b: drif, L = 0
+mk2g5c20b: drif, L = 0
+mk2g5c21b: drif, L = 0
+mk2g5c22b: drif, L = 0
+mk2g5c23b: drif, L = 0
+mk2g5c24b: drif, L = 0
+mk2g5c25b: drif, L = 0
+mk2g5c26b: drif, L = 0
+mk2g5c27b: drif, L = 0
+mk2g5c28b: drif, L = 0
+mk2g5c29b: drif, L = 0
+mk2g5c30b: drif, L = 0
+mk4g1c02a: drif, L = 0
+mk4g1c04a: drif, L = 0
+mk4g1c06a: drif, L = 0
+mk4g1c08a: drif, L = 0
+mk4g1c12a: drif, L = 0
+mk4g1c14a: drif, L = 0
+mk4g1c16a: drif, L = 0
+mk4g1c18a: drif, L = 0
+mk4g1c20a: drif, L = 0
+mk4g1c22a: drif, L = 0
+mk4g1c24a: drif, L = 0
+mk4g1c26a: drif, L = 0
+mk4g1c28a: drif, L = 0
+mk4g1c30a: drif, L = 0
+mk5g1c01a: drif, L = 0
+mk5g1c05a: drif, L = 0
+mk5g1c07a: drif, L = 0
+mk5g1c09a: drif, L = 0
+mk5g1c13a: drif, L = 0
+mk5g1c15a: drif, L = 0
+mk5g1c17a: drif, L = 0
+mk5g1c19a: drif, L = 0
+mk5g1c21a: drif, L = 0
+mk5g1c23a: drif, L = 0
+mk5g1c25a: drif, L = 0
+mk5g1c27a: drif, L = 0
+mk5g1c29a: drif, L = 0
+p1g1c30a: drif, L = 0
+p2g1c30a: drif, L = 0
+p3g1c30a: drif, L = 0
+p4g1c30a: drif, L = 0
+pu1g1c01a: drif, L = 0
+pu1g1c02a: drif, L = 0
+pu1g1c04a: drif, L = 0
+pu1g1c06a: drif, L = 0
+pu1g1c07a: drif, L = 0
+pu1g1c09a: drif, L = 0
+pu1g1c12a: drif, L = 0
+pu1g1c13a: drif, L = 0
+pu1g1c14a: drif, L = 0
+pu1g1c15a: drif, L = 0
+pu1g1c16a: drif, L = 0
+pu1g1c17a: drif, L = 0
+pu1g1c19a: drif, L = 0
+pu1g1c20a: drif, L = 0
+pu1g1c21a: drif, L = 0
+pu1g1c22a: drif, L = 0
+pu1g1c24a: drif, L = 0
+pu1g1c25a: drif, L = 0
+pu1g1c26a: drif, L = 0
+pu1g1c27a: drif, L = 0
+pu1g1c29a: drif, L = 0
+pu2g1c01a: drif, L = 0
+pu2g1c02a: drif, L = 0
+pu2g1c04a: drif, L = 0
+pu2g1c06a: drif, L = 0
+pu2g1c07a: drif, L = 0
+pu2g1c08a: drif, L = 0
+pu2g1c09a: drif, L = 0
+pu2g1c12a: drif, L = 0
+pu2g1c13a: drif, L = 0
+pu2g1c14a: drif, L = 0
+pu2g1c15a: drif, L = 0
+pu2g1c16a: drif, L = 0
+pu2g1c17a: drif, L = 0
+pu2g1c18a: drif, L = 0
+pu2g1c19a: drif, L = 0
+pu2g1c20a: drif, L = 0
+pu2g1c21a: drif, L = 0
+pu2g1c22a: drif, L = 0
+pu2g1c23a: drif, L = 0
+pu2g1c24a: drif, L = 0
+pu2g1c25a: drif, L = 0
+pu2g1c26a: drif, L = 0
+pu2g1c27a: drif, L = 0
+pu2g1c28a: drif, L = 0
+pu2g1c29a: drif, L = 0
+pu3g1c01a: drif, L = 0
+pu3g1c02a: drif, L = 0
+pu3g1c04a: drif, L = 0
+pu3g1c05a: drif, L = 0
+pu3g1c06a: drif, L = 0
+pu3g1c07a: drif, L = 0
+pu3g1c08a: drif, L = 0
+pu3g1c09a: drif, L = 0
+pu3g1c12a: drif, L = 0
+pu3g1c13a: drif, L = 0
+pu3g1c14a: drif, L = 0
+pu3g1c15a: drif, L = 0
+pu3g1c16a: drif, L = 0
+pu3g1c17a: drif, L = 0
+pu3g1c18a: drif, L = 0
+pu3g1c19a: drif, L = 0
+pu3g1c20a: drif, L = 0
+pu3g1c21a: drif, L = 0
+pu3g1c22a: drif, L = 0
+pu3g1c24a: drif, L = 0
+pu3g1c25a: drif, L = 0
+pu3g1c26a: drif, L = 0
+pu3g1c27a: drif, L = 0
+pu3g1c28a: drif, L = 0
+pu3g1c29a: drif, L = 0
+pu4g1c01a: drif, L = 0
+pu4g1c02a: drif, L = 0
+pu4g1c04a: drif, L = 0
+pu4g1c06a: drif, L = 0
+pu4g1c07a: drif, L = 0
+pu4g1c09a: drif, L = 0
+pu4g1c12a: drif, L = 0
+pu4g1c13a: drif, L = 0
+pu4g1c14a: drif, L = 0
+pu4g1c15a: drif, L = 0
+pu4g1c16a: drif, L = 0
+pu4g1c17a: drif, L = 0
+pu4g1c19a: drif, L = 0
+pu4g1c20a: drif, L = 0
+pu4g1c21a: drif, L = 0
+pu4g1c22a: drif, L = 0
+pu4g1c24a: drif, L = 0
+pu4g1c25a: drif, L = 0
+pu4g1c26a: drif, L = 0
+pu4g1c27a: drif, L = 0
+pu4g1c29a: drif, L = 0
+pvfg1c30a: drif, L = 0
+ch1xg2c02a: kick, L = 0, hkick = 0, vkick = 0
+ch1xg2c04a: kick, L = 0, hkick = 0, vkick = 0
+ch1xg2c06a: kick, L = 0, hkick = 0, vkick = 0
+ch1xg2c08a: kick, L = 0, hkick = 0, vkick = 0
+ch1xg2c10a: kick, L = 0, hkick = 0, vkick = 0
+ch1xg2c12a: kick, L = 0, hkick = 0, vkick = 0
+ch1xg2c14a: kick, L = 0, hkick = 0, vkick = 0
+ch1xg2c16a: kick, L = 0, hkick = 0, vkick = 0
+ch1xg2c18a: kick, L = 0, hkick = 0, vkick = 0
+ch1xg2c20a: kick, L = 0, hkick = 0, vkick = 0
+ch1xg2c22a: kick, L = 0, hkick = 0, vkick = 0
+ch1xg2c24a: kick, L = 0, hkick = 0, vkick = 0
+ch1xg2c26a: kick, L = 0, hkick = 0, vkick = 0
+ch1xg2c28a: kick, L = 0, hkick = 0, vkick = 0
+ch1xg2c30a: kick, L = 0, hkick = 0, vkick = 0
+ch1xg6c01b: kick, L = 0, hkick = 0, vkick = 0
+ch1xg6c03b: kick, L = 0, hkick = 0, vkick = 0
+ch1xg6c05b: kick, L = 0, hkick = 0, vkick = 0
+ch1xg6c07b: kick, L = 0, hkick = 0, vkick = 0
+ch1xg6c09b: kick, L = 0, hkick = 0, vkick = 0
+ch1xg6c11b: kick, L = 0, hkick = 0, vkick = 0
+ch1xg6c13b: kick, L = 0, hkick = 0, vkick = 0
+ch1xg6c15b: kick, L = 0, hkick = 0, vkick = 0
+ch1xg6c17b: kick, L = 0, hkick = 0, vkick = 0
+ch1xg6c19b: kick, L = 0, hkick = 0, vkick = 0
+ch1xg6c21b: kick, L = 0, hkick = 0, vkick = 0
+ch1xg6c23b: kick, L = 0, hkick = 0, vkick = 0
+ch1xg6c25b: kick, L = 0, hkick = 0, vkick = 0
+ch1xg6c27b: kick, L = 0, hkick = 0, vkick = 0
+ch1xg6c29b: kick, L = 0, hkick = 0, vkick = 0
+ch1yg2c02a: kick, L = 0, hkick = 0, vkick = 0
+ch1yg2c04a: kick, L = 0, hkick = 0, vkick = 0
+ch1yg2c06a: kick, L = 0, hkick = 0, vkick = 0
+ch1yg2c08a: kick, L = 0, hkick = 0, vkick = 0
+ch1yg2c10a: kick, L = 0, hkick = 0, vkick = 0
+ch1yg2c12a: kick, L = 0, hkick = 0, vkick = 0
+ch1yg2c14a: kick, L = 0, hkick = 0, vkick = 0
+ch1yg2c16a: kick, L = 0, hkick = 0, vkick = 0
+ch1yg2c18a: kick, L = 0, hkick = 0, vkick = 0
+ch1yg2c20a: kick, L = 0, hkick = 0, vkick = 0
+ch1yg2c22a: kick, L = 0, hkick = 0, vkick = 0
+ch1yg2c24a: kick, L = 0, hkick = 0, vkick = 0
+ch1yg2c26a: kick, L = 0, hkick = 0, vkick = 0
+ch1yg2c28a: kick, L = 0, hkick = 0, vkick = 0
+ch1yg2c30a: kick, L = 0, hkick = 0, vkick = 0
+ch1yg6c01b: kick, L = 0, hkick = 0, vkick = 0
+ch1yg6c03b: kick, L = 0, hkick = 0, vkick = 0
+ch1yg6c05b: kick, L = 0, hkick = 0, vkick = 0
+ch1yg6c07b: kick, L = 0, hkick = 0, vkick = 0
+ch1yg6c09b: kick, L = 0, hkick = 0, vkick = 0
+ch1yg6c11b: kick, L = 0, hkick = 0, vkick = 0
+ch1yg6c13b: kick, L = 0, hkick = 0, vkick = 0
+ch1yg6c15b: kick, L = 0, hkick = 0, vkick = 0
+ch1yg6c17b: kick, L = 0, hkick = 0, vkick = 0
+ch1yg6c19b: kick, L = 0, hkick = 0, vkick = 0
+ch1yg6c21b: kick, L = 0, hkick = 0, vkick = 0
+ch1yg6c23b: kick, L = 0, hkick = 0, vkick = 0
+ch1yg6c25b: kick, L = 0, hkick = 0, vkick = 0
+ch1yg6c27b: kick, L = 0, hkick = 0, vkick = 0
+ch1yg6c29b: kick, L = 0, hkick = 0, vkick = 0
+ch2xg2c02a: kick, L = 0, hkick = 0, vkick = 0
+ch2xg2c04a: kick, L = 0, hkick = 0, vkick = 0
+ch2xg2c06a: kick, L = 0, hkick = 0, vkick = 0
+ch2xg2c08a: kick, L = 0, hkick = 0, vkick = 0
+ch2xg2c10a: kick, L = 0, hkick = 0, vkick = 0
+ch2xg2c12a: kick, L = 0, hkick = 0, vkick = 0
+ch2xg2c14a: kick, L = 0, hkick = 0, vkick = 0
+ch2xg2c16a: kick, L = 0, hkick = 0, vkick = 0
+ch2xg2c18a: kick, L = 0, hkick = 0, vkick = 0
+ch2xg2c20a: kick, L = 0, hkick = 0, vkick = 0
+ch2xg2c22a: kick, L = 0, hkick = 0, vkick = 0
+ch2xg2c24a: kick, L = 0, hkick = 0, vkick = 0
+ch2xg2c26a: kick, L = 0, hkick = 0, vkick = 0
+ch2xg2c28a: kick, L = 0, hkick = 0, vkick = 0
+ch2xg2c30a: kick, L = 0, hkick = 0, vkick = 0
+ch2xg6c01b: kick, L = 0, hkick = 0, vkick = 0
+ch2xg6c03b: kick, L = 0, hkick = 0, vkick = 0
+ch2xg6c05b: kick, L = 0, hkick = 0, vkick = 0
+ch2xg6c07b: kick, L = 0, hkick = 0, vkick = 0
+ch2xg6c09b: kick, L = 0, hkick = 0, vkick = 0
+ch2xg6c11b: kick, L = 0, hkick = 0, vkick = 0
+ch2xg6c13b: kick, L = 0, hkick = 0, vkick = 0
+ch2xg6c15b: kick, L = 0, hkick = 0, vkick = 0
+ch2xg6c17b: kick, L = 0, hkick = 0, vkick = 0
+ch2xg6c19b: kick, L = 0, hkick = 0, vkick = 0
+ch2xg6c21b: kick, L = 0, hkick = 0, vkick = 0
+ch2xg6c23b: kick, L = 0, hkick = 0, vkick = 0
+ch2xg6c25b: kick, L = 0, hkick = 0, vkick = 0
+ch2xg6c27b: kick, L = 0, hkick = 0, vkick = 0
+ch2xg6c29b: kick, L = 0, hkick = 0, vkick = 0
+ch2yg2c02a: kick, L = 0, hkick = 0, vkick = 0
+ch2yg2c04a: kick, L = 0, hkick = 0, vkick = 0
+ch2yg2c06a: kick, L = 0, hkick = 0, vkick = 0
+ch2yg2c08a: kick, L = 0, hkick = 0, vkick = 0
+ch2yg2c10a: kick, L = 0, hkick = 0, vkick = 0
+ch2yg2c12a: kick, L = 0, hkick = 0, vkick = 0
+ch2yg2c14a: kick, L = 0, hkick = 0, vkick = 0
+ch2yg2c16a: kick, L = 0, hkick = 0, vkick = 0
+ch2yg2c18a: kick, L = 0, hkick = 0, vkick = 0
+ch2yg2c20a: kick, L = 0, hkick = 0, vkick = 0
+ch2yg2c22a: kick, L = 0, hkick = 0, vkick = 0
+ch2yg2c24a: kick, L = 0, hkick = 0, vkick = 0
+ch2yg2c26a: kick, L = 0, hkick = 0, vkick = 0
+ch2yg2c28a: kick, L = 0, hkick = 0, vkick = 0
+ch2yg2c30a: kick, L = 0, hkick = 0, vkick = 0
+ch2yg6c01b: kick, L = 0, hkick = 0, vkick = 0
+ch2yg6c03b: kick, L = 0, hkick = 0, vkick = 0
+ch2yg6c05b: kick, L = 0, hkick = 0, vkick = 0
+ch2yg6c07b: kick, L = 0, hkick = 0, vkick = 0
+ch2yg6c09b: kick, L = 0, hkick = 0, vkick = 0
+ch2yg6c11b: kick, L = 0, hkick = 0, vkick = 0
+ch2yg6c13b: kick, L = 0, hkick = 0, vkick = 0
+ch2yg6c15b: kick, L = 0, hkick = 0, vkick = 0
+ch2yg6c17b: kick, L = 0, hkick = 0, vkick = 0
+ch2yg6c19b: kick, L = 0, hkick = 0, vkick = 0
+ch2yg6c21b: kick, L = 0, hkick = 0, vkick = 0
+ch2yg6c23b: kick, L = 0, hkick = 0, vkick = 0
+ch2yg6c25b: kick, L = 0, hkick = 0, vkick = 0
+ch2yg6c27b: kick, L = 0, hkick = 0, vkick = 0
+ch2yg6c29b: kick, L = 0, hkick = 0, vkick = 0
+cl1xg2c01a: kick, L = 0, hkick = 0, vkick = 0
+cl1xg2c03a: kick, L = 0, hkick = 0, vkick = 0
+cl1xg2c05a: kick, L = 0, hkick = 0, vkick = 0
+cl1xg2c07a: kick, L = 0, hkick = 0, vkick = 0
+cl1xg2c09a: kick, L = 0, hkick = 0, vkick = 0
+cl1xg2c11a: kick, L = 0, hkick = 0, vkick = 0
+cl1xg2c13a: kick, L = 0, hkick = 0, vkick = 0
+cl1xg2c15a: kick, L = 0, hkick = 0, vkick = 0
+cl1xg2c17a: kick, L = 0, hkick = 0, vkick = 0
+cl1xg2c19a: kick, L = 0, hkick = 0, vkick = 0
+cl1xg2c21a: kick, L = 0, hkick = 0, vkick = 0
+cl1xg2c23a: kick, L = 0, hkick = 0, vkick = 0
+cl1xg2c25a: kick, L = 0, hkick = 0, vkick = 0
+cl1xg2c27a: kick, L = 0, hkick = 0, vkick = 0
+cl1xg2c29a: kick, L = 0, hkick = 0, vkick = 0
+cl1xg6c02b: kick, L = 0, hkick = 0, vkick = 0
+cl1xg6c04b: kick, L = 0, hkick = 0, vkick = 0
+cl1xg6c06b: kick, L = 0, hkick = 0, vkick = 0
+cl1xg6c08b: kick, L = 0, hkick = 0, vkick = 0
+cl1xg6c10b: kick, L = 0, hkick = 0, vkick = 0
+cl1xg6c12b: kick, L = 0, hkick = 0, vkick = 0
+cl1xg6c14b: kick, L = 0, hkick = 0, vkick = 0
+cl1xg6c16b: kick, L = 0, hkick = 0, vkick = 0
+cl1xg6c18b: kick, L = 0, hkick = 0, vkick = 0
+cl1xg6c20b: kick, L = 0, hkick = 0, vkick = 0
+cl1xg6c22b: kick, L = 0, hkick = 0, vkick = 0
+cl1xg6c24b: kick, L = 0, hkick = 0, vkick = 0
+cl1xg6c26b: kick, L = 0, hkick = 0, vkick = 0
+cl1xg6c28b: kick, L = 0, hkick = 0, vkick = 0
+cl1xg6c30b: kick, L = 0, hkick = 0, vkick = 0
+cl1yg2c01a: kick, L = 0, hkick = 0, vkick = 0
+cl1yg2c03a: kick, L = 0, hkick = 0, vkick = 0
+cl1yg2c05a: kick, L = 0, hkick = 0, vkick = 0
+cl1yg2c07a: kick, L = 0, hkick = 0, vkick = 0
+cl1yg2c09a: kick, L = 0, hkick = 0, vkick = 0
+cl1yg2c11a: kick, L = 0, hkick = 0, vkick = 0
+cl1yg2c13a: kick, L = 0, hkick = 0, vkick = 0
+cl1yg2c15a: kick, L = 0, hkick = 0, vkick = 0
+cl1yg2c17a: kick, L = 0, hkick = 0, vkick = 0
+cl1yg2c19a: kick, L = 0, hkick = 0, vkick = 0
+cl1yg2c21a: kick, L = 0, hkick = 0, vkick = 0
+cl1yg2c23a: kick, L = 0, hkick = 0, vkick = 0
+cl1yg2c25a: kick, L = 0, hkick = 0, vkick = 0
+cl1yg2c27a: kick, L = 0, hkick = 0, vkick = 0
+cl1yg2c29a: kick, L = 0, hkick = 0, vkick = 0
+cl1yg6c02b: kick, L = 0, hkick = 0, vkick = 0
+cl1yg6c04b: kick, L = 0, hkick = 0, vkick = 0
+cl1yg6c06b: kick, L = 0, hkick = 0, vkick = 0
+cl1yg6c08b: kick, L = 0, hkick = 0, vkick = 0
+cl1yg6c10b: kick, L = 0, hkick = 0, vkick = 0
+cl1yg6c12b: kick, L = 0, hkick = 0, vkick = 0
+cl1yg6c14b: kick, L = 0, hkick = 0, vkick = 0
+cl1yg6c16b: kick, L = 0, hkick = 0, vkick = 0
+cl1yg6c18b: kick, L = 0, hkick = 0, vkick = 0
+cl1yg6c20b: kick, L = 0, hkick = 0, vkick = 0
+cl1yg6c22b: kick, L = 0, hkick = 0, vkick = 0
+cl1yg6c24b: kick, L = 0, hkick = 0, vkick = 0
+cl1yg6c26b: kick, L = 0, hkick = 0, vkick = 0
+cl1yg6c28b: kick, L = 0, hkick = 0, vkick = 0
+cl1yg6c30b: kick, L = 0, hkick = 0, vkick = 0
+cl2xg2c01a: kick, L = 0, hkick = 0, vkick = 0
+cl2xg2c03a: kick, L = 0, hkick = 0, vkick = 0
+cl2xg2c05a: kick, L = 0, hkick = 0, vkick = 0
+cl2xg2c07a: kick, L = 0, hkick = 0, vkick = 0
+cl2xg2c09a: kick, L = 0, hkick = 0, vkick = 0
+cl2xg2c11a: kick, L = 0, hkick = 0, vkick = 0
+cl2xg2c13a: kick, L = 0, hkick = 0, vkick = 0
+cl2xg2c15a: kick, L = 0, hkick = 0, vkick = 0
+cl2xg2c17a: kick, L = 0, hkick = 0, vkick = 0
+cl2xg2c19a: kick, L = 0, hkick = 0, vkick = 0
+cl2xg2c21a: kick, L = 0, hkick = 0, vkick = 0
+cl2xg2c23a: kick, L = 0, hkick = 0, vkick = 0
+cl2xg2c25a: kick, L = 0, hkick = 0, vkick = 0
+cl2xg2c27a: kick, L = 0, hkick = 0, vkick = 0
+cl2xg2c29a: kick, L = 0, hkick = 0, vkick = 0
+cl2xg6c02b: kick, L = 0, hkick = 0, vkick = 0
+cl2xg6c04b: kick, L = 0, hkick = 0, vkick = 0
+cl2xg6c06b: kick, L = 0, hkick = 0, vkick = 0
+cl2xg6c08b: kick, L = 0, hkick = 0, vkick = 0
+cl2xg6c10b: kick, L = 0, hkick = 0, vkick = 0
+cl2xg6c12b: kick, L = 0, hkick = 0, vkick = 0
+cl2xg6c14b: kick, L = 0, hkick = 0, vkick = 0
+cl2xg6c16b: kick, L = 0, hkick = 0, vkick = 0
+cl2xg6c18b: kick, L = 0, hkick = 0, vkick = 0
+cl2xg6c20b: kick, L = 0, hkick = 0, vkick = 0
+cl2xg6c22b: kick, L = 0, hkick = 0, vkick = 0
+cl2xg6c24b: kick, L = 0, hkick = 0, vkick = 0
+cl2xg6c26b: kick, L = 0, hkick = 0, vkick = 0
+cl2xg6c28b: kick, L = 0, hkick = 0, vkick = 0
+cl2xg6c30b: kick, L = 0, hkick = 0, vkick = 0
+cl2yg2c01a: kick, L = 0, hkick = 0, vkick = 0
+cl2yg2c03a: kick, L = 0, hkick = 0, vkick = 0
+cl2yg2c05a: kick, L = 0, hkick = 0, vkick = 0
+cl2yg2c07a: kick, L = 0, hkick = 0, vkick = 0
+cl2yg2c09a: kick, L = 0, hkick = 0, vkick = 0
+cl2yg2c11a: kick, L = 0, hkick = 0, vkick = 0
+cl2yg2c13a: kick, L = 0, hkick = 0, vkick = 0
+cl2yg2c15a: kick, L = 0, hkick = 0, vkick = 0
+cl2yg2c17a: kick, L = 0, hkick = 0, vkick = 0
+cl2yg2c19a: kick, L = 0, hkick = 0, vkick = 0
+cl2yg2c21a: kick, L = 0, hkick = 0, vkick = 0
+cl2yg2c23a: kick, L = 0, hkick = 0, vkick = 0
+cl2yg2c25a: kick, L = 0, hkick = 0, vkick = 0
+cl2yg2c27a: kick, L = 0, hkick = 0, vkick = 0
+cl2yg2c29a: kick, L = 0, hkick = 0, vkick = 0
+cl2yg6c02b: kick, L = 0, hkick = 0, vkick = 0
+cl2yg6c04b: kick, L = 0, hkick = 0, vkick = 0
+cl2yg6c06b: kick, L = 0, hkick = 0, vkick = 0
+cl2yg6c08b: kick, L = 0, hkick = 0, vkick = 0
+cl2yg6c10b: kick, L = 0, hkick = 0, vkick = 0
+cl2yg6c12b: kick, L = 0, hkick = 0, vkick = 0
+cl2yg6c14b: kick, L = 0, hkick = 0, vkick = 0
+cl2yg6c16b: kick, L = 0, hkick = 0, vkick = 0
+cl2yg6c18b: kick, L = 0, hkick = 0, vkick = 0
+cl2yg6c20b: kick, L = 0, hkick = 0, vkick = 0
+cl2yg6c22b: kick, L = 0, hkick = 0, vkick = 0
+cl2yg6c24b: kick, L = 0, hkick = 0, vkick = 0
+cl2yg6c26b: kick, L = 0, hkick = 0, vkick = 0
+cl2yg6c28b: kick, L = 0, hkick = 0, vkick = 0
+cl2yg6c30b: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c01a: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c01b: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c02a: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c02b: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c03a: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c03b: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c04a: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c04b: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c05a: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c05b: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c06a: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c06b: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c07a: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c07b: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c08a: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c08b: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c09a: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c09b: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c10a: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c10b: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c11a: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c11b: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c12a: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c12b: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c13a: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c13b: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c14a: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c14b: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c15a: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c15b: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c16a: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c16b: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c17a: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c17b: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c18a: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c18b: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c19a: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c19b: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c20a: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c20b: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c21a: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c21b: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c22a: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c22b: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c23a: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c23b: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c24a: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c24b: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c25a: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c25b: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c26a: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c26b: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c27a: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c27b: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c28a: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c28b: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c29a: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c29b: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c30a: kick, L = 0, hkick = 0, vkick = 0
+cm1xg4c30b: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c01a: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c01b: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c02a: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c02b: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c03a: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c03b: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c04a: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c04b: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c05a: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c05b: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c06a: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c06b: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c07a: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c07b: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c08a: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c08b: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c09a: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c09b: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c10a: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c10b: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c11a: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c11b: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c12a: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c12b: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c13a: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c13b: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c14a: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c14b: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c15a: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c15b: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c16a: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c16b: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c17a: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c17b: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c18a: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c18b: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c19a: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c19b: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c20a: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c20b: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c21a: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c21b: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c22a: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c22b: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c23a: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c23b: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c24a: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c24b: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c25a: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c25b: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c26a: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c26b: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c27a: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c27b: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c28a: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c28b: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c29a: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c29b: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c30a: kick, L = 0, hkick = 0, vkick = 0
+cm1yg4c30b: kick, L = 0, hkick = 0, vkick = 0
+cu1xg1c02id1: kick, L = 0, hkick = 0, vkick = 0
+cu1xg1c03id1: kick, L = 0, hkick = 0, vkick = 0
+cu1xg1c05id2: kick, L = 0, hkick = 0, vkick = 0
+cu1xg1c08id1: kick, L = 0, hkick = 0, vkick = 0
+cu1xg1c08id2: kick, L = 0, hkick = 0, vkick = 0
+cu1xg1c10id1: kick, L = 0, hkick = 0, vkick = 0
+cu1xg1c11id1: kick, L = 0, hkick = 0, vkick = 0
+cu1xg1c18id1: kick, L = 0, hkick = 0, vkick = 0
+cu1xg1c18id2: kick, L = 0, hkick = 0, vkick = 0
+cu1xg1c21id1: kick, L = 0, hkick = 0, vkick = 0
+cu1xg1c23id1: kick, L = 0, hkick = 0, vkick = 0
+cu1xg1c23id2: kick, L = 0, hkick = 0, vkick = 0
+cu1xg1c28id1: kick, L = 0, hkick = 0, vkick = 0
+cu1xg1c28id2: kick, L = 0, hkick = 0, vkick = 0
+cu1yg1c02id1: kick, L = 0, hkick = 0, vkick = 0
+cu1yg1c03id1: kick, L = 0, hkick = 0, vkick = 0
+cu1yg1c05id2: kick, L = 0, hkick = 0, vkick = 0
+cu1yg1c08id1: kick, L = 0, hkick = 0, vkick = 0
+cu1yg1c08id2: kick, L = 0, hkick = 0, vkick = 0
+cu1yg1c10id1: kick, L = 0, hkick = 0, vkick = 0
+cu1yg1c11id1: kick, L = 0, hkick = 0, vkick = 0
+cu1yg1c18id1: kick, L = 0, hkick = 0, vkick = 0
+cu1yg1c18id2: kick, L = 0, hkick = 0, vkick = 0
+cu1yg1c21id1: kick, L = 0, hkick = 0, vkick = 0
+cu1yg1c23id1: kick, L = 0, hkick = 0, vkick = 0
+cu1yg1c23id2: kick, L = 0, hkick = 0, vkick = 0
+cu1yg1c28id1: kick, L = 0, hkick = 0, vkick = 0
+cu1yg1c28id2: kick, L = 0, hkick = 0, vkick = 0
+cu2xg1c02id2: kick, L = 0, hkick = 0, vkick = 0
+cu2xg1c03id2: kick, L = 0, hkick = 0, vkick = 0
+cu2xg1c05id2: kick, L = 0, hkick = 0, vkick = 0
+cu2xg1c08id1: kick, L = 0, hkick = 0, vkick = 0
+cu2xg1c08id2: kick, L = 0, hkick = 0, vkick = 0
+cu2xg1c10id2: kick, L = 0, hkick = 0, vkick = 0
+cu2xg1c11id2: kick, L = 0, hkick = 0, vkick = 0
+cu2xg1c18id1: kick, L = 0, hkick = 0, vkick = 0
+cu2xg1c18id2: kick, L = 0, hkick = 0, vkick = 0
+cu2xg1c21id2: kick, L = 0, hkick = 0, vkick = 0
+cu2xg1c23id1: kick, L = 0, hkick = 0, vkick = 0
+cu2xg1c23id2: kick, L = 0, hkick = 0, vkick = 0
+cu2xg1c28id1: kick, L = 0, hkick = 0, vkick = 0
+cu2xg1c28id2: kick, L = 0, hkick = 0, vkick = 0
+cu2yg1c02id2: kick, L = 0, hkick = 0, vkick = 0
+cu2yg1c03id2: kick, L = 0, hkick = 0, vkick = 0
+cu2yg1c05id2: kick, L = 0, hkick = 0, vkick = 0
+cu2yg1c08id1: kick, L = 0, hkick = 0, vkick = 0
+cu2yg1c08id2: kick, L = 0, hkick = 0, vkick = 0
+cu2yg1c10id2: kick, L = 0, hkick = 0, vkick = 0
+cu2yg1c11id2: kick, L = 0, hkick = 0, vkick = 0
+cu2yg1c18id1: kick, L = 0, hkick = 0, vkick = 0
+cu2yg1c18id2: kick, L = 0, hkick = 0, vkick = 0
+cu2yg1c21id2: kick, L = 0, hkick = 0, vkick = 0
+cu2yg1c23id1: kick, L = 0, hkick = 0, vkick = 0
+cu2yg1c23id2: kick, L = 0, hkick = 0, vkick = 0
+cu2yg1c28id1: kick, L = 0, hkick = 0, vkick = 0
+cu2yg1c28id2: kick, L = 0, hkick = 0, vkick = 0
+fh1g1c02a: kick, L = 0, hkick = 0, vkick = 0
+fh1g1c04a: kick, L = 0, hkick = 0, vkick = 0
+fh1g1c06a: kick, L = 0, hkick = 0, vkick = 0
+fh1g1c08a: kick, L = 0, hkick = 0, vkick = 0
+fh1g1c10a: kick, L = 0, hkick = 0, vkick = 0
+fh1g1c12a: kick, L = 0, hkick = 0, vkick = 0
+fh1g1c14a: kick, L = 0, hkick = 0, vkick = 0
+fh1g1c16a: kick, L = 0, hkick = 0, vkick = 0
+fh1g1c18a: kick, L = 0, hkick = 0, vkick = 0
+fh1g1c20a: kick, L = 0, hkick = 0, vkick = 0
+fh1g1c22a: kick, L = 0, hkick = 0, vkick = 0
+fh1g1c24a: kick, L = 0, hkick = 0, vkick = 0
+fh1g1c26a: kick, L = 0, hkick = 0, vkick = 0
+fh1g1c28a: kick, L = 0, hkick = 0, vkick = 0
+fh1g1c30a: kick, L = 0, hkick = 0, vkick = 0
+fh2g1c02a: kick, L = 0, hkick = 0, vkick = 0
+fh2g1c04a: kick, L = 0, hkick = 0, vkick = 0
+fh2g1c06a: kick, L = 0, hkick = 0, vkick = 0
+fh2g1c08a: kick, L = 0, hkick = 0, vkick = 0
+fh2g1c10a: kick, L = 0, hkick = 0, vkick = 0
+fh2g1c12a: kick, L = 0, hkick = 0, vkick = 0
+fh2g1c14a: kick, L = 0, hkick = 0, vkick = 0
+fh2g1c16a: kick, L = 0, hkick = 0, vkick = 0
+fh2g1c18a: kick, L = 0, hkick = 0, vkick = 0
+fh2g1c20a: kick, L = 0, hkick = 0, vkick = 0
+fh2g1c22a: kick, L = 0, hkick = 0, vkick = 0
+fh2g1c24a: kick, L = 0, hkick = 0, vkick = 0
+fh2g1c26a: kick, L = 0, hkick = 0, vkick = 0
+fh2g1c28a: kick, L = 0, hkick = 0, vkick = 0
+fh2g1c30a: kick, L = 0, hkick = 0, vkick = 0
+fl1g1c01a: kick, L = 0, hkick = 0, vkick = 0
+fl1g1c03a: kick, L = 0, hkick = 0, vkick = 0
+fl1g1c05a: kick, L = 0, hkick = 0, vkick = 0
+fl1g1c07a: kick, L = 0, hkick = 0, vkick = 0
+fl1g1c09a: kick, L = 0, hkick = 0, vkick = 0
+fl1g1c11a: kick, L = 0, hkick = 0, vkick = 0
+fl1g1c13a: kick, L = 0, hkick = 0, vkick = 0
+fl1g1c15a: kick, L = 0, hkick = 0, vkick = 0
+fl1g1c17a: kick, L = 0, hkick = 0, vkick = 0
+fl1g1c19a: kick, L = 0, hkick = 0, vkick = 0
+fl1g1c21a: kick, L = 0, hkick = 0, vkick = 0
+fl1g1c23a: kick, L = 0, hkick = 0, vkick = 0
+fl1g1c25a: kick, L = 0, hkick = 0, vkick = 0
+fl1g1c27a: kick, L = 0, hkick = 0, vkick = 0
+fl1g1c29a: kick, L = 0, hkick = 0, vkick = 0
+fl2g1c01a: kick, L = 0, hkick = 0, vkick = 0
+fl2g1c03a: kick, L = 0, hkick = 0, vkick = 0
+fl2g1c05a: kick, L = 0, hkick = 0, vkick = 0
+fl2g1c07a: kick, L = 0, hkick = 0, vkick = 0
+fl2g1c09a: kick, L = 0, hkick = 0, vkick = 0
+fl2g1c11a: kick, L = 0, hkick = 0, vkick = 0
+fl2g1c13a: kick, L = 0, hkick = 0, vkick = 0
+fl2g1c15a: kick, L = 0, hkick = 0, vkick = 0
+fl2g1c17a: kick, L = 0, hkick = 0, vkick = 0
+fl2g1c19a: kick, L = 0, hkick = 0, vkick = 0
+fl2g1c21a: kick, L = 0, hkick = 0, vkick = 0
+fl2g1c23a: kick, L = 0, hkick = 0, vkick = 0
+fl2g1c25a: kick, L = 0, hkick = 0, vkick = 0
+fl2g1c27a: kick, L = 0, hkick = 0, vkick = 0
+fl2g1c29a: kick, L = 0, hkick = 0, vkick = 0
+fm1g4c01a: kick, L = 0, hkick = 0, vkick = 0
+fm1g4c02a: kick, L = 0, hkick = 0, vkick = 0
+fm1g4c03a: kick, L = 0, hkick = 0, vkick = 0
+fm1g4c04a: kick, L = 0, hkick = 0, vkick = 0
+fm1g4c05a: kick, L = 0, hkick = 0, vkick = 0
+fm1g4c06a: kick, L = 0, hkick = 0, vkick = 0
+fm1g4c07a: kick, L = 0, hkick = 0, vkick = 0
+fm1g4c08a: kick, L = 0, hkick = 0, vkick = 0
+fm1g4c09a: kick, L = 0, hkick = 0, vkick = 0
+fm1g4c10a: kick, L = 0, hkick = 0, vkick = 0
+fm1g4c11a: kick, L = 0, hkick = 0, vkick = 0
+fm1g4c12a: kick, L = 0, hkick = 0, vkick = 0
+fm1g4c13a: kick, L = 0, hkick = 0, vkick = 0
+fm1g4c14a: kick, L = 0, hkick = 0, vkick = 0
+fm1g4c15a: kick, L = 0, hkick = 0, vkick = 0
+fm1g4c16a: kick, L = 0, hkick = 0, vkick = 0
+fm1g4c17a: kick, L = 0, hkick = 0, vkick = 0
+fm1g4c18a: kick, L = 0, hkick = 0, vkick = 0
+fm1g4c19a: kick, L = 0, hkick = 0, vkick = 0
+fm1g4c20a: kick, L = 0, hkick = 0, vkick = 0
+fm1g4c21a: kick, L = 0, hkick = 0, vkick = 0
+fm1g4c22a: kick, L = 0, hkick = 0, vkick = 0
+fm1g4c23a: kick, L = 0, hkick = 0, vkick = 0
+fm1g4c24a: kick, L = 0, hkick = 0, vkick = 0
+fm1g4c25a: kick, L = 0, hkick = 0, vkick = 0
+fm1g4c26a: kick, L = 0, hkick = 0, vkick = 0
+fm1g4c27a: kick, L = 0, hkick = 0, vkick = 0
+fm1g4c28a: kick, L = 0, hkick = 0, vkick = 0
+fm1g4c29a: kick, L = 0, hkick = 0, vkick = 0
+fm1g4c30a: kick, L = 0, hkick = 0, vkick = 0
+hpinger: kick, L = 0.3, hkick = 0, vkick = 0
+isbu1: kick, L = 0.65, hkick = 0, vkick = 0
+isbu2: kick, L = 0.65, hkick = 0, vkick = 0
+isbu3: kick, L = 0.65, hkick = 0, vkick = 0
+isbu4: kick, L = 0.65, hkick = 0, vkick = 0
+issp1d: kick, L = 0.799513, hkick = 0, vkick = 0
+issp1u: kick, L = 0.500487, hkick = 0, vkick = 0
+vpinger: kick, L = 0.3, hkick = 0, vkick = 0
+
+dw100g1c08d: ukickmap, l=3.4, input_file="/epics/aphla/apconf/nsls2/models/SR/pyelegant/kickmaps/W100_DF_asbuilt_3o4m_T2m2.sdds", n_kicks=34, periods=34, kref=16.5
+dw100g1c08u: ukickmap, l=3.4, input_file="/epics/aphla/apconf/nsls2/models/SR/pyelegant/kickmaps/W100_DF_asbuilt_3o4m_T2m2.sdds", n_kicks=34, periods=34, kref=16.5
+dw100g1c18d: ukickmap, l=3.4, input_file="/epics/aphla/apconf/nsls2/models/SR/pyelegant/kickmaps/W100_DF_asbuilt_3o4m_T2m2.sdds", n_kicks=34, periods=34, kref=16.5
+dw100g1c18u: ukickmap, l=3.4, input_file="/epics/aphla/apconf/nsls2/models/SR/pyelegant/kickmaps/W100_DF_asbuilt_3o4m_T2m2.sdds", n_kicks=34, periods=34, kref=16.5
+dw100g1c28d: ukickmap, l=3.4, input_file="/epics/aphla/apconf/nsls2/models/SR/pyelegant/kickmaps/W100_DF_asbuilt_3o4m_T2m2.sdds", n_kicks=34, periods=34, kref=16.5
+dw100g1c28u: ukickmap, l=3.4, input_file="/epics/aphla/apconf/nsls2/models/SR/pyelegant/kickmaps/W100_DF_asbuilt_3o4m_T2m2.sdds", n_kicks=34, periods=34, kref=16.5
+
+ph1g2c02a: moni, L = 0
+ph1g2c04a: moni, L = 0
+ph1g2c06a: moni, L = 0
+ph1g2c08a: moni, L = 0
+ph1g2c10a: moni, L = 0
+ph1g2c12a: moni, L = 0
+ph1g2c14a: moni, L = 0
+ph1g2c16a: moni, L = 0
+ph1g2c18a: moni, L = 0
+ph1g2c20a: moni, L = 0
+ph1g2c22a: moni, L = 0
+ph1g2c24a: moni, L = 0
+ph1g2c26a: moni, L = 0
+ph1g2c28a: moni, L = 0
+ph1g2c30a: moni, L = 0
+ph1g6c01b: moni, L = 0
+ph1g6c03b: moni, L = 0
+ph1g6c05b: moni, L = 0
+ph1g6c07b: moni, L = 0
+ph1g6c09b: moni, L = 0
+ph1g6c11b: moni, L = 0
+ph1g6c13b: moni, L = 0
+ph1g6c15b: moni, L = 0
+ph1g6c17b: moni, L = 0
+ph1g6c19b: moni, L = 0
+ph1g6c21b: moni, L = 0
+ph1g6c23b: moni, L = 0
+ph1g6c25b: moni, L = 0
+ph1g6c27b: moni, L = 0
+ph1g6c29b: moni, L = 0
+ph2g2c02a: moni, L = 0
+ph2g2c04a: moni, L = 0
+ph2g2c06a: moni, L = 0
+ph2g2c08a: moni, L = 0
+ph2g2c10a: moni, L = 0
+ph2g2c12a: moni, L = 0
+ph2g2c14a: moni, L = 0
+ph2g2c16a: moni, L = 0
+ph2g2c18a: moni, L = 0
+ph2g2c20a: moni, L = 0
+ph2g2c22a: moni, L = 0
+ph2g2c24a: moni, L = 0
+ph2g2c26a: moni, L = 0
+ph2g2c28a: moni, L = 0
+ph2g2c30a: moni, L = 0
+ph2g6c01b: moni, L = 0
+ph2g6c03b: moni, L = 0
+ph2g6c05b: moni, L = 0
+ph2g6c07b: moni, L = 0
+ph2g6c09b: moni, L = 0
+ph2g6c11b: moni, L = 0
+ph2g6c13b: moni, L = 0
+ph2g6c15b: moni, L = 0
+ph2g6c17b: moni, L = 0
+ph2g6c19b: moni, L = 0
+ph2g6c21b: moni, L = 0
+ph2g6c23b: moni, L = 0
+ph2g6c25b: moni, L = 0
+ph2g6c27b: moni, L = 0
+ph2g6c29b: moni, L = 0
+pl1g2c01a: moni, L = 0
+pl1g2c03a: moni, L = 0
+pl1g2c05a: moni, L = 0
+pl1g2c07a: moni, L = 0
+pl1g2c09a: moni, L = 0
+pl1g2c11a: moni, L = 0
+pl1g2c13a: moni, L = 0
+pl1g2c15a: moni, L = 0
+pl1g2c17a: moni, L = 0
+pl1g2c19a: moni, L = 0
+pl1g2c21a: moni, L = 0
+pl1g2c23a: moni, L = 0
+pl1g2c25a: moni, L = 0
+pl1g2c27a: moni, L = 0
+pl1g2c29a: moni, L = 0
+pl1g6c02b: moni, L = 0
+pl1g6c04b: moni, L = 0
+pl1g6c06b: moni, L = 0
+pl1g6c08b: moni, L = 0
+pl1g6c10b: moni, L = 0
+pl1g6c12b: moni, L = 0
+pl1g6c14b: moni, L = 0
+pl1g6c16b: moni, L = 0
+pl1g6c18b: moni, L = 0
+pl1g6c20b: moni, L = 0
+pl1g6c22b: moni, L = 0
+pl1g6c24b: moni, L = 0
+pl1g6c26b: moni, L = 0
+pl1g6c28b: moni, L = 0
+pl1g6c30b: moni, L = 0
+pl2g2c01a: moni, L = 0
+pl2g2c03a: moni, L = 0
+pl2g2c05a: moni, L = 0
+pl2g2c07a: moni, L = 0
+pl2g2c09a: moni, L = 0
+pl2g2c11a: moni, L = 0
+pl2g2c13a: moni, L = 0
+pl2g2c15a: moni, L = 0
+pl2g2c17a: moni, L = 0
+pl2g2c19a: moni, L = 0
+pl2g2c21a: moni, L = 0
+pl2g2c23a: moni, L = 0
+pl2g2c25a: moni, L = 0
+pl2g2c27a: moni, L = 0
+pl2g2c29a: moni, L = 0
+pl2g6c02b: moni, L = 0
+pl2g6c04b: moni, L = 0
+pl2g6c06b: moni, L = 0
+pl2g6c08b: moni, L = 0
+pl2g6c10b: moni, L = 0
+pl2g6c12b: moni, L = 0
+pl2g6c14b: moni, L = 0
+pl2g6c16b: moni, L = 0
+pl2g6c18b: moni, L = 0
+pl2g6c20b: moni, L = 0
+pl2g6c22b: moni, L = 0
+pl2g6c24b: moni, L = 0
+pl2g6c26b: moni, L = 0
+pl2g6c28b: moni, L = 0
+pl2g6c30b: moni, L = 0
+pm1g4c01a: moni, L = 0
+pm1g4c01b: moni, L = 0
+pm1g4c02a: moni, L = 0
+pm1g4c02b: moni, L = 0
+pm1g4c03a: moni, L = 0
+pm1g4c03b: moni, L = 0
+pm1g4c04a: moni, L = 0
+pm1g4c04b: moni, L = 0
+pm1g4c05a: moni, L = 0
+pm1g4c05b: moni, L = 0
+pm1g4c06a: moni, L = 0
+pm1g4c06b: moni, L = 0
+pm1g4c07a: moni, L = 0
+pm1g4c07b: moni, L = 0
+pm1g4c08a: moni, L = 0
+pm1g4c08b: moni, L = 0
+pm1g4c09a: moni, L = 0
+pm1g4c09b: moni, L = 0
+pm1g4c10a: moni, L = 0
+pm1g4c10b: moni, L = 0
+pm1g4c11a: moni, L = 0
+pm1g4c11b: moni, L = 0
+pm1g4c12a: moni, L = 0
+pm1g4c12b: moni, L = 0
+pm1g4c13a: moni, L = 0
+pm1g4c13b: moni, L = 0
+pm1g4c14a: moni, L = 0
+pm1g4c14b: moni, L = 0
+pm1g4c15a: moni, L = 0
+pm1g4c15b: moni, L = 0
+pm1g4c16a: moni, L = 0
+pm1g4c16b: moni, L = 0
+pm1g4c17a: moni, L = 0
+pm1g4c17b: moni, L = 0
+pm1g4c18a: moni, L = 0
+pm1g4c18b: moni, L = 0
+pm1g4c19a: moni, L = 0
+pm1g4c19b: moni, L = 0
+pm1g4c20a: moni, L = 0
+pm1g4c20b: moni, L = 0
+pm1g4c21a: moni, L = 0
+pm1g4c21b: moni, L = 0
+pm1g4c22a: moni, L = 0
+pm1g4c22b: moni, L = 0
+pm1g4c23a: moni, L = 0
+pm1g4c23b: moni, L = 0
+pm1g4c24a: moni, L = 0
+pm1g4c24b: moni, L = 0
+pm1g4c25a: moni, L = 0
+pm1g4c25b: moni, L = 0
+pm1g4c26a: moni, L = 0
+pm1g4c26b: moni, L = 0
+pm1g4c27a: moni, L = 0
+pm1g4c27b: moni, L = 0
+pm1g4c28a: moni, L = 0
+pm1g4c28b: moni, L = 0
+pm1g4c29a: moni, L = 0
+pm1g4c29b: moni, L = 0
+pm1g4c30a: moni, L = 0
+pm1g4c30b: moni, L = 0
+pu1g1c03a: moni, L = 0
+pu1g1c05a: moni, L = 0
+pu1g1c08a: moni, L = 0
+pu1g1c10a: moni, L = 0
+pu1g1c11a: moni, L = 0
+pu1g1c18a: moni, L = 0
+pu1g1c23a: moni, L = 0
+pu1g1c28a: moni, L = 0
+pu2g1c05a: moni, L = 0
+pu3g1c23a: moni, L = 0
+pu4g1c03a: moni, L = 0
+pu4g1c05a: moni, L = 0
+pu4g1c08a: moni, L = 0
+pu4g1c10a: moni, L = 0
+pu4g1c11a: moni, L = 0
+pu4g1c18a: moni, L = 0
+pu4g1c23a: moni, L = 0
+pu4g1c28a: moni, L = 0
+qh1g2c02a: kquad, L = 0.268, K1 =     -0.57740115
+qh1g2c04a: kquad, L = 0.268, K1 =     -0.57740115
+qh1g2c06a: kquad, L = 0.268, K1 =     -0.57740115
+qh1g2c08a: kquad, L = 0.268, K1 =     -0.64424092
+qh1g2c10a: kquad, L = 0.268, K1 =     -0.57740115
+qh1g2c12a: kquad, L = 0.268, K1 =     -0.57740115
+qh1g2c14a: kquad, L = 0.268, K1 =     -0.57740115
+qh1g2c16a: kquad, L = 0.268, K1 =     -0.57740115
+qh1g2c18a: kquad, L = 0.268, K1 =     -0.64424092
+qh1g2c20a: kquad, L = 0.268, K1 =     -0.57740115
+qh1g2c22a: kquad, L = 0.268, K1 =     -0.57740115
+qh1g2c24a: kquad, L = 0.268, K1 =     -0.57740115
+qh1g2c26a: kquad, L = 0.268, K1 =     -0.57740115
+qh1g2c28a: kquad, L = 0.268, K1 =     -0.64424092
+qh1g2c30a: kquad, L = 0.268, K1 =     -0.57740115
+qh1g6c01b: kquad, L = 0.268, K1 =     -0.57740115
+qh1g6c03b: kquad, L = 0.268, K1 =     -0.57740115
+qh1g6c05b: kquad, L = 0.268, K1 =     -0.57740115
+qh1g6c07b: kquad, L = 0.268, K1 =     -0.64424092
+qh1g6c09b: kquad, L = 0.268, K1 =     -0.57740115
+qh1g6c11b: kquad, L = 0.268, K1 =     -0.57740115
+qh1g6c13b: kquad, L = 0.268, K1 =     -0.57740115
+qh1g6c15b: kquad, L = 0.268, K1 =     -0.57740115
+qh1g6c17b: kquad, L = 0.268, K1 =     -0.64424092
+qh1g6c19b: kquad, L = 0.268, K1 =     -0.57740115
+qh1g6c21b: kquad, L = 0.268, K1 =     -0.57740115
+qh1g6c23b: kquad, L = 0.268, K1 =     -0.57740115
+qh1g6c25b: kquad, L = 0.268, K1 =     -0.57740115
+qh1g6c27b: kquad, L = 0.268, K1 =     -0.64424092
+qh1g6c29b: kquad, L = 0.268, K1 =     -0.57740115
+qh2g2c02a: kquad, L = 0.46, K1 =      1.40523703
+qh2g2c04a: kquad, L = 0.46, K1 =      1.40523703
+qh2g2c06a: kquad, L = 0.46, K1 =      1.40523703
+qh2g2c08a: kquad, L = 0.46, K1 =      1.44094049
+qh2g2c10a: kquad, L = 0.46, K1 =      1.40523703
+qh2g2c12a: kquad, L = 0.46, K1 =      1.40523703
+qh2g2c14a: kquad, L = 0.46, K1 =      1.40523703
+qh2g2c16a: kquad, L = 0.46, K1 =      1.40523703
+qh2g2c18a: kquad, L = 0.46, K1 =      1.44094049
+qh2g2c20a: kquad, L = 0.46, K1 =      1.40523703
+qh2g2c22a: kquad, L = 0.46, K1 =      1.40523703
+qh2g2c24a: kquad, L = 0.46, K1 =      1.40523703
+qh2g2c26a: kquad, L = 0.46, K1 =      1.40523703
+qh2g2c28a: kquad, L = 0.46, K1 =      1.44094049
+qh2g2c30a: kquad, L = 0.46, K1 =      1.40523703
+qh2g6c01b: kquad, L = 0.46, K1 =      1.40523703
+qh2g6c03b: kquad, L = 0.46, K1 =      1.40523703
+qh2g6c05b: kquad, L = 0.46, K1 =      1.40523703
+qh2g6c07b: kquad, L = 0.46, K1 =      1.44094049
+qh2g6c09b: kquad, L = 0.46, K1 =      1.40523703
+qh2g6c11b: kquad, L = 0.46, K1 =      1.40523703
+qh2g6c13b: kquad, L = 0.46, K1 =      1.40523703
+qh2g6c15b: kquad, L = 0.46, K1 =      1.40523703
+qh2g6c17b: kquad, L = 0.46, K1 =      1.44094049
+qh2g6c19b: kquad, L = 0.46, K1 =      1.40523703
+qh2g6c21b: kquad, L = 0.46, K1 =      1.40523703
+qh2g6c23b: kquad, L = 0.46, K1 =      1.40523703
+qh2g6c25b: kquad, L = 0.46, K1 =      1.40523703
+qh2g6c27b: kquad, L = 0.46, K1 =      1.44094049
+qh2g6c29b: kquad, L = 0.46, K1 =      1.40523703
+qh3g2c02a: kquad, L = 0.268, K1 =     -1.74830674
+qh3g2c04a: kquad, L = 0.268, K1 =     -1.74830674
+qh3g2c06a: kquad, L = 0.268, K1 =     -1.74830674
+qh3g2c08a: kquad, L = 0.268, K1 =     -1.76910537
+qh3g2c10a: kquad, L = 0.268, K1 =     -1.74830674
+qh3g2c12a: kquad, L = 0.268, K1 =     -1.74830674
+qh3g2c14a: kquad, L = 0.268, K1 =     -1.74830674
+qh3g2c16a: kquad, L = 0.268, K1 =     -1.74830674
+qh3g2c18a: kquad, L = 0.268, K1 =     -1.76910537
+qh3g2c20a: kquad, L = 0.268, K1 =     -1.74830674
+qh3g2c22a: kquad, L = 0.268, K1 =     -1.74830674
+qh3g2c24a: kquad, L = 0.268, K1 =     -1.74830674
+qh3g2c26a: kquad, L = 0.268, K1 =     -1.74830674
+qh3g2c28a: kquad, L = 0.268, K1 =     -1.76910537
+qh3g2c30a: kquad, L = 0.268, K1 =     -1.74830674
+qh3g6c01b: kquad, L = 0.268, K1 =     -1.74830674
+qh3g6c03b: kquad, L = 0.268, K1 =     -1.74830674
+qh3g6c05b: kquad, L = 0.268, K1 =     -1.74830674
+qh3g6c07b: kquad, L = 0.268, K1 =     -1.76910537
+qh3g6c09b: kquad, L = 0.268, K1 =     -1.74830674
+qh3g6c11b: kquad, L = 0.268, K1 =     -1.74830674
+qh3g6c13b: kquad, L = 0.268, K1 =     -1.74830674
+qh3g6c15b: kquad, L = 0.268, K1 =     -1.74830674
+qh3g6c17b: kquad, L = 0.268, K1 =     -1.76910537
+qh3g6c19b: kquad, L = 0.268, K1 =     -1.74830674
+qh3g6c21b: kquad, L = 0.268, K1 =     -1.74830674
+qh3g6c23b: kquad, L = 0.268, K1 =     -1.74830674
+qh3g6c25b: kquad, L = 0.268, K1 =     -1.74830674
+qh3g6c27b: kquad, L = 0.268, K1 =     -1.76910537
+qh3g6c29b: kquad, L = 0.268, K1 =     -1.74830674
+ql1g2c01a: kquad, L = 0.268, K1 =     -1.58486031
+ql1g2c03a: kquad, L = 0.268, K1 =     -1.58486031
+ql1g2c05a: kquad, L = 0.268, K1 =     -1.58486031
+ql1g2c07a: kquad, L = 0.268, K1 =     -1.58486031
+ql1g2c09a: kquad, L = 0.268, K1 =     -1.58486031
+ql1g2c11a: kquad, L = 0.268, K1 =     -1.58486031
+ql1g2c13a: kquad, L = 0.268, K1 =     -1.58486031
+ql1g2c15a: kquad, L = 0.268, K1 =     -1.58486031
+ql1g2c17a: kquad, L = 0.268, K1 =     -1.58486031
+ql1g2c19a: kquad, L = 0.268, K1 =     -1.58486031
+ql1g2c21a: kquad, L = 0.268, K1 =     -1.58486031
+ql1g2c23a: kquad, L = 0.268, K1 =     -1.58486031
+ql1g2c25a: kquad, L = 0.268, K1 =     -1.58486031
+ql1g2c27a: kquad, L = 0.268, K1 =     -1.58486031
+ql1g2c29a: kquad, L = 0.268, K1 =     -1.58486031
+ql1g6c02b: kquad, L = 0.268, K1 =     -1.58486031
+ql1g6c04b: kquad, L = 0.268, K1 =     -1.58486031
+ql1g6c06b: kquad, L = 0.268, K1 =     -1.58486031
+ql1g6c08b: kquad, L = 0.268, K1 =     -1.58486031
+ql1g6c10b: kquad, L = 0.268, K1 =     -1.58486031
+ql1g6c12b: kquad, L = 0.268, K1 =     -1.58486031
+ql1g6c14b: kquad, L = 0.268, K1 =     -1.58486031
+ql1g6c16b: kquad, L = 0.268, K1 =     -1.58486031
+ql1g6c18b: kquad, L = 0.268, K1 =     -1.58486031
+ql1g6c20b: kquad, L = 0.268, K1 =     -1.58486031
+ql1g6c22b: kquad, L = 0.268, K1 =     -1.58486031
+ql1g6c24b: kquad, L = 0.268, K1 =     -1.58486031
+ql1g6c26b: kquad, L = 0.268, K1 =     -1.58486031
+ql1g6c28b: kquad, L = 0.268, K1 =     -1.58486031
+ql1g6c30b: kquad, L = 0.268, K1 =     -1.58486031
+ql2g2c01a: kquad, L = 0.46, K1 =      1.76105228
+ql2g2c03a: kquad, L = 0.46, K1 =      1.76105228
+ql2g2c05a: kquad, L = 0.46, K1 =      1.76105228
+ql2g2c07a: kquad, L = 0.46, K1 =      1.76105228
+ql2g2c09a: kquad, L = 0.46, K1 =      1.76105228
+ql2g2c11a: kquad, L = 0.46, K1 =      1.76105228
+ql2g2c13a: kquad, L = 0.46, K1 =      1.76105228
+ql2g2c15a: kquad, L = 0.46, K1 =      1.76105228
+ql2g2c17a: kquad, L = 0.46, K1 =      1.76105228
+ql2g2c19a: kquad, L = 0.46, K1 =      1.76105228
+ql2g2c21a: kquad, L = 0.46, K1 =      1.76105228
+ql2g2c23a: kquad, L = 0.46, K1 =      1.76105228
+ql2g2c25a: kquad, L = 0.46, K1 =      1.76105228
+ql2g2c27a: kquad, L = 0.46, K1 =      1.76105228
+ql2g2c29a: kquad, L = 0.46, K1 =      1.76105228
+ql2g6c02b: kquad, L = 0.46, K1 =      1.76105228
+ql2g6c04b: kquad, L = 0.46, K1 =      1.76105228
+ql2g6c06b: kquad, L = 0.46, K1 =      1.76105228
+ql2g6c08b: kquad, L = 0.46, K1 =      1.76105228
+ql2g6c10b: kquad, L = 0.46, K1 =      1.76105228
+ql2g6c12b: kquad, L = 0.46, K1 =      1.76105228
+ql2g6c14b: kquad, L = 0.46, K1 =      1.76105228
+ql2g6c16b: kquad, L = 0.46, K1 =      1.76105228
+ql2g6c18b: kquad, L = 0.46, K1 =      1.76105228
+ql2g6c20b: kquad, L = 0.46, K1 =      1.76105228
+ql2g6c22b: kquad, L = 0.46, K1 =      1.76105228
+ql2g6c24b: kquad, L = 0.46, K1 =      1.76105228
+ql2g6c26b: kquad, L = 0.46, K1 =      1.76105228
+ql2g6c28b: kquad, L = 0.46, K1 =      1.76105228
+ql2g6c30b: kquad, L = 0.46, K1 =      1.76105228
+ql3g2c01a: kquad, L = 0.268, K1 =     -1.53015105
+ql3g2c03a: kquad, L = 0.268, K1 =     -1.53015105
+ql3g2c05a: kquad, L = 0.268, K1 =     -1.53015105
+ql3g2c07a: kquad, L = 0.268, K1 =     -1.53015105
+ql3g2c09a: kquad, L = 0.268, K1 =     -1.53015105
+ql3g2c11a: kquad, L = 0.268, K1 =     -1.53015105
+ql3g2c13a: kquad, L = 0.268, K1 =     -1.53015105
+ql3g2c15a: kquad, L = 0.268, K1 =     -1.53015105
+ql3g2c17a: kquad, L = 0.268, K1 =     -1.53015105
+ql3g2c19a: kquad, L = 0.268, K1 =     -1.53015105
+ql3g2c21a: kquad, L = 0.268, K1 =     -1.53015105
+ql3g2c23a: kquad, L = 0.268, K1 =     -1.53015105
+ql3g2c25a: kquad, L = 0.268, K1 =     -1.53015105
+ql3g2c27a: kquad, L = 0.268, K1 =     -1.53015105
+ql3g2c29a: kquad, L = 0.268, K1 =     -1.53015105
+ql3g6c02b: kquad, L = 0.268, K1 =     -1.53015105
+ql3g6c04b: kquad, L = 0.268, K1 =     -1.53015105
+ql3g6c06b: kquad, L = 0.268, K1 =     -1.53015105
+ql3g6c08b: kquad, L = 0.268, K1 =     -1.53015105
+ql3g6c10b: kquad, L = 0.268, K1 =     -1.53015105
+ql3g6c12b: kquad, L = 0.268, K1 =     -1.53015105
+ql3g6c14b: kquad, L = 0.268, K1 =     -1.53015105
+ql3g6c16b: kquad, L = 0.268, K1 =     -1.53015105
+ql3g6c18b: kquad, L = 0.268, K1 =     -1.53015105
+ql3g6c20b: kquad, L = 0.268, K1 =     -1.53015105
+ql3g6c22b: kquad, L = 0.268, K1 =     -1.53015105
+ql3g6c24b: kquad, L = 0.268, K1 =     -1.53015105
+ql3g6c26b: kquad, L = 0.268, K1 =     -1.53015105
+ql3g6c28b: kquad, L = 0.268, K1 =     -1.53015105
+ql3g6c30b: kquad, L = 0.268, K1 =     -1.53015105
+qm1g4c01a: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c01b: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c02a: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c02b: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c03a: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c03b: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c04a: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c04b: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c05a: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c05b: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c06a: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c06b: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c07a: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c07b: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c08a: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c08b: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c09a: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c09b: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c10a: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c10b: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c11a: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c11b: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c12a: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c12b: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c13a: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c13b: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c14a: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c14b: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c15a: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c15b: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c16a: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c16b: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c17a: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c17b: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c18a: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c18b: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c19a: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c19b: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c20a: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c20b: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c21a: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c21b: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c22a: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c22b: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c23a: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c23b: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c24a: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c24b: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c25a: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c25b: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c26a: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c26b: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c27a: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c27b: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c28a: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c28b: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c29a: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c29b: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c30a: kquad, L = 0.247, K1 =     -0.81223482
+qm1g4c30b: kquad, L = 0.247, K1 =     -0.81223482
+qm2g4c01a: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c01b: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c02a: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c02b: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c03a: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c03b: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c04a: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c04b: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c05a: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c05b: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c06a: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c06b: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c07a: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c07b: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c08a: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c08b: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c09a: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c09b: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c10a: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c10b: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c11a: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c11b: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c12a: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c12b: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c13a: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c13b: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c14a: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c14b: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c15a: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c15b: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c16a: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c16b: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c17a: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c17b: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c18a: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c18b: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c19a: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c19b: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c20a: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c20b: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c21a: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c21b: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c22a: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c22b: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c23a: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c23b: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c24a: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c24b: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c25a: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c25b: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c26a: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c26b: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c27a: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c27b: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c28a: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c28b: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c29a: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c29b: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c30a: kquad, L = 0.282, K1 =      1.22615466
+qm2g4c30b: kquad, L = 0.282, K1 =      1.22615466
+rfc: rfca, L = 0
+sh1g2c02a: ksext, L = 0.2, K2 =     19.83291210
+sh1g2c04a: ksext, L = 0.2, K2 =     19.83291210
+sh1g2c06a: ksext, L = 0.2, K2 =     19.83291210
+sh1g2c08a: ksext, L = 0.2, K2 =     19.83291210
+sh1g2c10a: ksext, L = 0.2, K2 =     19.83291210
+sh1g2c12a: ksext, L = 0.2, K2 =     19.83291210
+sh1g2c14a: ksext, L = 0.2, K2 =     19.83291210
+sh1g2c16a: ksext, L = 0.2, K2 =     19.83291210
+sh1g2c18a: ksext, L = 0.2, K2 =     19.83291210
+sh1g2c20a: ksext, L = 0.2, K2 =     19.83291210
+sh1g2c22a: ksext, L = 0.2, K2 =     19.83291210
+sh1g2c24a: ksext, L = 0.2, K2 =     19.83291210
+sh1g2c26a: ksext, L = 0.2, K2 =     19.83291210
+sh1g2c28a: ksext, L = 0.2, K2 =     19.83291210
+sh1g2c30a: ksext, L = 0.2, K2 =     19.83291210
+sh1g6c01b: ksext, L = 0.2, K2 =     19.83291210
+sh1g6c03b: ksext, L = 0.2, K2 =     19.83291210
+sh1g6c05b: ksext, L = 0.2, K2 =     19.83291210
+sh1g6c07b: ksext, L = 0.2, K2 =     19.83291210
+sh1g6c09b: ksext, L = 0.2, K2 =     19.83291210
+sh1g6c11b: ksext, L = 0.2, K2 =     19.83291210
+sh1g6c13b: ksext, L = 0.2, K2 =     19.83291210
+sh1g6c15b: ksext, L = 0.2, K2 =     19.83291210
+sh1g6c17b: ksext, L = 0.2, K2 =     19.83291210
+sh1g6c19b: ksext, L = 0.2, K2 =     19.83291210
+sh1g6c21b: ksext, L = 0.2, K2 =     19.83291210
+sh1g6c23b: ksext, L = 0.2, K2 =     19.83291210
+sh1g6c25b: ksext, L = 0.2, K2 =     19.83291210
+sh1g6c27b: ksext, L = 0.2, K2 =     19.83291210
+sh1g6c29b: ksext, L = 0.2, K2 =     19.83291210
+sh3g2c02a: ksext, L = 0.2, K2 =     -5.85510841
+sh3g2c04a: ksext, L = 0.2, K2 =     -5.85510841
+sh3g2c06a: ksext, L = 0.2, K2 =     -5.85510841
+sh3g2c08a: ksext, L = 0.2, K2 =     -5.85510841
+sh3g2c10a: ksext, L = 0.2, K2 =     -5.85510841
+sh3g2c12a: ksext, L = 0.2, K2 =     -5.85510841
+sh3g2c14a: ksext, L = 0.2, K2 =     -5.85510841
+sh3g2c16a: ksext, L = 0.2, K2 =     -5.85510841
+sh3g2c18a: ksext, L = 0.2, K2 =     -5.85510841
+sh3g2c20a: ksext, L = 0.2, K2 =     -5.85510841
+sh3g2c22a: ksext, L = 0.2, K2 =     -5.85510841
+sh3g2c24a: ksext, L = 0.2, K2 =     -5.85510841
+sh3g2c26a: ksext, L = 0.2, K2 =     -5.85510841
+sh3g2c28a: ksext, L = 0.2, K2 =     -5.85510841
+sh3g2c30a: ksext, L = 0.2, K2 =     -5.85510841
+sh3g6c01b: ksext, L = 0.2, K2 =     -5.85510841
+sh3g6c03b: ksext, L = 0.2, K2 =     -5.85510841
+sh3g6c05b: ksext, L = 0.2, K2 =     -5.85510841
+sh3g6c07b: ksext, L = 0.2, K2 =     -5.85510841
+sh3g6c09b: ksext, L = 0.2, K2 =     -5.85510841
+sh3g6c11b: ksext, L = 0.2, K2 =     -5.85510841
+sh3g6c13b: ksext, L = 0.2, K2 =     -5.85510841
+sh3g6c15b: ksext, L = 0.2, K2 =     -5.85510841
+sh3g6c17b: ksext, L = 0.2, K2 =     -5.85510841
+sh3g6c19b: ksext, L = 0.2, K2 =     -5.85510841
+sh3g6c21b: ksext, L = 0.2, K2 =     -5.85510841
+sh3g6c23b: ksext, L = 0.2, K2 =     -5.85510841
+sh3g6c25b: ksext, L = 0.2, K2 =     -5.85510841
+sh3g6c27b: ksext, L = 0.2, K2 =     -5.85510841
+sh3g6c29b: ksext, L = 0.2, K2 =     -5.85510841
+sh4g2c02a: ksext, L = 0.2, K2 =    -15.82090071
+sh4g2c04a: ksext, L = 0.2, K2 =    -15.82090071
+sh4g2c06a: ksext, L = 0.2, K2 =    -15.82090071
+sh4g2c08a: ksext, L = 0.2, K2 =    -15.82090071
+sh4g2c10a: ksext, L = 0.2, K2 =    -15.82090071
+sh4g2c12a: ksext, L = 0.2, K2 =    -15.82090071
+sh4g2c14a: ksext, L = 0.2, K2 =    -15.82090071
+sh4g2c16a: ksext, L = 0.2, K2 =    -15.82090071
+sh4g2c18a: ksext, L = 0.2, K2 =    -15.82090071
+sh4g2c20a: ksext, L = 0.2, K2 =    -15.82090071
+sh4g2c22a: ksext, L = 0.2, K2 =    -15.82090071
+sh4g2c24a: ksext, L = 0.2, K2 =    -15.82090071
+sh4g2c26a: ksext, L = 0.2, K2 =    -15.82090071
+sh4g2c28a: ksext, L = 0.2, K2 =    -15.82090071
+sh4g2c30a: ksext, L = 0.2, K2 =    -15.82090071
+sh4g6c01b: ksext, L = 0.2, K2 =    -15.82090071
+sh4g6c03b: ksext, L = 0.2, K2 =    -15.82090071
+sh4g6c05b: ksext, L = 0.2, K2 =    -15.82090071
+sh4g6c07b: ksext, L = 0.2, K2 =    -15.82090071
+sh4g6c09b: ksext, L = 0.2, K2 =    -15.82090071
+sh4g6c11b: ksext, L = 0.2, K2 =    -15.82090071
+sh4g6c13b: ksext, L = 0.2, K2 =    -15.82090071
+sh4g6c15b: ksext, L = 0.2, K2 =    -15.82090071
+sh4g6c17b: ksext, L = 0.2, K2 =    -15.82090071
+sh4g6c19b: ksext, L = 0.2, K2 =    -15.82090071
+sh4g6c21b: ksext, L = 0.2, K2 =    -15.82090071
+sh4g6c23b: ksext, L = 0.2, K2 =    -15.82090071
+sh4g6c25b: ksext, L = 0.2, K2 =    -15.82090071
+sh4g6c27b: ksext, L = 0.2, K2 =    -15.82090071
+sh4g6c29b: ksext, L = 0.2, K2 =    -15.82090071
+sl1g2c01a: ksext, L = 0.2, K2 =    -13.27160605
+sl1g2c03a: ksext, L = 0.2, K2 =    -13.27160605
+sl1g2c05a: ksext, L = 0.2, K2 =    -13.27160605
+sl1g2c07a: ksext, L = 0.2, K2 =    -13.27160605
+sl1g2c09a: ksext, L = 0.2, K2 =    -13.27160605
+sl1g2c11a: ksext, L = 0.2, K2 =    -13.27160605
+sl1g2c13a: ksext, L = 0.2, K2 =    -13.27160605
+sl1g2c15a: ksext, L = 0.2, K2 =    -13.27160605
+sl1g2c17a: ksext, L = 0.2, K2 =    -13.27160605
+sl1g2c19a: ksext, L = 0.2, K2 =    -13.27160605
+sl1g2c21a: ksext, L = 0.2, K2 =    -13.27160605
+sl1g2c23a: ksext, L = 0.2, K2 =    -13.27160605
+sl1g2c25a: ksext, L = 0.2, K2 =    -13.27160605
+sl1g2c27a: ksext, L = 0.2, K2 =    -13.27160605
+sl1g2c29a: ksext, L = 0.2, K2 =    -13.27160605
+sl1g6c02b: ksext, L = 0.2, K2 =    -13.27160605
+sl1g6c04b: ksext, L = 0.2, K2 =    -13.27160605
+sl1g6c06b: ksext, L = 0.2, K2 =    -13.27160605
+sl1g6c08b: ksext, L = 0.2, K2 =    -13.27160605
+sl1g6c10b: ksext, L = 0.2, K2 =    -13.27160605
+sl1g6c12b: ksext, L = 0.2, K2 =    -13.27160605
+sl1g6c14b: ksext, L = 0.2, K2 =    -13.27160605
+sl1g6c16b: ksext, L = 0.2, K2 =    -13.27160605
+sl1g6c18b: ksext, L = 0.2, K2 =    -13.27160605
+sl1g6c20b: ksext, L = 0.2, K2 =    -13.27160605
+sl1g6c22b: ksext, L = 0.2, K2 =    -13.27160605
+sl1g6c24b: ksext, L = 0.2, K2 =    -13.27160605
+sl1g6c26b: ksext, L = 0.2, K2 =    -13.27160605
+sl1g6c28b: ksext, L = 0.2, K2 =    -13.27160605
+sl1g6c30b: ksext, L = 0.2, K2 =    -13.27160605
+sl2g2c01a: ksext, L = 0.2, K2 =     35.67792145
+sl2g2c03a: ksext, L = 0.2, K2 =     35.67792145
+sl2g2c05a: ksext, L = 0.2, K2 =     35.67792145
+sl2g2c07a: ksext, L = 0.2, K2 =     35.67792145
+sl2g2c09a: ksext, L = 0.2, K2 =     35.67792145
+sl2g2c11a: ksext, L = 0.2, K2 =     35.67792145
+sl2g2c13a: ksext, L = 0.2, K2 =     35.67792145
+sl2g2c15a: ksext, L = 0.2, K2 =     35.67792145
+sl2g2c17a: ksext, L = 0.2, K2 =     35.67792145
+sl2g2c19a: ksext, L = 0.2, K2 =     35.67792145
+sl2g2c21a: ksext, L = 0.2, K2 =     35.67792145
+sl2g2c23a: ksext, L = 0.2, K2 =     35.67792145
+sl2g2c25a: ksext, L = 0.2, K2 =     35.67792145
+sl2g2c27a: ksext, L = 0.2, K2 =     35.67792145
+sl2g2c29a: ksext, L = 0.2, K2 =     35.67792145
+sl2g6c02b: ksext, L = 0.2, K2 =     35.67792145
+sl2g6c04b: ksext, L = 0.2, K2 =     35.67792145
+sl2g6c06b: ksext, L = 0.2, K2 =     35.67792145
+sl2g6c08b: ksext, L = 0.2, K2 =     35.67792145
+sl2g6c10b: ksext, L = 0.2, K2 =     35.67792145
+sl2g6c12b: ksext, L = 0.2, K2 =     35.67792145
+sl2g6c14b: ksext, L = 0.2, K2 =     35.67792145
+sl2g6c16b: ksext, L = 0.2, K2 =     35.67792145
+sl2g6c18b: ksext, L = 0.2, K2 =     35.67792145
+sl2g6c20b: ksext, L = 0.2, K2 =     35.67792145
+sl2g6c22b: ksext, L = 0.2, K2 =     35.67792145
+sl2g6c24b: ksext, L = 0.2, K2 =     35.67792145
+sl2g6c26b: ksext, L = 0.2, K2 =     35.67792145
+sl2g6c28b: ksext, L = 0.2, K2 =     35.67792145
+sl2g6c30b: ksext, L = 0.2, K2 =     35.67792145
+sl3g2c01a: ksext, L = 0.2, K2 =    -29.46086061
+sl3g2c03a: ksext, L = 0.2, K2 =    -29.46086061
+sl3g2c05a: ksext, L = 0.2, K2 =    -29.46086061
+sl3g2c07a: ksext, L = 0.2, K2 =    -29.46086061
+sl3g2c09a: ksext, L = 0.2, K2 =    -29.46086061
+sl3g2c11a: ksext, L = 0.2, K2 =    -29.46086061
+sl3g2c13a: ksext, L = 0.2, K2 =    -29.46086061
+sl3g2c15a: ksext, L = 0.2, K2 =    -29.46086061
+sl3g2c17a: ksext, L = 0.2, K2 =    -29.46086061
+sl3g2c19a: ksext, L = 0.2, K2 =    -29.46086061
+sl3g2c21a: ksext, L = 0.2, K2 =    -29.46086061
+sl3g2c23a: ksext, L = 0.2, K2 =    -29.46086061
+sl3g2c25a: ksext, L = 0.2, K2 =    -29.46086061
+sl3g2c27a: ksext, L = 0.2, K2 =    -29.46086061
+sl3g2c29a: ksext, L = 0.2, K2 =    -29.46086061
+sl3g6c02b: ksext, L = 0.2, K2 =    -29.46086061
+sl3g6c04b: ksext, L = 0.2, K2 =    -29.46086061
+sl3g6c06b: ksext, L = 0.2, K2 =    -29.46086061
+sl3g6c08b: ksext, L = 0.2, K2 =    -29.46086061
+sl3g6c10b: ksext, L = 0.2, K2 =    -29.46086061
+sl3g6c12b: ksext, L = 0.2, K2 =    -29.46086061
+sl3g6c14b: ksext, L = 0.2, K2 =    -29.46086061
+sl3g6c16b: ksext, L = 0.2, K2 =    -29.46086061
+sl3g6c18b: ksext, L = 0.2, K2 =    -29.46086061
+sl3g6c20b: ksext, L = 0.2, K2 =    -29.46086061
+sl3g6c22b: ksext, L = 0.2, K2 =    -29.46086061
+sl3g6c24b: ksext, L = 0.2, K2 =    -29.46086061
+sl3g6c26b: ksext, L = 0.2, K2 =    -29.46086061
+sl3g6c28b: ksext, L = 0.2, K2 =    -29.46086061
+sl3g6c30b: ksext, L = 0.2, K2 =    -29.46086061
+sm1g4c01a: ksext, L = 0.2, K2 =    -23.68063424
+sm1g4c01b: ksext, L = 0.2, K2 =    -25.94603546
+sm1g4c02a: ksext, L = 0.2, K2 =    -23.68063424
+sm1g4c02b: ksext, L = 0.2, K2 =    -25.94603546
+sm1g4c03a: ksext, L = 0.2, K2 =    -23.68063424
+sm1g4c03b: ksext, L = 0.2, K2 =    -25.94603546
+sm1g4c04a: ksext, L = 0.2, K2 =    -23.68063424
+sm1g4c04b: ksext, L = 0.2, K2 =    -25.94603546
+sm1g4c05a: ksext, L = 0.2, K2 =    -23.68063424
+sm1g4c05b: ksext, L = 0.2, K2 =    -25.94603546
+sm1g4c06a: ksext, L = 0.2, K2 =    -23.68063424
+sm1g4c06b: ksext, L = 0.2, K2 =    -25.94603546
+sm1g4c07a: ksext, L = 0.2, K2 =    -23.68063424
+sm1g4c07b: ksext, L = 0.2, K2 =    -25.94603546
+sm1g4c08a: ksext, L = 0.2, K2 =    -23.68063424
+sm1g4c08b: ksext, L = 0.2, K2 =    -25.94603546
+sm1g4c09a: ksext, L = 0.2, K2 =    -23.68063424
+sm1g4c09b: ksext, L = 0.2, K2 =    -25.94603546
+sm1g4c10a: ksext, L = 0.2, K2 =    -23.68063424
+sm1g4c10b: ksext, L = 0.2, K2 =    -25.94603546
+sm1g4c11a: ksext, L = 0.2, K2 =    -23.68063424
+sm1g4c11b: ksext, L = 0.2, K2 =    -25.94603546
+sm1g4c12a: ksext, L = 0.2, K2 =    -23.68063424
+sm1g4c12b: ksext, L = 0.2, K2 =    -25.94603546
+sm1g4c13a: ksext, L = 0.2, K2 =    -23.68063424
+sm1g4c13b: ksext, L = 0.2, K2 =    -25.94603546
+sm1g4c14a: ksext, L = 0.2, K2 =    -23.68063424
+sm1g4c14b: ksext, L = 0.2, K2 =    -25.94603546
+sm1g4c15a: ksext, L = 0.2, K2 =    -23.68063424
+sm1g4c15b: ksext, L = 0.2, K2 =    -25.94603546
+sm1g4c16a: ksext, L = 0.2, K2 =    -23.68063424
+sm1g4c16b: ksext, L = 0.2, K2 =    -25.94603546
+sm1g4c17a: ksext, L = 0.2, K2 =    -23.68063424
+sm1g4c17b: ksext, L = 0.2, K2 =    -25.94603546
+sm1g4c18a: ksext, L = 0.2, K2 =    -23.68063424
+sm1g4c18b: ksext, L = 0.2, K2 =    -25.94603546
+sm1g4c19a: ksext, L = 0.2, K2 =    -23.68063424
+sm1g4c19b: ksext, L = 0.2, K2 =    -25.94603546
+sm1g4c20a: ksext, L = 0.2, K2 =    -23.68063424
+sm1g4c20b: ksext, L = 0.2, K2 =    -25.94603546
+sm1g4c21a: ksext, L = 0.2, K2 =    -23.68063424
+sm1g4c21b: ksext, L = 0.2, K2 =    -25.94603546
+sm1g4c22a: ksext, L = 0.2, K2 =    -23.68063424
+sm1g4c22b: ksext, L = 0.2, K2 =    -25.94603546
+sm1g4c23a: ksext, L = 0.2, K2 =    -23.68063424
+sm1g4c23b: ksext, L = 0.2, K2 =    -25.94603546
+sm1g4c24a: ksext, L = 0.2, K2 =    -23.68063424
+sm1g4c24b: ksext, L = 0.2, K2 =    -25.94603546
+sm1g4c25a: ksext, L = 0.2, K2 =    -23.68063424
+sm1g4c25b: ksext, L = 0.2, K2 =    -25.94603546
+sm1g4c26a: ksext, L = 0.2, K2 =    -23.68063424
+sm1g4c26b: ksext, L = 0.2, K2 =    -25.94603546
+sm1g4c27a: ksext, L = 0.2, K2 =    -23.68063424
+sm1g4c27b: ksext, L = 0.2, K2 =    -25.94603546
+sm1g4c28a: ksext, L = 0.2, K2 =    -23.68063424
+sm1g4c28b: ksext, L = 0.2, K2 =    -25.94603546
+sm1g4c29a: ksext, L = 0.2, K2 =    -23.68063424
+sm1g4c29b: ksext, L = 0.2, K2 =    -25.94603546
+sm1g4c30a: ksext, L = 0.2, K2 =    -23.68063424
+sm1g4c30b: ksext, L = 0.2, K2 =    -25.94603546
+sm2g4c01b: ksext, L = 0.25, K2 =     28.64315469
+sm2g4c02b: ksext, L = 0.25, K2 =     28.64315469
+sm2g4c03b: ksext, L = 0.25, K2 =     28.64315469
+sm2g4c04b: ksext, L = 0.25, K2 =     28.64315469
+sm2g4c05b: ksext, L = 0.25, K2 =     28.64315469
+sm2g4c06b: ksext, L = 0.25, K2 =     28.64315469
+sm2g4c07b: ksext, L = 0.25, K2 =     28.64315469
+sm2g4c08b: ksext, L = 0.25, K2 =     28.64315469
+sm2g4c09b: ksext, L = 0.25, K2 =     28.64315469
+sm2g4c10b: ksext, L = 0.25, K2 =     28.64315469
+sm2g4c11b: ksext, L = 0.25, K2 =     28.64315469
+sm2g4c12b: ksext, L = 0.25, K2 =     28.64315469
+sm2g4c13b: ksext, L = 0.25, K2 =     28.64315469
+sm2g4c14b: ksext, L = 0.25, K2 =     28.64315469
+sm2g4c15b: ksext, L = 0.25, K2 =     28.64315469
+sm2g4c16b: ksext, L = 0.25, K2 =     28.64315469
+sm2g4c17b: ksext, L = 0.25, K2 =     28.64315469
+sm2g4c18b: ksext, L = 0.25, K2 =     28.64315469
+sm2g4c19b: ksext, L = 0.25, K2 =     28.64315469
+sm2g4c20b: ksext, L = 0.25, K2 =     28.64315469
+sm2g4c21b: ksext, L = 0.25, K2 =     28.64315469
+sm2g4c22b: ksext, L = 0.25, K2 =     28.64315469
+sm2g4c23b: ksext, L = 0.25, K2 =     28.64315469
+sm2g4c24b: ksext, L = 0.25, K2 =     28.64315469
+sm2g4c25b: ksext, L = 0.25, K2 =     28.64315469
+sm2g4c26b: ksext, L = 0.25, K2 =     28.64315469
+sm2g4c27b: ksext, L = 0.25, K2 =     28.64315469
+sm2g4c28b: ksext, L = 0.25, K2 =     28.64315469
+sm2g4c29b: ksext, L = 0.25, K2 =     28.64315469
+sm2g4c30b: ksext, L = 0.25, K2 =     28.64315469
+sqhg2c02a: kquad, L = 0.1, K1 =      0.00000000, tilt =      0.78539816
+sqhg2c04a: kquad, L = 0.1, K1 =      0.00000000, tilt =      0.78539816
+sqhg2c06a: kquad, L = 0.1, K1 =      0.00000000, tilt =      0.78539816
+sqhg2c08a: kquad, L = 0.1, K1 =      0.00000000, tilt =      0.78539816
+sqhg2c10a: kquad, L = 0.1, K1 =      0.00000000, tilt =      0.78539816
+sqhg2c12a: kquad, L = 0.1, K1 =      0.00000000, tilt =      0.78539816
+sqhg2c14a: kquad, L = 0.1, K1 =      0.00000000, tilt =      0.78539816
+sqhg2c16a: kquad, L = 0.1, K1 =      0.00000000, tilt =      0.78539816
+sqhg2c18a: kquad, L = 0.1, K1 =      0.00000000, tilt =      0.78539816
+sqhg2c20a: kquad, L = 0.1, K1 =      0.00000000, tilt =      0.78539816
+sqhg2c22a: kquad, L = 0.1, K1 =      0.00000000, tilt =      0.78539816
+sqhg2c24a: kquad, L = 0.1, K1 =      0.00000000, tilt =      0.78539816
+sqhg2c26a: kquad, L = 0.1, K1 =      0.00000000, tilt =      0.78539816
+sqhg2c28a: kquad, L = 0.1, K1 =      0.00000000, tilt =      0.78539816
+sqhg2c30a: kquad, L = 0.1, K1 =      0.00000000, tilt =      0.78539816
+sqmg4c01a: kquad, L = 0.1, K1 =      0.00000000, tilt =      0.78539816
+sqmg4c03a: kquad, L = 0.1, K1 =      0.00000000, tilt =      0.78539816
+sqmg4c05a: kquad, L = 0.1, K1 =      0.00000000, tilt =      0.78539816
+sqmg4c07a: kquad, L = 0.1, K1 =      0.00000000, tilt =      0.78539816
+sqmg4c09a: kquad, L = 0.1, K1 =      0.00000000, tilt =      0.78539816
+sqmg4c11a: kquad, L = 0.1, K1 =      0.00000000, tilt =      0.78539816
+sqmg4c13a: kquad, L = 0.1, K1 =      0.00000000, tilt =      0.78539816
+sqmg4c15a: kquad, L = 0.1, K1 =      0.00000000, tilt =      0.78539816
+sqmg4c17a: kquad, L = 0.1, K1 =      0.00000000, tilt =      0.78539816
+sqmg4c19a: kquad, L = 0.1, K1 =      0.00000000, tilt =      0.78539816
+sqmg4c21a: kquad, L = 0.1, K1 =      0.00000000, tilt =      0.78539816
+sqmg4c23a: kquad, L = 0.1, K1 =      0.00000000, tilt =      0.78539816
+sqmg4c25a: kquad, L = 0.1, K1 =      0.00000000, tilt =      0.78539816
+sqmg4c27a: kquad, L = 0.1, K1 =      0.00000000, tilt =      0.78539816
+sqmg4c29a: kquad, L = 0.1, K1 =      0.00000000, tilt =      0.78539816
+
+! === Beam line sequence:
+ring: LINE = (mk4g1c30a, issp1d, dhi6, pvfg1c30a, &
+  dhi7, btsp9, dhi8, p3g1c30a, dhi9, isbu3, dhi10, p4g1c30a, dhi11, isbu4, &
+  dhi12, dft, fh2g1c30a, dft, dh1g1a, geg1c30a, gsg2c30a, sh1g2c30a, dh1ag2a, &
+  ph1g2c30a, dbpm01, qh1g2c30a, dh2ag2a, sqhg2c30a, ch1xg2c30a, ch1yg2c30a, &
+  sqhg2c30a, dh2bg2a1, hscraperxp, hscraperxn, dh2bg2a2, qh2g2c30a, dh3ag2a, &
+  sh3g2c30a, dh3bg2a, qh3g2c30a, dh4ag2a, ph2g2c30a, dbpm02, sh4g2c30a, dh4bg2a1, &
+  vscraper1p, vscraper1n, dh4bg2a2, dfch, ch2xg2c30a, ch2yg2c30a, dfch, geg2c30a, &
+  dh4cg3a, gsg3c30a, mk1g3c30a, b1g3c30a, geg3c30a, gsg4c30a, dm1ag4a, dsch, &
+  cm1xg4c30a, cm1yg4c30a, dsch, dm1bg4a, qm1g4c30a, dm2ag4a, sm1g4c30a, dft1, &
+  dft, fm1g4c30a, dft, dm2bg4a, pm1g4c30a, dbpm03, qm2g4c30a, dm2cg4a, sm2g4c30b, &
+  dm2cg4b, qm2g4c30b, dm2bg4b1, hscraper1p, hscraper1n, dm2bg4b2, sm1g4c30b, &
+  dm2ag4b, pm1g4c30b, dbpm04, qm1g4c30b, dm1eg4b, dfch, cm1yg4c30b, cm1xg4c30b, &
+  dfch, geg4c30b, gsg5c30b, dm1dg5b1, dpwg5b, dm1cg5b1, b1g5c30b, mk2g5c30b, &
+  geg5c30b, dl4bg6b, gsg6c30b, dl4ag6b, ql3g6c30b, dbpm05, pl2g6c30b, dl3cg6b, &
+  sl3g6c30b, dl3bg6b, dsch, cl2yg6c30b, cl2xg6c30b, dsch, dl3ag6b, ql2g6c30b, &
+  dl2cg6b, sl2g6c30b, dl2bg6b, dsch, cl1yg6c30b, cl1xg6c30b, dsch, dl2ag6b, &
+  ql1g6c30b, dl1ag6b, pl1g6c30b, dbpm06, sl1g6c30b, geg6c30b, gsg1c01a, dl0bg1a, &
+  dft, fl1g1c01a, dft, dft2, dldk, dl01g1c01a, pu1g1c01a, dl02g1c01a, cu1xg1c01id1, &
+  cu1yg1c01id1, idc01h1, cu2xg1c01id1, cu2yg1c01id1, dl03g1c01a, pu2g1c01a, &
+  dl04g1c01a, mk5g1c01a, dl05g1c01a, pu3g1c01a, dl06g1c01a, cu1xg1c01id2, &
+  cu1yg1c01id2, idc01h2, cu2xg1c01id2, cu2yg1c01id2, dl07g1c01a, pu4g1c01a, &
+  dl08g1c01a, dldk, dft2, dft, fl2g1c01a, dft, dl0ag1a, geg1c01a, gsg2c01a, &
+  sl1g2c01a, dl1ag2a, pl1g2c01a, dbpm07, ql1g2c01a, dl2ag2a, dsch, cl1xg2c01a, &
+  cl1yg2c01a, dsch, dl2bg2a, sl2g2c01a, dl2cg2a, ql2g2c01a, dl3ag2a, dsch, &
+  cl2xg2c01a, cl2yg2c01a, dsch, dl3bg2a, sl3g2c01a, dl3cg2a, pl2g2c01a, dbpm08, &
+  ql3g2c01a, dl4ag2a, geg2c01a, dl4bg3a, gsg3c01a, mk1g3c01a, b1g3c01a, geg3c01a, &
+  gsg4c01a, dm1ag4a, sqmg4c01a, cm1xg4c01a, cm1yg4c01a, sqmg4c01a, dm1bg4a, &
+  qm1g4c01a, dm2a2g4a, sm1g4c01a, dft1, dft, fm1g4c01a, dft, dm2b2g4a, pm1g4c01a, &
+  dbpm09, qm2g4c01a, dm2cg4a, sm2g4c01b, dm2cg4b, qm2g4c01b, dm2b2g4b1, hscraper2p, &
+  hscraper2n, dm2b2g4b2, sm1g4c01b, dm2a2g4b, pm1g4c01b, dbpm10, qm1g4c01b, &
+  dm1eg4b, dfch, cm1yg4c01b, cm1xg4c01b, dfch, geg4c01b, gsg5c01b, dm1dg5b2, &
+  dpwg5b1, vscraper2p, vscraper2n, dpwg5b2, dm1cg5b2, b1g5c01b, mk2g5c01b, &
+  geg5c01b, dh4cg6b, gsg6c01b, dfch, ch2yg6c01b, ch2xg6c01b, dfch, dh4bg6b, &
+  sh4g6c01b, dh4ag6b, ph2g6c01b, dbpm11, qh3g6c01b, dh3bg6b, sh3g6c01b, dh3ag6b, &
+  qh2g6c01b, dh2bg6b, dsch, ch1yg6c01b, ch1xg6c01b, dsch, dh2ag6b, qh1g6c01b, &
+  dh1ag6b, ph1g6c01b, dbpm12, sh1g6c01b, geg6c01b, gsg1c02a, dh2g1a, dft, &
+  fh1g1c02a, dft, dh01g1c02a, pu1g1c02a, dh02g1c02a, cu1xg1c02id1, cu1yg1c02id1, &
+  idc02h1, cu2xg1c02id1, cu2yg1c02id1, pu2g1c02a, mk4g1c02a, dh05g1c02a, &
+  pu3g1c02a, dh06g1c02a, cu1xg1c02id2, cu1yg1c02id2, idc02h2, cu2xg1c02id2, &
+  cu2yg1c02id2, dh07g1c02a, pu4g1c02a, dh08g1c02a, dft, fh2g1c02a, dft, dh1g1a, &
+  geg1c02a, gsg2c02a, sh1g2c02a, dh1ag2a, ph1g2c02a, dbpm01, qh1g2c02a, dh2ag2a, &
+  sqhg2c02a, ch1xg2c02a, ch1yg2c02a, sqhg2c02a, dh2bg2a, qh2g2c02a, dh3ag2a, &
+  sh3g2c02a, dh3bg2a, qh3g2c02a, dh4ag2a, ph2g2c02a, dbpm02, sh4g2c02a, dh4bg2a, &
+  dfch, ch2xg2c02a, ch2yg2c02a, dfch, geg2c02a, dh4cg3a, gsg3c02a, mk1g3c02a, &
+  b1g3c02a, geg3c02a, gsg4c02a, dm1ag4a, dsch, cm1xg4c02a, cm1yg4c02a, dsch, &
+  dm1bg4a, qm1g4c02a, dm2ag4a, sm1g4c02a, dft1, dft, fm1g4c02a, dft, dm2bg4a, &
+  pm1g4c02a, dbpm03, qm2g4c02a, dm2cg4a, sm2g4c02b, dm2cg4b, qm2g4c02b, dm2bg4b, &
+  sm1g4c02b, dm2ag4b, pm1g4c02b, dbpm04, qm1g4c02b, dm1eg4b, dfch, cm1yg4c02b, &
+  cm1xg4c02b, dfch, geg4c02b, gsg5c02b, dm1dg5b1, dpwg5b, dm1cg5b1, b1g5c02b, &
+  mk2g5c02b, geg5c02b, dl4bg6b, gsg6c02b, dl4ag6b, ql3g6c02b, dbpm05, pl2g6c02b, &
+  dl3cg6b, sl3g6c02b, dl3bg6b, dsch, cl2yg6c02b, cl2xg6c02b, dsch, dl3ag6b, &
+  ql2g6c02b, dl2cg6b, sl2g6c02b, dl2bg6b, dsch, cl1yg6c02b, cl1xg6c02b, dsch, &
+  dl2ag6b, ql1g6c02b, dl1ag6b, pl1g6c02b, dbpm06, sl1g6c02b, geg6c02b, gsg1c03a, &
+  dl0bg1a, dft, fl1g1c03a, dft, dft2, dldk, dl01g1c03a, pu1g1c03a, dl02g1c03a, &
+  cu1xg1c03id1, cu1yg1c03id1, ivu20g1c03c, cu2xg1c03id2, cu2yg1c03id2, dl07g1c03a, &
+  pu4g1c03a, dl08g1c03a, dldk, dft2, dft, fl2g1c03a, dft, dl0ag1a, geg1c03a, &
+  gsg2c03a, sl1g2c03a, dl1ag2a, pl1g2c03a, dbpm07, ql1g2c03a, dl2ag2a, dsch, &
+  cl1xg2c03a, cl1yg2c03a, dsch, dl2bg2a, sl2g2c03a, dl2cg2a, ql2g2c03a, dl3ag2a, &
+  dsch, cl2xg2c03a, cl2yg2c03a, dsch, dl3bg2a, sl3g2c03a, dl3cg2a, pl2g2c03a, &
+  dbpm08, ql3g2c03a, dl4ag2a, geg2c03a, dl4bg3a, gsg3c03a, mk1g3c03a, b2g3c03a, &
+  geg3c03a, gsg4c03a, dm1ag4a, sqmg4c03a, cm1xg4c03a, cm1yg4c03a, sqmg4c03a, &
+  dm1bg4a, qm1g4c03a, dm2a2g4a, sm1g4c03a, dft1, dft, fm1g4c03a, dft, dm2b2g4a, &
+  pm1g4c03a, dbpm09, qm2g4c03a, dm2cg4a, sm2g4c03b, dm2cg4b, qm2g4c03b, dm2b2g4b, &
+  sm1g4c03b, dm2a2g4b, pm1g4c03b, dbpm10, qm1g4c03b, dm1eg4b, dfch, cm1yg4c03b, &
+  cm1xg4c03b, dfch, geg4c03b, gsg5c03b, dm1dg5b2c03, dpwg5b, dm1cg5b2c03, &
+  b2g5c03b, mk2g5c03b, geg5c03b, dh4cg6b, gsg6c03b, dfch, ch2yg6c03b, ch2xg6c03b, &
+  dfch, dh4bg6b, sh4g6c03b, dh4ag6b, ph2g6c03b, dbpm11, qh3g6c03b, dh3bg6b, &
+  sh3g6c03b, dh3ag6b, qh2g6c03b, dh2bg6b, dsch, ch1yg6c03b, ch1xg6c03b, dsch, &
+  dh2ag6b, qh1g6c03b, dh1ag6b, ph1g6c03b, dbpm12, sh1g6c03b, geg6c03b, gsg1c04a, &
+  dh2g1a, dft, fh1g1c04a, dft, dh01g1c04a, pu1g1c04a, dh02g1c04a, cu1xg1c04id1, &
+  cu1yg1c04id1, idc04h1, cu2xg1c04id1, cu2yg1c04id1, dh03g1c04a, pu2g1c04a, &
+  dh04g1c04a, mk4g1c04a, dh05g1c04a, pu3g1c04a, dh06g1c04a, cu1xg1c04id2, &
+  cu1yg1c04id2, idc04h2, cu2xg1c04id2, cu2yg1c04id2, dh07g1c04a, pu4g1c04a, &
+  dh08g1c04a, dft, fh2g1c04a, dft, dh1g1a, geg1c04a, gsg2c04a, sh1g2c04a, &
+  dh1ag2a, ph1g2c04a, dbpm01, qh1g2c04a, dh2ag2a, sqhg2c04a, ch1xg2c04a, &
+  ch1yg2c04a, sqhg2c04a, dh2bg2a, qh2g2c04a, dh3ag2a, sh3g2c04a, dh3bg2a, &
+  qh3g2c04a, dh4ag2a, ph2g2c04a, dbpm02, sh4g2c04a, dh4bg2a, dfch, ch2xg2c04a, &
+  ch2yg2c04a, dfch, geg2c04a, dh4cg3a, gsg3c04a, mk1g3c04a, b1g3c04a, geg3c04a, &
+  gsg4c04a, dm1ag4a, dsch, cm1xg4c04a, cm1yg4c04a, dsch, dm1bg4a, qm1g4c04a, &
+  dm2ag4a, sm1g4c04a, dft1, dft, fm1g4c04a, dft, dm2bg4a, pm1g4c04a, dbpm03, &
+  qm2g4c04a, dm2cg4a, sm2g4c04b, dm2cg4b, qm2g4c04b, dm2bg4b, sm1g4c04b, &
+  dm2ag4b, pm1g4c04b, dbpm04, qm1g4c04b, dm1eg4b, dfch, cm1yg4c04b, cm1xg4c04b, &
+  dfch, geg4c04b, gsg5c04b, dm1dg5b1, dpwg5b, dm1cg5b1, b1g5c04b, mk2g5c04b, &
+  geg5c04b, dl4bg6b, gsg6c04b, dl4ag6b, ql3g6c04b, dbpm05, pl2g6c04b, dl3cg6b, &
+  sl3g6c04b, dl3bg6b, dsch, cl2yg6c04b, cl2xg6c04b, dsch, dl3ag6b, ql2g6c04b, &
+  dl2cg6b, sl2g6c04b, dl2bg6b, dsch, cl1yg6c04b, cl1xg6c04b, dsch, dl2ag6b, &
+  ql1g6c04b, dl1ag6b, pl1g6c04b, dbpm06, sl1g6c04b, geg6c04b, gsg1c05a, dl0bg1a, &
+  dft, fl1g1c05a, dft, dft2, dldk, dl01g1c05a, pu1g1c05a, dl02g1c05a, cu1xg1c05id1, &
+  cu1yg1c05id1, idc05h1, cu2xg1c05id1, cu2yg1c05id1, dl03g1c05a, pu2g1c05a, &
+  dl04g1c05a, mk5g1c05a, dl05g1c05a, pu3g1c05a, dl06g1c05a, cu1xg1c05id2, &
+  cu1yg1c05id2, ivu21g1c05d, cu2xg1c05id2, cu2yg1c05id2, dl07g1c05a, pu4g1c05a, &
+  dl08g1c05a, dldk, dft2, dft, fl2g1c05a, dft, dl0ag1a, geg1c05a, gsg2c05a, &
+  sl1g2c05a, dl1ag2a, pl1g2c05a, dbpm07, ql1g2c05a, dl2ag2a, dsch, cl1xg2c05a, &
+  cl1yg2c05a, dsch, dl2bg2a, sl2g2c05a, dl2cg2a, ql2g2c05a, dl3ag2a, dsch, &
+  cl2xg2c05a, cl2yg2c05a, dsch, dl3bg2a, sl3g2c05a, dl3cg2a, pl2g2c05a, dbpm08, &
+  ql3g2c05a, dl4ag2a, geg2c05a, dl4bg3a, gsg3c05a, mk1g3c05a, b1g3c05a, geg3c05a, &
+  gsg4c05a, dm1ag4a, sqmg4c05a, cm1xg4c05a, cm1yg4c05a, sqmg4c05a, dm1bg4a, &
+  qm1g4c05a, dm2a2g4a, sm1g4c05a, dft1, dft, fm1g4c05a, dft, dm2b2g4a, pm1g4c05a, &
+  dbpm09, qm2g4c05a, dm2cg4a, sm2g4c05b, dm2cg4b, qm2g4c05b, dm2b2g4b, sm1g4c05b, &
+  dm2a2g4b, pm1g4c05b, dbpm10, qm1g4c05b, dm1eg4b, dfch, cm1yg4c05b, cm1xg4c05b, &
+  dfch, geg4c05b, gsg5c05b, dm1dg5b2, dpwg5b, dm1cg5b2, b1g5c05b, mk2g5c05b, &
+  geg5c05b, dh4cg6b, gsg6c05b, dfch, ch2yg6c05b, ch2xg6c05b, dfch, dh4bg6b, &
+  sh4g6c05b, dh4ag6b, ph2g6c05b, dbpm11, qh3g6c05b, dh3bg6b, sh3g6c05b, dh3ag6b, &
+  qh2g6c05b, dh2bg6b, dsch, ch1yg6c05b, ch1xg6c05b, dsch, dh2ag6b, qh1g6c05b, &
+  dh1ag6b, ph1g6c05b, dbpm12, sh1g6c05b, geg6c05b, gsg1c06a, dh2g1a, dft, &
+  fh1g1c06a, dft, dh01g1c06a, pu1g1c06a, dh02g1c06a, cu1xg1c06id1, cu1yg1c06id1, &
+  idc06h1, cu2xg1c06id1, cu2yg1c06id1, dh03g1c06a, pu2g1c06a, dh04g1c06a, &
+  mk4g1c06a, dh05g1c06a, pu3g1c06a, dh06g1c06a, cu1xg1c06id2, cu1yg1c06id2, &
+  idc06h2, cu2xg1c06id2, cu2yg1c06id2, dh07g1c06a, pu4g1c06a, dh08g1c06a, &
+  dft, fh2g1c06a, dft, dh1g1a, geg1c06a, gsg2c06a, sh1g2c06a, dh1ag2a, ph1g2c06a, &
+  dbpm01, qh1g2c06a, dh2ag2a, sqhg2c06a, ch1xg2c06a, ch1yg2c06a, sqhg2c06a, &
+  dh2bg2a, qh2g2c06a, dh3ag2a, sh3g2c06a, dh3bg2a, qh3g2c06a, dh4ag2a, ph2g2c06a, &
+  dbpm02, sh4g2c06a, dh4bg2a, dfch, ch2xg2c06a, ch2yg2c06a, dfch, geg2c06a, &
+  dh4cg3a, gsg3c06a, mk1g3c06a, b1g3c06a, geg3c06a, gsg4c06a, dm1ag4a, dsch, &
+  cm1xg4c06a, cm1yg4c06a, dsch, dm1bg4a, qm1g4c06a, dm2ag4a, sm1g4c06a, dft1, &
+  dft, fm1g4c06a, dft, dm2bg4a, pm1g4c06a, dbpm03, qm2g4c06a, dm2cg4a, sm2g4c06b, &
+  dm2cg4b, qm2g4c06b, dm2bg4b, sm1g4c06b, dm2ag4b, pm1g4c06b, dbpm04, qm1g4c06b, &
+  dm1eg4b, dfch, cm1yg4c06b, cm1xg4c06b, dfch, geg4c06b, gsg5c06b, dm1dg5b1, &
+  dpwg5b, dm1cg5b1, b1g5c06b, mk2g5c06b, geg5c06b, dl4bg6b, gsg6c06b, dl4ag6b, &
+  ql3g6c06b, dbpm05, pl2g6c06b, dl3cg6b, sl3g6c06b, dl3bg6b, dsch, cl2yg6c06b, &
+  cl2xg6c06b, dsch, dl3ag6b, ql2g6c06b, dl2cg6b, sl2g6c06b, dl2bg6b, dsch, &
+  cl1yg6c06b, cl1xg6c06b, dsch, dl2ag6b, ql1g6c06b, dl1ag6b, pl1g6c06b, dbpm06, &
+  sl1g6c06b, geg6c06b, gsg1c07a, dl0bg1a, dft, fl1g1c07a, dft, dft2, dldk, &
+  dl01g1c07a, pu1g1c07a, dl02g1c07a, cu1xg1c07id1, cu1yg1c07id1, idc07h1, &
+  cu2xg1c07id1, cu2yg1c07id1, dl03g1c07a, pu2g1c07a, dl04g1c07a, mk5g1c07a, &
+  dl05g1c07a, pu3g1c07a, dl06g1c07a, cu1xg1c07id2, cu1yg1c07id2, idc07h2, &
+  cu2xg1c07id2, cu2yg1c07id2, dl07g1c07a, pu4g1c07a, dl08g1c07a, dldk, dft2, &
+  dft, fl2g1c07a, dft, dl0ag1a, geg1c07a, gsg2c07a, sl1g2c07a, dl1ag2a, pl1g2c07a, &
+  dbpm07, ql1g2c07a, dl2ag2a, dsch, cl1xg2c07a, cl1yg2c07a, dsch, dl2bg2a, &
+  sl2g2c07a, dl2cg2a, ql2g2c07a, dl3ag2a, dsch, cl2xg2c07a, cl2yg2c07a, dsch, &
+  dl3bg2a, sl3g2c07a, dl3cg2a, pl2g2c07a, dbpm08, ql3g2c07a, dl4ag2a, geg2c07a, &
+  dl4bg3a, gsg3c07a, mk1g3c07a, b1g3c07a, geg3c07a, gsg4c07a, dm1ag4a, sqmg4c07a, &
+  cm1xg4c07a, cm1yg4c07a, sqmg4c07a, dm1bg4a, qm1g4c07a, dm2a2g4a, sm1g4c07a, &
+  dft1, dft, fm1g4c07a, dft, dm2b2g4a, pm1g4c07a, dbpm09, qm2g4c07a, dm2cg4a, &
+  sm2g4c07b, dm2cg4b, qm2g4c07b, dm2b2g4b, sm1g4c07b, dm2a2g4b, pm1g4c07b, &
+  dbpm10, qm1g4c07b, dm1eg4b, dfch, cm1yg4c07b, cm1xg4c07b, dfch, geg4c07b, &
+  gsg5c07b, dm1dg5b2, dpwg5b, dm1cg5b2, b1g5c07b, mk2g5c07b, geg5c07b, dh4cg6b, &
+  gsg6c07b, dfch, ch2yg6c07b, ch2xg6c07b, dfch, dh4bg6b, sh4g6c07b, dh4ag6b, &
+  ph2g6c07b, dbpm11, qh3g6c07b, dh3bg6b, sh3g6c07b, dh3ag6b, qh2g6c07b, dh2bg6b, &
+  dsch, ch1yg6c07b, ch1xg6c07b, dsch, dh2ag6b, qh1g6c07b, dh1ag6b, ph1g6c07b, &
+  dbpm12, sh1g6c07b, geg6c07b, gsg1c08a, dh2g1a, dft, fh1g1c08a, dft, dh01g1c08a, &
+  pu1g1c08a, dh02g1c08a, cu1xg1c08id1, cu1yg1c08id1, dw100g1c08u, cu2xg1c08id1, &
+  cu2yg1c08id1, dh03g1c08a, pu2g1c08a, dh04g1c08a, mk4g1c08a, dh05g1c08a, &
+  pu3g1c08a, dh06g1c08a, cu1xg1c08id2, cu1yg1c08id2, dw100g1c08d, cu2xg1c08id2, &
+  cu2yg1c08id2, dh07g1c08a, pu4g1c08a, dh08g1c08a, dft, fh2g1c08a, dft, dh1g1a, &
+  geg1c08a, gsg2c08a, sh1g2c08a, dh1ag2a, ph1g2c08a, dbpm01, qh1g2c08a, dh2ag2a, &
+  sqhg2c08a, ch1xg2c08a, ch1yg2c08a, sqhg2c08a, dh2bg2a, qh2g2c08a, dh3ag2a, &
+  sh3g2c08a, dh3bg2a, qh3g2c08a, dh4ag2a, ph2g2c08a, dbpm02, sh4g2c08a, dh4bg2a, &
+  dfch, ch2xg2c08a, ch2yg2c08a, dfch, geg2c08a, dh4cg3a, gsg3c08a, mk1g3c08a, &
+  b1g3c08a, geg3c08a, gsg4c08a, dm1ag4a, dsch, cm1xg4c08a, cm1yg4c08a, dsch, &
+  dm1bg4a, qm1g4c08a, dm2ag4a, sm1g4c08a, dft1, dft, fm1g4c08a, dft, dm2bg4a, &
+  pm1g4c08a, dbpm03, qm2g4c08a, dm2cg4a, sm2g4c08b, dm2cg4b, qm2g4c08b, dm2bg4b, &
+  sm1g4c08b, dm2ag4b, pm1g4c08b, dbpm04, qm1g4c08b, dm1eg4b, dfch, cm1yg4c08b, &
+  cm1xg4c08b, dfch, geg4c08b, gsg5c08b, dm1dg5b1, dpwg5b, dm1cg5b1, b1g5c08b, &
+  mk2g5c08b, geg5c08b, dl4bg6b, gsg6c08b, dl4ag6b, ql3g6c08b, dbpm05, pl2g6c08b, &
+  dl3cg6b, sl3g6c08b, dl3bg6b, dsch, cl2yg6c08b, cl2xg6c08b, dsch, dl3ag6b, &
+  ql2g6c08b, dl2cg6b, sl2g6c08b, dl2bg6b, dsch, cl1yg6c08b, cl1xg6c08b, dsch, &
+  dl2ag6b, ql1g6c08b, dl1ag6b, pl1g6c08b, dbpm06, sl1g6c08b, geg6c08b, gsg1c09a, &
+  dl0bg1a, dft, fl1g1c09a, dft, dft2, dldk, dl01g1c09a, pu1g1c09a, dl02g1c09a, &
+  cu1xg1c09id1, cu1yg1c09id1, idc09h1, cu2xg1c09id1, cu2yg1c09id1, dl03g1c09a, &
+  pu2g1c09a, dl04g1c09a, mk5g1c09a, dl05g1c09a, pu3g1c09a, dl06g1c09a, cu1xg1c09id2, &
+  cu1yg1c09id2, idc09h2, cu2xg1c09id2, cu2yg1c09id2, dl07g1c09a, pu4g1c09a, &
+  dl08g1c09a, dldk, dft2, dft, fl2g1c09a, dft, dl0ag1a, geg1c09a, gsg2c09a, &
+  sl1g2c09a, dl1ag2a, pl1g2c09a, dbpm07, ql1g2c09a, dl2ag2a, dsch, cl1xg2c09a, &
+  cl1yg2c09a, dsch, dl2bg2a, sl2g2c09a, dl2cg2a, ql2g2c09a, dl3ag2a, dsch, &
+  cl2xg2c09a, cl2yg2c09a, dsch, dl3bg2a, sl3g2c09a, dl3cg2a, pl2g2c09a, dbpm08, &
+  ql3g2c09a, dl4ag2a, geg2c09a, dl4bg3a, gsg3c09a, mk1g3c09a, b1g3c09a, geg3c09a, &
+  gsg4c09a, dm1ag4a, sqmg4c09a, cm1xg4c09a, cm1yg4c09a, sqmg4c09a, dm1bg4a, &
+  qm1g4c09a, dm2a2g4a, sm1g4c09a, dft1, dft, fm1g4c09a, dft, dm2b2g4a, pm1g4c09a, &
+  dbpm09, qm2g4c09a, dm2cg4a, sm2g4c09b, dm2cg4b, qm2g4c09b, dm2b2g4b, sm1g4c09b, &
+  dm2a2g4b, pm1g4c09b, dbpm10, qm1g4c09b, dm1eg4b, dfch, cm1yg4c09b, cm1xg4c09b, &
+  dfch, geg4c09b, gsg5c09b, dm1dg5b2, dpwg5b, dm1cg5b2, b1g5c09b, mk2g5c09b, &
+  geg5c09b, dh4cg6b, gsg6c09b, dfch, ch2yg6c09b, ch2xg6c09b, dfch, dh4bg6b, &
+  sh4g6c09b, dh4ag6b, ph2g6c09b, dbpm11, qh3g6c09b, dh3bg6b, sh3g6c09b, dh3ag6b, &
+  qh2g6c09b, dh2bg6b, dsch, ch1yg6c09b, ch1xg6c09b, dsch, dh2ag6b, qh1g6c09b, &
+  dh1ag6b, ph1g6c09b, dbpm12, sh1g6c09b, geg6c09b, gsg1c10a, dh2g1a, dft, &
+  fh1g1c10a, dft, dh01g1c10a, pu1g1c10a, dh02g1c10a, cu1xg1c10id1, cu1yg1c10id1, &
+  ivu22g1c10c, cu2xg1c10id2, cu2yg1c10id2, dh07g1c10a, pu4g1c10a, dh08g1c10a, &
+  dft, fh2g1c10a, dft, dh1g1a, geg1c10a, gsg2c10a, sh1g2c10a, dh1ag2a, ph1g2c10a, &
+  dbpm01, qh1g2c10a, dh2ag2a, sqhg2c10a, ch1xg2c10a, ch1yg2c10a, sqhg2c10a, &
+  dh2bg2a, qh2g2c10a, dh3ag2a, sh3g2c10a, dh3bg2a, qh3g2c10a, dh4ag2a, ph2g2c10a, &
+  dbpm02, sh4g2c10a, dh4bg2a, dfch, ch2xg2c10a, ch2yg2c10a, dfch, geg2c10a, &
+  dh4cg3a, gsg3c10a, mk1g3c10a, b1g3c10a, geg3c10a, gsg4c10a, dm1ag4a, dsch, &
+  cm1xg4c10a, cm1yg4c10a, dsch, dm1bg4a, qm1g4c10a, dm2ag4a, sm1g4c10a, dft1, &
+  dft, fm1g4c10a, dft, dm2bg4a, pm1g4c10a, dbpm03, qm2g4c10a, dm2cg4a, sm2g4c10b, &
+  dm2cg4b, qm2g4c10b, dm2bg4b, sm1g4c10b, dm2ag4b, pm1g4c10b, dbpm04, qm1g4c10b, &
+  dm1eg4b, dfch, cm1yg4c10b, cm1xg4c10b, dfch, geg4c10b, gsg5c10b, dm1dg5b1, &
+  dpwg5b, dm1cg5b1, b1g5c10b, mk2g5c10b, geg5c10b, dl4bg6b, gsg6c10b, dl4ag6b, &
+  ql3g6c10b, dbpm05, pl2g6c10b, dl3cg6b, sl3g6c10b, dl3bg6b, dsch, cl2yg6c10b, &
+  cl2xg6c10b, dsch, dl3ag6b, ql2g6c10b, dl2cg6b, sl2g6c10b, dl2bg6b, dsch, &
+  cl1yg6c10b, cl1xg6c10b, dsch, dl2ag6b, ql1g6c10b, dl1ag6b, pl1g6c10b, dbpm06, &
+  sl1g6c10b, geg6c10b, gsg1c11a, dl0bg1a, dft, fl1g1c11a, dft, dft2, dldk, &
+  dl01g1c11a, pu1g1c11a, dl02g1c11a, cu1xg1c11id1, cu1yg1c11id1, ivu20g1c11c, &
+  cu2xg1c11id2, cu2yg1c11id2, dl07g1c11a, pu4g1c11a, dl08g1c11a, dldk, dft2, &
+  dft, fl2g1c11a, dft, dl0ag1a, geg1c11a, gsg2c11a, sl1g2c11a, dl1ag2a, pl1g2c11a, &
+  dbpm07, ql1g2c11a, dl2ag2a, dsch, cl1xg2c11a, cl1yg2c11a, dsch, dl2bg2a, &
+  sl2g2c11a, dl2cg2a, ql2g2c11a, dl3ag2a, dsch, cl2xg2c11a, cl2yg2c11a, dsch, &
+  dl3bg2a, sl3g2c11a, dl3cg2a, pl2g2c11a, dbpm08, ql3g2c11a, dl4ag2a, geg2c11a, &
+  dl4bg3a, gsg3c11a, mk1g3c11a, b1g3c11a, geg3c11a, gsg4c11a, dm1ag4a, sqmg4c11a, &
+  cm1xg4c11a, cm1yg4c11a, sqmg4c11a, dm1bg4a, qm1g4c11a, dm2a2g4a, sm1g4c11a, &
+  dft1, dft, fm1g4c11a, dft, dm2b2g4a, pm1g4c11a, dbpm09, qm2g4c11a, dm2cg4a, &
+  sm2g4c11b, dm2cg4b, qm2g4c11b, dm2b2g4b, sm1g4c11b, dm2a2g4b, pm1g4c11b, &
+  dbpm10, qm1g4c11b, dm1eg4b, dfch, cm1yg4c11b, cm1xg4c11b, dfch, geg4c11b, &
+  gsg5c11b, dm1dg5b2, dpwg5b, dm1cg5b2, b1g5c11b, mk2g5c11b, geg5c11b, dh4cg6b, &
+  gsg6c11b, dfch, ch2yg6c11b, ch2xg6c11b, dfch, dh4bg6b, sh4g6c11b, dh4ag6b, &
+  ph2g6c11b, dbpm11, qh3g6c11b, dh3bg6b, sh3g6c11b, dh3ag6b, qh2g6c11b, dh2bg6b, &
+  dsch, ch1yg6c11b, ch1xg6c11b, dsch, dh2ag6b, qh1g6c11b, dh1ag6b, ph1g6c11b, &
+  dbpm12, sh1g6c11b, geg6c11b, gsg1c12a, dh2g1a, dft, fh1g1c12a, dft, dh01g1c12a, &
+  pu1g1c12a, dh02g1c12a, cu1xg1c12id1, cu1yg1c12id1, idc12h1, cu2xg1c12id1, &
+  cu2yg1c12id1, dh03g1c12a, pu2g1c12a, dh04g1c12a, mk4g1c12a, dh05g1c12a, &
+  pu3g1c12a, dh06g1c12a, cu1xg1c12id2, cu1yg1c12id2, idc12h2, cu2xg1c12id2, &
+  cu2yg1c12id2, dh07g1c12a, pu4g1c12a, dh08g1c12a, dft, fh2g1c12a, dft, dh1g1a, &
+  geg1c12a, gsg2c12a, sh1g2c12a, dh1ag2a, ph1g2c12a, dbpm01, qh1g2c12a, dh2ag2a, &
+  sqhg2c12a, ch1xg2c12a, ch1yg2c12a, sqhg2c12a, dh2bg2a, qh2g2c12a, dh3ag2a, &
+  sh3g2c12a, dh3bg2a, qh3g2c12a, dh4ag2a, ph2g2c12a, dbpm02, sh4g2c12a, dh4bg2a, &
+  dfch, ch2xg2c12a, ch2yg2c12a, dfch, geg2c12a, dh4cg3a, gsg3c12a, mk1g3c12a, &
+  b1g3c12a, geg3c12a, gsg4c12a, dm1ag4a, dsch, cm1xg4c12a, cm1yg4c12a, dsch, &
+  dm1bg4a, qm1g4c12a, dm2ag4a, sm1g4c12a, dft1, dft, fm1g4c12a, dft, dm2bg4a, &
+  pm1g4c12a, dbpm03, qm2g4c12a, dm2cg4a, sm2g4c12b, dm2cg4b, qm2g4c12b, dm2bg4b, &
+  sm1g4c12b, dm2ag4b, pm1g4c12b, dbpm04, qm1g4c12b, dm1eg4b, dfch, cm1yg4c12b, &
+  cm1xg4c12b, dfch, geg4c12b, gsg5c12b, dm1dg5b1, dpwg5b, dm1cg5b1, b1g5c12b, &
+  mk2g5c12b, geg5c12b, dl4bg6b, gsg6c12b, dl4ag6b, ql3g6c12b, dbpm05, pl2g6c12b, &
+  dl3cg6b, sl3g6c12b, dl3bg6b, dsch, cl2yg6c12b, cl2xg6c12b, dsch, dl3ag6b, &
+  ql2g6c12b, dl2cg6b, sl2g6c12b, dl2bg6b, dsch, cl1yg6c12b, cl1xg6c12b, dsch, &
+  dl2ag6b, ql1g6c12b, dl1ag6b, pl1g6c12b, dbpm06, sl1g6c12b, geg6c12b, gsg1c13a, &
+  dl0bg1a, dft, fl1g1c13a, dft, dft2, dldk, dl01g1c13a, pu1g1c13a, dl02g1c13a, &
+  cu1xg1c13id1, cu1yg1c13id1, idc13h1, cu2xg1c13id1, cu2yg1c13id1, dl03g1c13a, &
+  pu2g1c13a, dl04g1c13a, mk5g1c13a, dl05g1c13a, pu3g1c13a, dl06g1c13a, cu1xg1c13id2, &
+  cu1yg1c13id2, idc13h2, cu2xg1c13id2, cu2yg1c13id2, dl07g1c13a, pu4g1c13a, &
+  dl08g1c13a, dldk, dft2, dft, fl2g1c13a, dft, dl0ag1a, geg1c13a, gsg2c13a, &
+  sl1g2c13a, dl1ag2a, pl1g2c13a, dbpm07, ql1g2c13a, dl2ag2a, dsch, cl1xg2c13a, &
+  cl1yg2c13a, dsch, dl2bg2a, sl2g2c13a, dl2cg2a, ql2g2c13a, dl3ag2a, dsch, &
+  cl2xg2c13a, cl2yg2c13a, dsch, dl3bg2a, sl3g2c13a, dl3cg2a, pl2g2c13a, dbpm08, &
+  ql3g2c13a, dl4ag2a, geg2c13a, dl4bg3a, gsg3c13a, mk1g3c13a, b2g3c13a, geg3c13a, &
+  gsg4c13a, dm1ag4a, sqmg4c13a, cm1xg4c13a, cm1yg4c13a, sqmg4c13a, dm1bg4a, &
+  qm1g4c13a, dm2a2g4a, sm1g4c13a, dft1, dft, fm1g4c13a, dft, dm2b2g4a, pm1g4c13a, &
+  dbpm09, qm2g4c13a, dm2cg4a, sm2g4c13b, dm2cg4b, qm2g4c13b, dm2b2g4b, sm1g4c13b, &
+  dm2a2g4b, pm1g4c13b, dbpm10, qm1g4c13b, dm1eg4b, dfch, cm1yg4c13b, cm1xg4c13b, &
+  dfch, geg4c13b, gsg5c13b, dm1dg5b2c13, dpwg5b, dm1cg5b2c13, b2g5c13b, mk2g5c13b, &
+  geg5c13b, dh4cg6b, gsg6c13b, dfch, ch2yg6c13b, ch2xg6c13b, dfch, dh4bg6b, &
+  sh4g6c13b, dh4ag6b, ph2g6c13b, dbpm11, qh3g6c13b, dh3bg6b, sh3g6c13b, dh3ag6b, &
+  qh2g6c13b, dh2bg6b, dsch, ch1yg6c13b, ch1xg6c13b, dsch, dh2ag6b, qh1g6c13b, &
+  dh1ag6b, ph1g6c13b, dbpm12, sh1g6c13b, geg6c13b, gsg1c14a, dh2g1a, dft, &
+  fh1g1c14a, dft, dh01g1c14a, pu1g1c14a, dh02g1c14a, cu1xg1c14id1, cu1yg1c14id1, &
+  idc14h1, cu2xg1c14id1, cu2yg1c14id1, dh03g1c14a, pu2g1c14a, dh04g1c14a, &
+  mk4g1c14a, dh05g1c14a, pu3g1c14a, dh06g1c14a, cu1xg1c14id2, cu1yg1c14id2, &
+  idc14h2, cu2xg1c14id2, cu2yg1c14id2, dh07g1c14a, pu4g1c14a, dh08g1c14a, &
+  dft, fh2g1c14a, dft, dh1g1a, geg1c14a, gsg2c14a, sh1g2c14a, dh1ag2a, ph1g2c14a, &
+  dbpm01, qh1g2c14a, dh2ag2a, sqhg2c14a, ch1xg2c14a, ch1yg2c14a, sqhg2c14a, &
+  dh2bg2a, qh2g2c14a, dh3ag2a, sh3g2c14a, dh3bg2a, qh3g2c14a, dh4ag2a, ph2g2c14a, &
+  dbpm02, sh4g2c14a, dh4bg2a, dfch, ch2xg2c14a, ch2yg2c14a, dfch, geg2c14a, &
+  dh4cg3a, gsg3c14a, mk1g3c14a, b1g3c14a, geg3c14a, gsg4c14a, dm1ag4a, dsch, &
+  cm1xg4c14a, cm1yg4c14a, dsch, dm1bg4a, qm1g4c14a, dm2ag4a, sm1g4c14a, dft1, &
+  dft, fm1g4c14a, dft, dm2bg4a, pm1g4c14a, dbpm03, qm2g4c14a, dm2cg4a, sm2g4c14b, &
+  dm2cg4b, qm2g4c14b, dm2bg4b, sm1g4c14b, dm2ag4b, pm1g4c14b, dbpm04, qm1g4c14b, &
+  dm1eg4b, dfch, cm1yg4c14b, cm1xg4c14b, dfch, geg4c14b, gsg5c14b, dm1dg5b1, &
+  dpwg5b, dm1cg5b1, b1g5c14b, mk2g5c14b, geg5c14b, dl4bg6b, gsg6c14b, dl4ag6b, &
+  ql3g6c14b, dbpm05, pl2g6c14b, dl3cg6b, sl3g6c14b, dl3bg6b, dsch, cl2yg6c14b, &
+  cl2xg6c14b, dsch, dl3ag6b, ql2g6c14b, dl2cg6b, sl2g6c14b, dl2bg6b, dsch, &
+  cl1yg6c14b, cl1xg6c14b, dsch, dl2ag6b, ql1g6c14b, dl1ag6b, pl1g6c14b, dbpm06, &
+  sl1g6c14b, geg6c14b, gsg1c15a, dl0bg1a, dft, fl1g1c15a, dft, dft2, dldk, &
+  dl01g1c15a, pu1g1c15a, dl02g1c15a, cu1xg1c15id1, cu1yg1c15id1, idc15h1, &
+  cu2xg1c15id1, cu2yg1c15id1, dl03g1c15a, pu2g1c15a, dl04g1c15a, mk5g1c15a, &
+  dl05g1c15a, pu3g1c15a, dl06g1c15a, cu1xg1c15id2, cu1yg1c15id2, idc15h2, &
+  cu2xg1c15id2, cu2yg1c15id2, dl07g1c15a, pu4g1c15a, dl08g1c15a, dldk, dft2, &
+  dft, fl2g1c15a, dft, dl0ag1a, geg1c15a, gsg2c15a, sl1g2c15a, dl1ag2a, pl1g2c15a, &
+  dbpm07, ql1g2c15a, dl2ag2a, dsch, cl1xg2c15a, cl1yg2c15a, dsch, dl2bg2a, &
+  sl2g2c15a, dl2cg2a, ql2g2c15a, dl3ag2a, dsch, cl2xg2c15a, cl2yg2c15a, dsch, &
+  dl3bg2a, sl3g2c15a, dl3cg2a, pl2g2c15a, dbpm08, ql3g2c15a, dl4ag2a, geg2c15a, &
+  dl4bg3a, gsg3c15a, mk1g3c15a, b1g3c15a, geg3c15a, gsg4c15a, dm1ag4a, sqmg4c15a, &
+  cm1xg4c15a, cm1yg4c15a, sqmg4c15a, dm1bg4a, qm1g4c15a, dm2a2g4a, sm1g4c15a, &
+  dft1, dft, fm1g4c15a, dft, dm2b2g4a, pm1g4c15a, dbpm09, qm2g4c15a, dm2cg4a, &
+  sm2g4c15b, dm2cg4b, qm2g4c15b, dm2b2g4b, sm1g4c15b, dm2a2g4b, pm1g4c15b, &
+  dbpm10, qm1g4c15b, dm1eg4b, dfch, cm1yg4c15b, cm1xg4c15b, dfch, geg4c15b, &
+  gsg5c15b, dm1dg5b2, dpwg5b, dm1cg5b2, b1g5c15b, mk2g5c15b, geg5c15b, dh4cg6b, &
+  gsg6c15b, dfch, ch2yg6c15b, ch2xg6c15b, dfch, dh4bg6b, sh4g6c15b, dh4ag6b, &
+  ph2g6c15b, dbpm11, qh3g6c15b, dh3bg6b, sh3g6c15b, dh3ag6b, qh2g6c15b, dh2bg6b, &
+  dsch, ch1yg6c15b, ch1xg6c15b, dsch, dh2ag6b, qh1g6c15b, dh1ag6b, ph1g6c15b, &
+  dbpm12, sh1g6c15b, geg6c15b, gsg1c16a, dh2g1a, dft, fh1g1c16a, dft, dh01g1c16a, &
+  pu1g1c16a, dh02g1c16a, cu1xg1c16id1, cu1yg1c16id1, idc16h1, cu2xg1c16id1, &
+  cu2yg1c16id1, dh03g1c16a, pu2g1c16a, dh04g1c16a, mk4g1c16a, dh05g1c16a, &
+  pu3g1c16a, dh06g1c16a, cu1xg1c16id2, cu1yg1c16id2, idc16h2, cu2xg1c16id2, &
+  cu2yg1c16id2, dh07g1c16a, pu4g1c16a, dh08g1c16a, dft, fh2g1c16a, dft, dh1g1a, &
+  geg1c16a, gsg2c16a, sh1g2c16a, dh1ag2a, ph1g2c16a, dbpm01, qh1g2c16a, dh2ag2a, &
+  sqhg2c16a, ch1xg2c16a, ch1yg2c16a, sqhg2c16a, dh2bg2a, qh2g2c16a, dh3ag2a, &
+  sh3g2c16a, dh3bg2a, qh3g2c16a, dh4ag2a, ph2g2c16a, dbpm02, sh4g2c16a, dh4bg2a, &
+  dfch, ch2xg2c16a, ch2yg2c16a, dfch, geg2c16a, dh4cg3a, gsg3c16a, mk1g3c16a, &
+  b1g3c16a, geg3c16a, gsg4c16a, dm1ag4a, dsch, cm1xg4c16a, cm1yg4c16a, dsch, &
+  dm1bg4a, qm1g4c16a, dm2ag4a, sm1g4c16a, dft1, dft, fm1g4c16a, dft, dm2bg4a, &
+  pm1g4c16a, dbpm03, qm2g4c16a, dm2cg4a, sm2g4c16b, dm2cg4b, qm2g4c16b, dm2bg4b, &
+  sm1g4c16b, dm2ag4b, pm1g4c16b, dbpm04, qm1g4c16b, dm1eg4b, dfch, cm1yg4c16b, &
+  cm1xg4c16b, dfch, geg4c16b, gsg5c16b, dm1dg5b1, dpwg5b, dm1cg5b1, b1g5c16b, &
+  mk2g5c16b, geg5c16b, dl4bg6b, gsg6c16b, dl4ag6b, ql3g6c16b, dbpm05, pl2g6c16b, &
+  dl3cg6b, sl3g6c16b, dl3bg6b, dsch, cl2yg6c16b, cl2xg6c16b, dsch, dl3ag6b, &
+  ql2g6c16b, dl2cg6b, sl2g6c16b, dl2bg6b, dsch, cl1yg6c16b, cl1xg6c16b, dsch, &
+  dl2ag6b, ql1g6c16b, dl1ag6b, pl1g6c16b, dbpm06, sl1g6c16b, geg6c16b, gsg1c17a, &
+  dl0bg1a, dft, fl1g1c17a, dft, dft2, dldk, dl01g1c17a, pu1g1c17a, dl02g1c17a, &
+  cu1xg1c17id1, cu1yg1c17id1, idc17h1, cu2xg1c17id1, cu2yg1c17id1, dl03g1c17a, &
+  pu2g1c17a, dl04g1c17a, mk5g1c17a, dl05g1c17a, pu3g1c17a, dl06g1c17a, cu1xg1c17id2, &
+  cu1yg1c17id2, idc17h2, cu2xg1c17id2, cu2yg1c17id2, dl07g1c17a, pu4g1c17a, &
+  dl08g1c17a, dldk, dft2, dft, fl2g1c17a, dft, dl0ag1a, geg1c17a, gsg2c17a, &
+  sl1g2c17a, dl1ag2a, pl1g2c17a, dbpm07, ql1g2c17a, dl2ag2a, dsch, cl1xg2c17a, &
+  cl1yg2c17a, dsch, dl2bg2a, sl2g2c17a, dl2cg2a, ql2g2c17a, dl3ag2a, dsch, &
+  cl2xg2c17a, cl2yg2c17a, dsch, dl3bg2a, sl3g2c17a, dl3cg2a, pl2g2c17a, dbpm08, &
+  ql3g2c17a, dl4ag2a, geg2c17a, dl4bg3a, gsg3c17a, mk1g3c17a, b1g3c17a, geg3c17a, &
+  gsg4c17a, dm1ag4a, sqmg4c17a, cm1xg4c17a, cm1yg4c17a, sqmg4c17a, dm1bg4a, &
+  qm1g4c17a, dm2a2g4a, sm1g4c17a, dft1, dft, fm1g4c17a, dft, dm2b2g4a, pm1g4c17a, &
+  dbpm09, qm2g4c17a, dm2cg4a, sm2g4c17b, dm2cg4b, qm2g4c17b, dm2b2g4b, sm1g4c17b, &
+  dm2a2g4b, pm1g4c17b, dbpm10, qm1g4c17b, dm1eg4b, dfch, cm1yg4c17b, cm1xg4c17b, &
+  dfch, geg4c17b, gsg5c17b, dm1dg5b2, dpwg5b, dm1cg5b2, b1g5c17b, mk2g5c17b, &
+  geg5c17b, dh4cg6b, gsg6c17b, dfch, ch2yg6c17b, ch2xg6c17b, dfch, dh4bg6b, &
+  sh4g6c17b, dh4ag6b, ph2g6c17b, dbpm11, qh3g6c17b, dh3bg6b, sh3g6c17b, dh3ag6b, &
+  qh2g6c17b, dh2bg6b, dsch, ch1yg6c17b, ch1xg6c17b, dsch, dh2ag6b, qh1g6c17b, &
+  dh1ag6b, ph1g6c17b, dbpm12, sh1g6c17b, geg6c17b, gsg1c18a, dh2g1a, dft, &
+  fh1g1c18a, dft, dh01g1c18a, pu1g1c18a, dh02g1c18a, cu1xg1c18id1, cu1yg1c18id1, &
+  dw100g1c18u, cu2xg1c18id1, cu2yg1c18id1, dh03g1c18a, pu2g1c18a, dh04g1c18a, &
+  mk4g1c18a, dh05g1c18a, pu3g1c18a, dh06g1c18a, cu1xg1c18id2, cu1yg1c18id2, &
+  dw100g1c18d, cu2xg1c18id2, cu2yg1c18id2, dh07g1c18a, pu4g1c18a, dh08g1c18a, &
+  dft, fh2g1c18a, dft, dh1g1a, geg1c18a, gsg2c18a, sh1g2c18a, dh1ag2a, ph1g2c18a, &
+  dbpm01, qh1g2c18a, dh2ag2a, sqhg2c18a, ch1xg2c18a, ch1yg2c18a, sqhg2c18a, &
+  dh2bg2a, qh2g2c18a, dh3ag2a, sh3g2c18a, dh3bg2a, qh3g2c18a, dh4ag2a, ph2g2c18a, &
+  dbpm02, sh4g2c18a, dh4bg2a, dfch, ch2xg2c18a, ch2yg2c18a, dfch, geg2c18a, &
+  dh4cg3a, gsg3c18a, mk1g3c18a, b1g3c18a, geg3c18a, gsg4c18a, dm1ag4a, dsch, &
+  cm1xg4c18a, cm1yg4c18a, dsch, dm1bg4a, qm1g4c18a, dm2ag4a, sm1g4c18a, dft1, &
+  dft, fm1g4c18a, dft, dm2bg4a, pm1g4c18a, dbpm03, qm2g4c18a, dm2cg4a, sm2g4c18b, &
+  dm2cg4b, qm2g4c18b, dm2bg4b, sm1g4c18b, dm2ag4b, pm1g4c18b, dbpm04, qm1g4c18b, &
+  dm1eg4b, dfch, cm1yg4c18b, cm1xg4c18b, dfch, geg4c18b, gsg5c18b, dm1dg5b1, &
+  dpwg5b, dm1cg5b1, b1g5c18b, mk2g5c18b, geg5c18b, dl4bg6b, gsg6c18b, dl4ag6b, &
+  ql3g6c18b, dbpm05, pl2g6c18b, dl3cg6b, sl3g6c18b, dl3bg6b, dsch, cl2yg6c18b, &
+  cl2xg6c18b, dsch, dl3ag6b, ql2g6c18b, dl2cg6b, sl2g6c18b, dl2bg6b, dsch, &
+  cl1yg6c18b, cl1xg6c18b, dsch, dl2ag6b, ql1g6c18b, dl1ag6b, pl1g6c18b, dbpm06, &
+  sl1g6c18b, geg6c18b, gsg1c19a, dl0bg1a, dft, fl1g1c19a, dft, dft2, dldk, &
+  dl01g1c19a, pu1g1c19a, dl02g1c19a, cu1xg1c19id1, cu1yg1c19id1, idc19h1, &
+  cu2xg1c19id1, cu2yg1c19id1, dl03g1c19a, pu2g1c19a, dl04g1c19a, mk5g1c19a, &
+  dl05g1c19a, pu3g1c19a, dl06g1c19a, cu1xg1c19id2, cu1yg1c19id2, idc19h2, &
+  cu2xg1c19id2, cu2yg1c19id2, dl07g1c19a, pu4g1c19a, dl08g1c19a, dldk, dft2, &
+  dft, fl2g1c19a, dft, dl0ag1a, geg1c19a, gsg2c19a, sl1g2c19a, dl1ag2a, pl1g2c19a, &
+  dbpm07, ql1g2c19a, dl2ag2a, dsch, cl1xg2c19a, cl1yg2c19a, dsch, dl2bg2a, &
+  sl2g2c19a, dl2cg2a, ql2g2c19a, dl3ag2a, dsch, cl2xg2c19a, cl2yg2c19a, dsch, &
+  dl3bg2a, sl3g2c19a, dl3cg2a, pl2g2c19a, dbpm08, ql3g2c19a, dl4ag2a, geg2c19a, &
+  dl4bg3a, gsg3c19a, mk1g3c19a, b1g3c19a, geg3c19a, gsg4c19a, dm1ag4a, sqmg4c19a, &
+  cm1xg4c19a, cm1yg4c19a, sqmg4c19a, dm1bg4a, qm1g4c19a, dm2a2g4a, sm1g4c19a, &
+  dft1, dft, fm1g4c19a, dft, dm2b2g4a, pm1g4c19a, dbpm09, qm2g4c19a, dm2cg4a, &
+  sm2g4c19b, dm2cg4b, qm2g4c19b, dm2b2g4b, sm1g4c19b, dm2a2g4b, pm1g4c19b, &
+  dbpm10, qm1g4c19b, dm1eg4b, dfch, cm1yg4c19b, cm1xg4c19b, dfch, geg4c19b, &
+  gsg5c19b, dm1dg5b2, dpwg5b, dm1cg5b2, b1g5c19b, mk2g5c19b, geg5c19b, dh4cg6b, &
+  gsg6c19b, dfch, ch2yg6c19b, ch2xg6c19b, dfch, dh4bg6b, sh4g6c19b, dh4ag6b, &
+  ph2g6c19b, dbpm11, qh3g6c19b, dh3bg6b, sh3g6c19b, dh3ag6b, qh2g6c19b, dh2bg6b, &
+  dsch, ch1yg6c19b, ch1xg6c19b, dsch, dh2ag6b, qh1g6c19b, dh1ag6b, ph1g6c19b, &
+  dbpm12, sh1g6c19b, geg6c19b, gsg1c20a, dh2g1a, dft, fh1g1c20a, dft, dh01g1c20a, &
+  pu1g1c20a, dh02g1c20a, cu1xg1c20id1, cu1yg1c20id1, idc20h1, cu2xg1c20id1, &
+  cu2yg1c20id1, dh03g1c20a, pu2g1c20a, dh04g1c20a, mk4g1c20a, dh05g1c20a, &
+  pu3g1c20a, dh06g1c20a, cu1xg1c20id2, cu1yg1c20id2, idc20h2, cu2xg1c20id2, &
+  cu2yg1c20id2, dh07g1c20a, pu4g1c20a, dh08g1c20a, dft, fh2g1c20a, dft, dh1g1a, &
+  geg1c20a, gsg2c20a, sh1g2c20a, dh1ag2a, ph1g2c20a, dbpm01, qh1g2c20a, dh2ag2a, &
+  sqhg2c20a, ch1xg2c20a, ch1yg2c20a, sqhg2c20a, dh2bg2a, qh2g2c20a, dh3ag2a, &
+  sh3g2c20a, dh3bg2a, qh3g2c20a, dh4ag2a, ph2g2c20a, dbpm02, sh4g2c20a, dh4bg2a, &
+  dfch, ch2xg2c20a, ch2yg2c20a, dfch, geg2c20a, dh4cg3a, gsg3c20a, mk1g3c20a, &
+  b1g3c20a, geg3c20a, gsg4c20a, dm1ag4a, dsch, cm1xg4c20a, cm1yg4c20a, dsch, &
+  dm1bg4a, qm1g4c20a, dm2ag4a, sm1g4c20a, dft1, dft, fm1g4c20a, dft, dm2bg4a, &
+  pm1g4c20a, dbpm03, qm2g4c20a, dm2cg4a, sm2g4c20b, dm2cg4b, qm2g4c20b, dm2bg4b, &
+  sm1g4c20b, dm2ag4b, pm1g4c20b, dbpm04, qm1g4c20b, dm1eg4b, dfch, cm1yg4c20b, &
+  cm1xg4c20b, dfch, geg4c20b, gsg5c20b, dm1dg5b1, dpwg5b, dm1cg5b1, b1g5c20b, &
+  mk2g5c20b, geg5c20b, dl4bg6b, gsg6c20b, dl4ag6b, ql3g6c20b, dbpm05, pl2g6c20b, &
+  dl3cg6b, sl3g6c20b, dl3bg6b, dsch, cl2yg6c20b, cl2xg6c20b, dsch, dl3ag6b, &
+  ql2g6c20b, dl2cg6b, sl2g6c20b, dl2bg6b, dsch, cl1yg6c20b, cl1xg6c20b, dsch, &
+  dl2ag6b, ql1g6c20b, dl1ag6b, pl1g6c20b, dbpm06, sl1g6c20b, geg6c20b, gsg1c21a, &
+  dl0bg1a, dft, fl1g1c21a, dft, dft2, dldk, dl01g1c21a, pu1g1c21a, dl02g1c21a, &
+  cu1xg1c21id1, cu1yg1c21id1, idc21h1, cu2xg1c21id1, cu2yg1c21id1, dl03g1c21a, &
+  pu2g1c21a, mk5g1c21a, pu3g1c21a, cu1xg1c21id2, cu1yg1c21id2, idc21h2, cu2xg1c21id2, &
+  cu2yg1c21id2, dl07g1c21a, pu4g1c21a, dl08g1c21a, dldk, dft2, dft, fl2g1c21a, &
+  dft, dl0ag1a, geg1c21a, gsg2c21a, sl1g2c21a, dl1ag2a, pl1g2c21a, dbpm07, &
+  ql1g2c21a, dl2ag2a, dsch, cl1xg2c21a, cl1yg2c21a, dsch, dl2bg2a, sl2g2c21a, &
+  dl2cg2a, ql2g2c21a, dl3ag2a, dsch, cl2xg2c21a, cl2yg2c21a, dsch, dl3bg2a, &
+  sl3g2c21a, dl3cg2a, pl2g2c21a, dbpm08, ql3g2c21a, dl4ag2a, geg2c21a, dl4bg3a, &
+  gsg3c21a, mk1g3c21a, b1g3c21a, geg3c21a, gsg4c21a, dm1ag4a, sqmg4c21a, &
+  cm1xg4c21a, cm1yg4c21a, sqmg4c21a, dm1bg4a, qm1g4c21a, dm2a2g4a, sm1g4c21a, &
+  dft1, dft, fm1g4c21a, dft, dm2b2g4a, pm1g4c21a, dbpm09, qm2g4c21a, dm2cg4a, &
+  sm2g4c21b, dm2cg4b, qm2g4c21b, dm2b2g4b, sm1g4c21b, dm2a2g4b, pm1g4c21b, &
+  dbpm10, qm1g4c21b, dm1eg4b, dfch, cm1yg4c21b, cm1xg4c21b, dfch, geg4c21b, &
+  gsg5c21b, dm1dg5b2, dpwg5b, dm1cg5b2, b1g5c21b, mk2g5c21b, geg5c21b, dh4cg6b, &
+  gsg6c21b, dfch, ch2yg6c21b, ch2xg6c21b, dfch, dh4bg6b, sh4g6c21b, dh4ag6b, &
+  ph2g6c21b, dbpm11, qh3g6c21b, dh3bg6b, sh3g6c21b, dh3ag6b, qh2g6c21b, dh2bg6b, &
+  dsch, ch1yg6c21b, ch1xg6c21b, dsch, dh2ag6b, qh1g6c21b, dh1ag6b, ph1g6c21b, &
+  dbpm12, sh1g6c21b, geg6c21b, gsg1c22a, dh2g1a, dft, fh1g1c22a, dft, dhp0g1c22a, &
+  hpinger, dhp1g1c22a, vpinger, dh01g1c22a, rfc, pu1g1c22a, dh02g1c22a, cu1xg1c22id1, &
+  cu1yg1c22id1, idc22h1, cu2xg1c22id1, cu2yg1c22id1, dh03g1c22a, pu2g1c22a, &
+  dh04g1c22a, mk4g1c22a, dh05g1c22a, pu3g1c22a, dh06g1c22a, cu1xg1c22id2, &
+  cu1yg1c22id2, idc22h2, cu2xg1c22id2, cu2yg1c22id2, dh07g1c22a, pu4g1c22a, &
+  dh08g1c22a, dft, fh2g1c22a, dft, dh1g1a, geg1c22a, gsg2c22a, sh1g2c22a, &
+  dh1ag2a, ph1g2c22a, dbpm01, qh1g2c22a, dh2ag2a, sqhg2c22a, ch1xg2c22a, &
+  ch1yg2c22a, sqhg2c22a, dh2bg2a, qh2g2c22a, dh3ag2a, sh3g2c22a, dh3bg2a, &
+  qh3g2c22a, dh4ag2a, ph2g2c22a, dbpm02, sh4g2c22a, dh4bg2a, dfch, ch2xg2c22a, &
+  ch2yg2c22a, dfch, geg2c22a, dh4cg3a, gsg3c22a, mk1g3c22a, b1g3c22a, geg3c22a, &
+  gsg4c22a, dm1ag4a, dsch, cm1xg4c22a, cm1yg4c22a, dsch, dm1bg4a, qm1g4c22a, &
+  dm2ag4a, sm1g4c22a, dft1, dft, fm1g4c22a, dft, dm2bg4a, pm1g4c22a, dbpm03, &
+  qm2g4c22a, dm2cg4a, sm2g4c22b, dm2cg4b, qm2g4c22b, dm2bg4b, sm1g4c22b, &
+  dm2ag4b, pm1g4c22b, dbpm04, qm1g4c22b, dm1eg4b, dfch, cm1yg4c22b, cm1xg4c22b, &
+  dfch, geg4c22b, gsg5c22b, dm1dg5b1, dpwg5b, dm1cg5b1, b1g5c22b, mk2g5c22b, &
+  geg5c22b, dl4bg6b, gsg6c22b, dl4ag6b, ql3g6c22b, dbpm05, pl2g6c22b, dl3cg6b, &
+  sl3g6c22b, dl3bg6b, dsch, cl2yg6c22b, cl2xg6c22b, dsch, dl3ag6b, ql2g6c22b, &
+  dl2cg6b, sl2g6c22b, dl2bg6b, dsch, cl1yg6c22b, cl1xg6c22b, dsch, dl2ag6b, &
+  ql1g6c22b, dl1ag6b, pl1g6c22b, dbpm06, sl1g6c22b, geg6c22b, gsg1c23a, dl0bg1a, &
+  dft, fl1g1c23a, dft, dft2, dldk, dl01g1c23a, pu1g1c23a, dl02g1c23a, cu1xg1c23id1, &
+  cu1yg1c23id1, epu49g1c23u, cu2xg1c23id1, cu2yg1c23id1, dl03g1c23a, pu2g1c23a, &
+  dl04g1c23a, mk5g1c23a, dl05g1c23a, pu3g1c23a, dl06g1c23a, cu1xg1c23id2, &
+  cu1yg1c23id2, epu49g1c23u, cu2xg1c23id2, cu2yg1c23id2, dl07g1c23a, pu4g1c23a, &
+  dl08g1c23a, dldk, dft2, dft, fl2g1c23a, dft, dl0ag1a, geg1c23a, gsg2c23a, &
+  sl1g2c23a, dl1ag2a, pl1g2c23a, dbpm07, ql1g2c23a, dl2ag2a, dsch, cl1xg2c23a, &
+  cl1yg2c23a, dsch, dl2bg2a, sl2g2c23a, dl2cg2a, ql2g2c23a, dl3ag2a, dsch, &
+  cl2xg2c23a, cl2yg2c23a, dsch, dl3bg2a, sl3g2c23a, dl3cg2a, pl2g2c23a, dbpm08, &
+  ql3g2c23a, dl4ag2a, geg2c23a, dl4bg3a, gsg3c23a, mk1g3c23a, b2g3c23a, geg3c23a, &
+  gsg4c23a, dm1ag4a, sqmg4c23a, cm1xg4c23a, cm1yg4c23a, sqmg4c23a, dm1bg4a, &
+  qm1g4c23a, dm2a2g4a, sm1g4c23a, dft1, dft, fm1g4c23a, dft, dm2b2g4a, pm1g4c23a, &
+  dbpm09, qm2g4c23a, dm2cg4a, sm2g4c23b, dm2cg4b, qm2g4c23b, dm2b2g4b, sm1g4c23b, &
+  dm2a2g4b, pm1g4c23b, dbpm10, qm1g4c23b, dm1eg4b, dfch, cm1yg4c23b, cm1xg4c23b, &
+  dfch, geg4c23b, gsg5c23b, dm1dg5b2c23, dpwg5b, dm1cg5b2c23, b2g5c23b, mk2g5c23b, &
+  geg5c23b, dh4cg6b, gsg6c23b, dfch, ch2yg6c23b, ch2xg6c23b, dfch, dh4bg6b, &
+  sh4g6c23b, dh4ag6b, ph2g6c23b, dbpm11, qh3g6c23b, dh3bg6b, sh3g6c23b, dh3ag6b, &
+  qh2g6c23b, dh2bg6b, dsch, ch1yg6c23b, ch1xg6c23b, dsch, dh2ag6b, qh1g6c23b, &
+  dh1ag6b, ph1g6c23b, dbpm12, sh1g6c23b, geg6c23b, gsg1c24a, dh2g1a, dft, &
+  fh1g1c24a, dft, dh01g1c24a, pu1g1c24a, dh02g1c24a, cu1xg1c24id1, cu1yg1c24id1, &
+  idc24h1, cu2xg1c24id1, cu2yg1c24id1, dh03g1c24a, pu2g1c24a, dh04g1c24a, &
+  mk4g1c24a, dh05g1c24a, pu3g1c24a, dh06g1c24a, cu1xg1c24id2, cu1yg1c24id2, &
+  idc24h2, cu2xg1c24id2, cu2yg1c24id2, dh07g1c24a, pu4g1c24a, dh08g1c24a, &
+  dft, fh2g1c24a, dft, dh1g1a, geg1c24a, gsg2c24a, sh1g2c24a, dh1ag2a, ph1g2c24a, &
+  dbpm01, qh1g2c24a, dh2ag2a, sqhg2c24a, ch1xg2c24a, ch1yg2c24a, sqhg2c24a, &
+  dh2bg2a, qh2g2c24a, dh3ag2a, sh3g2c24a, dh3bg2a, qh3g2c24a, dh4ag2a, ph2g2c24a, &
+  dbpm02, sh4g2c24a, dh4bg2a, dfch, ch2xg2c24a, ch2yg2c24a, dfch, geg2c24a, &
+  dh4cg3a, gsg3c24a, mk1g3c24a, b1g3c24a, geg3c24a, gsg4c24a, dm1ag4a, dsch, &
+  cm1xg4c24a, cm1yg4c24a, dsch, dm1bg4a, qm1g4c24a, dm2ag4a, sm1g4c24a, dft1, &
+  dft, fm1g4c24a, dft, dm2bg4a, pm1g4c24a, dbpm03, qm2g4c24a, dm2cg4a, sm2g4c24b, &
+  dm2cg4b, qm2g4c24b, dm2bg4b, sm1g4c24b, dm2ag4b, pm1g4c24b, dbpm04, qm1g4c24b, &
+  dm1eg4b, dfch, cm1yg4c24b, cm1xg4c24b, dfch, geg4c24b, gsg5c24b, dm1dg5b1, &
+  dpwg5b, dm1cg5b1, b1g5c24b, mk2g5c24b, geg5c24b, dl4bg6b, gsg6c24b, dl4ag6b, &
+  ql3g6c24b, dbpm05, pl2g6c24b, dl3cg6b, sl3g6c24b, dl3bg6b, dsch, cl2yg6c24b, &
+  cl2xg6c24b, dsch, dl3ag6b, ql2g6c24b, dl2cg6b, sl2g6c24b, dl2bg6b, dsch, &
+  cl1yg6c24b, cl1xg6c24b, dsch, dl2ag6b, ql1g6c24b, dl1ag6b, pl1g6c24b, dbpm06, &
+  sl1g6c24b, geg6c24b, gsg1c25a, dl0bg1a, dft, fl1g1c25a, dft, dft2, dldk, &
+  dl01g1c25a, pu1g1c25a, dl02g1c25a, cu1xg1c25id1, cu1yg1c25id1, idc25h1, &
+  cu2xg1c25id1, cu2yg1c25id1, dl03g1c25a, pu2g1c25a, dl04g1c25a, mk5g1c25a, &
+  dl05g1c25a, pu3g1c25a, dl06g1c25a, cu1xg1c25id2, cu1yg1c25id2, idc25h2, &
+  cu2xg1c25id2, cu2yg1c25id2, dl07g1c25a, pu4g1c25a, dl08g1c25a, dldk, dft2, &
+  dft, fl2g1c25a, dft, dl0ag1a, geg1c25a, gsg2c25a, sl1g2c25a, dl1ag2a, pl1g2c25a, &
+  dbpm07, ql1g2c25a, dl2ag2a, dsch, cl1xg2c25a, cl1yg2c25a, dsch, dl2bg2a, &
+  sl2g2c25a, dl2cg2a, ql2g2c25a, dl3ag2a, dsch, cl2xg2c25a, cl2yg2c25a, dsch, &
+  dl3bg2a, sl3g2c25a, dl3cg2a, pl2g2c25a, dbpm08, ql3g2c25a, dl4ag2a, geg2c25a, &
+  dl4bg3a, gsg3c25a, mk1g3c25a, b1g3c25a, geg3c25a, gsg4c25a, dm1ag4a, sqmg4c25a, &
+  cm1xg4c25a, cm1yg4c25a, sqmg4c25a, dm1bg4a, qm1g4c25a, dm2a2g4a, sm1g4c25a, &
+  dft1, dft, fm1g4c25a, dft, dm2b2g4a, pm1g4c25a, dbpm09, qm2g4c25a, dm2cg4a, &
+  sm2g4c25b, dm2cg4b, qm2g4c25b, dm2b2g4b, sm1g4c25b, dm2a2g4b, pm1g4c25b, &
+  dbpm10, qm1g4c25b, dm1eg4b, dfch, cm1yg4c25b, cm1xg4c25b, dfch, geg4c25b, &
+  gsg5c25b, dm1dg5b2, dpwg5b, dm1cg5b2, b1g5c25b, mk2g5c25b, geg5c25b, dh4cg6b, &
+  gsg6c25b, dfch, ch2yg6c25b, ch2xg6c25b, dfch, dh4bg6b, sh4g6c25b, dh4ag6b, &
+  ph2g6c25b, dbpm11, qh3g6c25b, dh3bg6b, sh3g6c25b, dh3ag6b, qh2g6c25b, dh2bg6b, &
+  dsch, ch1yg6c25b, ch1xg6c25b, dsch, dh2ag6b, qh1g6c25b, dh1ag6b, ph1g6c25b, &
+  dbpm12, sh1g6c25b, geg6c25b, gsg1c26a, dh2g1a, dft, fh1g1c26a, dft, dh01g1c26a, &
+  pu1g1c26a, dh02g1c26a, cu1xg1c26id1, cu1yg1c26id1, idc26h1, cu2xg1c26id1, &
+  cu2yg1c26id1, dh03g1c26a, pu2g1c26a, dh04g1c26a, mk4g1c26a, dh05g1c26a, &
+  pu3g1c26a, dh06g1c26a, cu1xg1c26id2, cu1yg1c26id2, idc26h2, cu2xg1c26id2, &
+  cu2yg1c26id2, dh07g1c26a, pu4g1c26a, dh08g1c26a, dft, fh2g1c26a, dft, dh1g1a, &
+  geg1c26a, gsg2c26a, sh1g2c26a, dh1ag2a, ph1g2c26a, dbpm01, qh1g2c26a, dh2ag2a, &
+  sqhg2c26a, ch1xg2c26a, ch1yg2c26a, sqhg2c26a, dh2bg2a, qh2g2c26a, dh3ag2a, &
+  sh3g2c26a, dh3bg2a, qh3g2c26a, dh4ag2a, ph2g2c26a, dbpm02, sh4g2c26a, dh4bg2a, &
+  dfch, ch2xg2c26a, ch2yg2c26a, dfch, geg2c26a, dh4cg3a, gsg3c26a, mk1g3c26a, &
+  b1g3c26a, geg3c26a, gsg4c26a, dm1ag4a, dsch, cm1xg4c26a, cm1yg4c26a, dsch, &
+  dm1bg4a, qm1g4c26a, dm2ag4a, sm1g4c26a, dft1, dft, fm1g4c26a, dft, dm2bg4a, &
+  pm1g4c26a, dbpm03, qm2g4c26a, dm2cg4a, sm2g4c26b, dm2cg4b, qm2g4c26b, dm2bg4b, &
+  sm1g4c26b, dm2ag4b, pm1g4c26b, dbpm04, qm1g4c26b, dm1eg4b, dfch, cm1yg4c26b, &
+  cm1xg4c26b, dfch, geg4c26b, gsg5c26b, dm1dg5b1, dpwg5b, dm1cg5b1, b1g5c26b, &
+  mk2g5c26b, geg5c26b, dl4bg6b, gsg6c26b, dl4ag6b, ql3g6c26b, dbpm05, pl2g6c26b, &
+  dl3cg6b, sl3g6c26b, dl3bg6b, dsch, cl2yg6c26b, cl2xg6c26b, dsch, dl3ag6b, &
+  ql2g6c26b, dl2cg6b, sl2g6c26b, dl2bg6b, dsch, cl1yg6c26b, cl1xg6c26b, dsch, &
+  dl2ag6b, ql1g6c26b, dl1ag6b, pl1g6c26b, dbpm06, sl1g6c26b, geg6c26b, gsg1c27a, &
+  dl0bg1a, dft, fl1g1c27a, dft, dft2, dldk, dl01g1c27a, pu1g1c27a, dl02g1c27a, &
+  cu1xg1c27id1, cu1yg1c27id1, idc27h1, cu2xg1c27id1, cu2yg1c27id1, dl03g1c27a, &
+  pu2g1c27a, dl04g1c27a, mk5g1c27a, dl05g1c27a, pu3g1c27a, dl06g1c27a, cu1xg1c27id2, &
+  cu1yg1c27id2, idc27h2, cu2xg1c27id2, cu2yg1c27id2, dl07g1c27a, pu4g1c27a, &
+  dl08g1c27a, dldk, dft2, dft, fl2g1c27a, dft, dl0ag1a, geg1c27a, gsg2c27a, &
+  sl1g2c27a, dl1ag2a, pl1g2c27a, dbpm07, ql1g2c27a, dl2ag2a, dsch, cl1xg2c27a, &
+  cl1yg2c27a, dsch, dl2bg2a, sl2g2c27a, dl2cg2a, ql2g2c27a, dl3ag2a, dsch, &
+  cl2xg2c27a, cl2yg2c27a, dsch, dl3bg2a, sl3g2c27a, dl3cg2a, pl2g2c27a, dbpm08, &
+  ql3g2c27a, dl4ag2a, geg2c27a, dl4bg3a, gsg3c27a, mk1g3c27a, b1g3c27a, geg3c27a, &
+  gsg4c27a, dm1ag4a, sqmg4c27a, cm1xg4c27a, cm1yg4c27a, sqmg4c27a, dm1bg4a, &
+  qm1g4c27a, dm2a2g4a, sm1g4c27a, dft1, dft, fm1g4c27a, dft, dm2b2g4a, pm1g4c27a, &
+  dbpm09, qm2g4c27a, dm2cg4a, sm2g4c27b, dm2cg4b, qm2g4c27b, dm2b2g4b, sm1g4c27b, &
+  dm2a2g4b, pm1g4c27b, dbpm10, qm1g4c27b, dm1eg4b, dfch, cm1yg4c27b, cm1xg4c27b, &
+  dfch, geg4c27b, gsg5c27b, dm1dg5b2, dpwg5b, dm1cg5b2, b1g5c27b, mk2g5c27b, &
+  geg5c27b, dh4cg6b, gsg6c27b, dfch, ch2yg6c27b, ch2xg6c27b, dfch, dh4bg6b, &
+  sh4g6c27b, dh4ag6b, ph2g6c27b, dbpm11, qh3g6c27b, dh3bg6b, sh3g6c27b, dh3ag6b, &
+  qh2g6c27b, dh2bg6b, dsch, ch1yg6c27b, ch1xg6c27b, dsch, dh2ag6b, qh1g6c27b, &
+  dh1ag6b, ph1g6c27b, dbpm12, sh1g6c27b, geg6c27b, gsg1c28a, dh2g1a, dft, &
+  fh1g1c28a, dft, dh01g1c28a, pu1g1c28a, dh02g1c28a, cu1xg1c28id1, cu1yg1c28id1, &
+  dw100g1c28u, cu2xg1c28id1, cu2yg1c28id1, dh03g1c28a, pu2g1c28a, dh04g1c28a, &
+  mk4g1c28a, dh05g1c28a, pu3g1c28a, dh06g1c28a, cu1xg1c28id2, cu1yg1c28id2, &
+  dw100g1c28d, cu2xg1c28id2, cu2yg1c28id2, dh07g1c28a, pu4g1c28a, dh08g1c28a, &
+  dft, fh2g1c28a, dft, dh1g1a, geg1c28a, gsg2c28a, sh1g2c28a, dh1ag2a, ph1g2c28a, &
+  dbpm01, qh1g2c28a, dh2ag2a, sqhg2c28a, ch1xg2c28a, ch1yg2c28a, sqhg2c28a, &
+  dh2bg2a, qh2g2c28a, dh3ag2a, sh3g2c28a, dh3bg2a, qh3g2c28a, dh4ag2a, ph2g2c28a, &
+  dbpm02, sh4g2c28a, dh4bg2a, dfch, ch2xg2c28a, ch2yg2c28a, dfch, geg2c28a, &
+  dh4cg3a, gsg3c28a, mk1g3c28a, b1g3c28a, geg3c28a, gsg4c28a, dm1ag4a, dsch, &
+  cm1xg4c28a, cm1yg4c28a, dsch, dm1bg4a, qm1g4c28a, dm2ag4a, sm1g4c28a, dft1, &
+  dft, fm1g4c28a, dft, dm2bg4a, pm1g4c28a, dbpm03, qm2g4c28a, dm2cg4a, sm2g4c28b, &
+  dm2cg4b, qm2g4c28b, dm2bg4b, sm1g4c28b, dm2ag4b, pm1g4c28b, dbpm04, qm1g4c28b, &
+  dm1eg4b, dfch, cm1yg4c28b, cm1xg4c28b, dfch, geg4c28b, gsg5c28b, dm1dg5b1, &
+  dpwg5b, dm1cg5b1, b1g5c28b, mk2g5c28b, geg5c28b, dl4bg6b, gsg6c28b, dl4ag6b, &
+  ql3g6c28b, dbpm05, pl2g6c28b, dl3cg6b, sl3g6c28b, dl3bg6b, dsch, cl2yg6c28b, &
+  cl2xg6c28b, dsch, dl3ag6b, ql2g6c28b, dl2cg6b, sl2g6c28b, dl2bg6b, dsch, &
+  cl1yg6c28b, cl1xg6c28b, dsch, dl2ag6b, ql1g6c28b, dl1ag6b, pl1g6c28b, dbpm06, &
+  sl1g6c28b, geg6c28b, gsg1c29a, dl0bg1a, dft, fl1g1c29a, dft, dft2, dldk, &
+  dl01g1c29a, pu1g1c29a, dl02g1c29a, cu1xg1c29id1, cu1yg1c29id1, idc29h1, &
+  cu2xg1c29id1, cu2yg1c29id1, dl03g1c29a, pu2g1c29a, dl04g1c29a, mk5g1c29a, &
+  dl05g1c29a, pu3g1c29a, dl06g1c29a, cu1xg1c29id2, cu1yg1c29id2, idc29h2, &
+  cu2xg1c29id2, cu2yg1c29id2, dl07g1c29a, pu4g1c29a, dl08g1c29a, dldk, dft2, &
+  dft, fl2g1c29a, dft, dl0ag1a, geg1c29a, gsg2c29a, sl1g2c29a, dl1ag2a, pl1g2c29a, &
+  dbpm07, ql1g2c29a, dl2ag2a, dsch, cl1xg2c29a, cl1yg2c29a, dsch, dl2bg2a, &
+  sl2g2c29a, dl2cg2a, ql2g2c29a, dl3ag2a, dsch, cl2xg2c29a, cl2yg2c29a, dsch, &
+  dl3bg2a, sl3g2c29a, dl3cg2a, pl2g2c29a, dbpm08, ql3g2c29a, dl4ag2a, geg2c29a, &
+  dl4bg3a, gsg3c29a, mk1g3c29a, b1g3c29a, geg3c29a, gsg4c29a, dm1ag4a, sqmg4c29a, &
+  cm1xg4c29a, cm1yg4c29a, sqmg4c29a, dm1bg4a, qm1g4c29a, dm2a2g4a, sm1g4c29a, &
+  dft1, dft, fm1g4c29a, dft, dm2b2g4a, pm1g4c29a, dbpm09, qm2g4c29a, dm2cg4a, &
+  sm2g4c29b, dm2cg4b, qm2g4c29b, dm2b2g4b, sm1g4c29b, dm2a2g4b, pm1g4c29b, &
+  dbpm10, qm1g4c29b, dm1eg4b, dfch, cm1yg4c29b, cm1xg4c29b, dfch, geg4c29b, &
+  gsg5c29b, dm1dg5b2, dpwg5b, dm1cg5b2, b1g5c29b, mk2g5c29b, geg5c29b, dh4cg6b, &
+  gsg6c29b, dfch, ch2yg6c29b, ch2xg6c29b, dfch, dh4bg6b, sh4g6c29b, dh4ag6b, &
+  ph2g6c29b, dbpm11, qh3g6c29b, dh3bg6b, sh3g6c29b, dh3ag6b, qh2g6c29b, dh2bg6b, &
+  dsch, ch1yg6c29b, ch1xg6c29b, dsch, dh2ag6b, qh1g6c29b, dh1ag6b, ph1g6c29b, &
+  dbpm12, sh1g6c29b, geg6c29b, gsg1c30a, dh2g1a, dft, fh1g1c30a, dft, dhi1, &
+  isbu1, dhi2, p1g1c30a, dhi3, isbu2, dhi4, p2g1c30a, dhi5, issp1u)
+
+use, ring
+return

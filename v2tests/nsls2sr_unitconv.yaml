@@ -475,10 +475,14 @@ SR:
                ivu20g1c11c, ivu23g1c12d, ivu23g1c16c, ivu21g1c17u, ivu21g1c17d,
                ivu18g1c19u,
                dw100g1c08u, dw100g1c08d, dw100g1c18u, dw100g1c18d,
+               scw70g1c27d,
                epu49g1c23u, epu49g1c23d,
                _phaserg1c23c]
-    # *) Only ivu20g1c03c has cch6, cch7, cch8, cch9, which were introduced when
-    #    its ID correctors couldn't be used. 
+    # *) Only "ivu20g1c03c" and "scw70g1c27d" have cch6, cch7, cch8, cch9.
+    #    For "ivu20g1c03c", these channels were introduced when its ID
+    #    correctors couldn't be used.
+    # *) Only "scw70g1c27d" has qch0 thru qch5 and linoptff0_m0_I thru
+    #    linoptff5_m0_I, which are used for linear optics feedforward for C27 ID.
     fields: [
       cch0, cch1, cch2, cch3, cch4, cch5, cch6, cch7, cch8, cch9,
       orbff0_m0_I, orbff1_m0_I, orbff2_m0_I, orbff3_m0_I, orbff4_m0_I,
@@ -490,6 +494,9 @@ SR:
       orbff5_m2_I,
       orbff0_m3_I, orbff1_m3_I, orbff2_m3_I, orbff3_m3_I, orbff4_m3_I,
       orbff5_m3_I,
+      qch0, qch1, qch2, qch3, qch4, qch5,
+      linoptff0_m0_I, linoptff1_m0_I, linoptff2_m0_I, linoptff3_m0_I,
+      linoptff4_m0_I, linoptff5_m0_I
       ]
     handles: [readback, setpoint]
     src_unitsys:
@@ -540,6 +547,55 @@ SR:
     invertible: True
     coeffs: [1.0, 0.0]
 
+  ID_SCW_mainI: &ID_SCW_mainI
+    elements: [scw70g1c27d]
+    fields: [
+      mainI,
+      orbff0_m0_mainI, orbff1_m0_mainI, orbff2_m0_mainI, orbff3_m0_mainI,
+      orbff4_m0_mainI, orbff5_m0_mainI, orbff6_m0_mainI, orbff7_m0_mainI,
+      orbff8_m0_mainI, orbff9_m0_mainI,
+      linoptff0_m0_mainI, linoptff1_m0_mainI, linoptff2_m0_mainI,
+      linoptff3_m0_mainI, linoptff4_m0_mainI, linoptff5_m0_mainI
+    ]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: A
+    class: polynomial
+    invertible: True
+    coeffs: [1.0, 0.0]
+
+  ID_SCW_mainI_readonly:
+    <<: *ID_SCW_mainI
+    fields: [loopback, dcct1, dcct2]
+    handles: [readback]
+
+  ID_SCW_mainI_speed:
+    elements: ['scw70g1c27d']
+    fields: [mainI_speed]
+    handles: [setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: "A/s"
+    dst_unit: "A/s"
+    class: polynomial
+    invertible: True
+    coeffs: [1.0, 0.0]
+
+  ID_SCW_By:
+    elements: ['scw70g1c27d']
+    fields: [By]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: T
+    class: interpolation
+    invertible: True
+    calib_factor: 1.0
+    polarity: 1
+    table_key: scw70g1c27d_mainI_vs_By_Tesla
 
 
   qm1g4c24b: &quad
