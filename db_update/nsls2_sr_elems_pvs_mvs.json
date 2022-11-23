@@ -89744,6 +89744,36 @@
           },
           "pv": "SR:C26-MG{PS:CL1B}RpStart2-Cmd"
         }
+      },
+      "x_2nd": {
+        "put": {
+          "pv": "SR:C26-MG{PS:CL1B}I:Sp1_2-SP",
+          "epsilon": 0.01,
+          "mv": {
+            "pyelegant": {
+              "elem_name": "CL1YG6C26B",
+              "property": [
+                "HKICK",
+                1
+              ]
+            }
+          }
+        }
+      },
+      "y_2nd": {
+        "put": {
+          "pv": "SR:C26-MG{PS:CL1B}I:Sp2_2-SP",
+          "epsilon": 0.01,
+          "mv": {
+            "pyelegant": {
+              "elem_name": "CL1YG6C26B",
+              "property": [
+                "VKICK",
+                1
+              ]
+            }
+          }
+        }
       }
     },
     "tags": [
@@ -90535,6 +90565,36 @@
             }
           },
           "pv": "SR:C27-MG{PS:CL1A}RpStart2-Cmd"
+        }
+      },
+      "x_2nd": {
+        "put": {
+          "pv": "SR:C27-MG{PS:CL1A}I:Sp1_2-SP",
+          "epsilon": 0.01,
+          "mv": {
+            "pyelegant": {
+              "elem_name": "CL1YG2C27A",
+              "property": [
+                "HKICK",
+                1
+              ]
+            }
+          }
+        }
+      },
+      "y_2nd": {
+        "put": {
+          "pv": "SR:C27-MG{PS:CL1A}I:Sp2_2-SP",
+          "epsilon": 0.01,
+          "mv": {
+            "pyelegant": {
+              "elem_name": "CL1YG2C27A",
+              "property": [
+                "VKICK",
+                1
+              ]
+            }
+          }
         }
       }
     },

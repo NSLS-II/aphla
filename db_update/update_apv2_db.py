@@ -785,6 +785,36 @@ def add_2nd_channels_to_C27_HEX_FF_quads(exist_ok=False):
     with gzip.GzipFile(ELEM_PV_MV_PGZ_FILEPATHS['SR'], 'wb') as f:
         pickle.dump(d, f)
 
+def add_2nd_channels_to_C27_HEX_cch6thru9(exist_ok=False):
+
+    d = get_elem_pv_mv_pgz_database_dict('SR')
+
+    scw = ap.getElements('scw*c27*')[0]
+    sel_scors = ap.getNeighbors(scw, 'cl*', n=1, elemself=False)
+
+    for plane in ['x', 'y']:
+        for e in sel_scors:
+            if (not exist_ok) and (f'{plane}_2nd' in d[e.name]['map']):
+                print(f'Field "{plane}_2nd" already defined for "{e.name}". Not changing.')
+                continue
+            primary_pvsp = d[e.name]['map'][plane]['put']['pv']
+            if plane == 'x':
+                put_d = dict(pv=primary_pvsp.replace('I:Sp1-', 'I:Sp1_2-'))
+            elif plane == 'y':
+                put_d = dict(pv=primary_pvsp.replace('I:Sp2-', 'I:Sp2_2-'))
+            else:
+                raise ValueError
+            put_d['epsilon'] = 0.01
+            mv_copy = json.loads(json.dumps(d[e.name]['map'][plane]['put']['mv']))
+            mv_copy['pyelegant']['property'][1] = 1
+            mv_copy['pyelegant']['property'] = tuple(mv_copy['pyelegant']['property'])
+            put_d['mv'] = mv_copy
+            fld_d = {}
+            fld_d['put'] = put_d
+            d[e.name]['map'][f'{plane}_2nd'] = fld_d
+
+    with gzip.GzipFile(ELEM_PV_MV_PGZ_FILEPATHS['SR'], 'wb') as f:
+        pickle.dump(d, f)
 
 if __name__ == '__main__':
 
@@ -875,7 +905,10 @@ if __name__ == '__main__':
     elif False: # Run on 11/08/2022
         add_C27_HEX_unitconv_table_for_mainI_vs_By_Tesla()
 
-    elif True: # Last run on 11/15/2022
+    elif False: # Run on 11/23/2022
+        add_2nd_channels_to_C27_HEX_cch6thru9(exist_ok=False)
+
+    elif True: # Last run on 11/23/2022
         save_pgz_db_contents_to_json(machine_list=['SR'])
 
     print('Finished')
