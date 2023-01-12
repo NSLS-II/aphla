@@ -900,6 +900,162 @@ def add_2nd_channels_to_C27_HEX_cch6thru9(exist_ok=False):
         pickle.dump(d, f)
 
 
+def update_C28_BNL_PSI_upgrade():
+    """
+    --- PV Changes ---
+
+    The same is true for the downstream DW device for all the following changes.
+
+    For "Ch.0":
+        SR:C28-ID:G1{DW100:1}MPS:ch0:setpoint => SR:C27-MG{PS:DW1_ID28}U1-I-SP
+        SR:C28-ID:G1{DW100:1}MPS:ch0:readback => SR:C27-MG{PS:DW1_ID28}U1-I-I
+        SR:C28-ID:G1{DW100:1}MPS:ch0:current  => SR:C27-MG{PS:DW1_ID28}U1-I-I
+
+    For the other channels 1 through 5, change "ch0" to "ch1", "ch2", ..., "ch5"
+    and and "U1" to "U2", "U3", ..., "U6".
+
+    --- Field Changes ---
+    cch0, cch1, ..., cch5:
+        change RB/SP => -I-I & -I-SP
+    cch0rb1, cch1rb1, ..., cch5rb1:
+        RB => -I-I
+        SP => None
+    cch0_on, cch1_on, ..., cch5_on:
+        delete this field
+    cch[0], cch[1], ..., cch[5]:
+        RB => -I-I
+        SP => None
+    orbff0_output, orbff1_output, ..., orbff13_output:
+        RB => None
+        SP => -I-SP
+    """
+
+    with gzip.GzipFile(ELEM_PV_MV_PGZ_FILEPATHS["SR"], "rb") as f:
+        d = pickle.load(f)
+
+    for dw_index, idname in enumerate(["dw100g1c28u", "dw100g1c28d"]):
+
+        print(f'{"#"*20} {idname} {"#"*20}')
+
+        dw_num = dw_index + 1
+
+        for fld, v1 in d[idname]["map"].items():
+            if "get" in v1:
+                pvrb = v1["get"]["pv"]
+            else:
+                pvrb = None
+
+            if "put" in v1:
+                pvsp = v1["put"]["pv"]
+            else:
+                pvsp = None
+
+            print(f"Field: {fld}; Get: {pvrb}; Put: {pvsp}")
+
+        print("###################################################")
+
+        for fld in list(d[idname]["map"]):
+
+            v1 = d[idname]["map"][fld]
+
+            if "get" in v1:
+                pvrb = v1["get"]["pv"]
+            else:
+                pvrb = None
+
+            if "put" in v1:
+                pvsp = v1["put"]["pv"]
+            else:
+                pvsp = None
+
+            if ((pvrb is not None) and (":ch" in pvrb)) or (
+                (pvsp is not None) and (":ch" in pvsp)
+            ):
+                print(f"OLD:: Field: {fld}; Get: {pvrb}; Put: {pvsp}")
+
+                if matches := re.findall("^cch(\d)$", fld):
+                    i = int(matches[0])
+                    v1["get"]["pv"] = f"SR:C27-MG{{PS:DW{dw_num}_ID28}}U{i+1}-I-I"
+                    v1["get"]["epsilon"] = 0.05
+                    v1["put"]["pv"] = f"SR:C27-MG{{PS:DW{dw_num}_ID28}}U{i+1}-I-SP"
+                    v1["put"]["epsilon"] = 0.05
+
+                elif matches := re.findall("^cch(\d)_on$", fld):
+                    del d[idname]["map"][fld]
+
+                elif matches := re.findall("^cch(\d)rb1$", fld):
+                    i = int(matches[0])
+                    v1["get"]["pv"] = f"SR:C27-MG{{PS:DW{dw_num}_ID28}}U{i+1}-I-I"
+                    if "put" in v1:
+                        del v1["put"]
+
+                elif matches := re.findall("^cch\[(\d)\]$", fld):
+                    i = int(matches[0])
+                    v1["get"] = dict(pv=f"SR:C27-MG{{PS:DW{dw_num}_ID28}}U{i+1}-I-I")
+                    if "put" in v1:
+                        del v1["put"]
+
+                elif matches := re.findall("^orbff(\d+)_output$", fld):
+                    i = int(matches[0])
+                    if "get" in v1:
+                        del v1["get"]
+                    if i in range(6):
+                        v1["put"]["pv"] = f"SR:C27-MG{{PS:DW1_ID28}}U{i+1}-I-SP"
+                    elif i in range(6, 12):
+                        v1["put"]["pv"] = f"SR:C27-MG{{PS:DW2_ID28}}U{i-6+1}-I-SP"
+                    else:
+                        raise ValueError
+
+                else:
+                    raise NotImplementedError
+
+                if fld in d[idname]["map"]:
+
+                    if "get" in v1:
+                        new_pvrb = v1["get"]["pv"]
+                    else:
+                        new_pvrb = None
+
+                    if "put" in v1:
+                        new_pvsp = v1["put"]["pv"]
+                    else:
+                        new_pvsp = None
+
+                    print((f"NEW:: Field: {fld}; Get: {new_pvrb}; Put: {new_pvsp}"))
+                else:
+                    print(f"NEW:: Field '{fld}' deleted")
+
+    """ Also the unit conversion file "nsls2sr_unitconv.yaml" had to be manually
+        modified as follows:
+
+diff --git a/v2tests/nsls2sr_unitconv.yaml b/v2tests/nsls2sr_unitconv.yaml
+index 23bc5b5..645296e 100644
+--- a/v2tests/nsls2sr_unitconv.yaml
++++ b/v2tests/nsls2sr_unitconv.yaml
+@@ -442,7 +442,7 @@ SR:
+     coeffs: [1e-3, 0.0]
+
+   ID_orb_cor_channel_type1: &ID_orb_cor_channel_type1
+-    elements: [dw100g1c28u, dw100g1c28d]
++    elements: []
+     fields: [
+       cch0, cch1, cch2, cch3, cch4, cch5,
+       orbff0_m0_I, orbff1_m0_I, orbff2_m0_I, orbff3_m0_I, orbff4_m0_I,
+@@ -474,7 +474,7 @@ SR:
+                ivu20g1c03c, ivu23g1c04u, ivu21g1c05d, ovu42g1c07u, ivu22g1c10c,
+                ivu20g1c11c, ivu23g1c12d, ivu23g1c16c, ivu21g1c17u, ivu21g1c17d,
+                ivu18g1c19u,
+-               dw100g1c08u, dw100g1c08d, dw100g1c18u, dw100g1c18d,
++               dw100g1c08u, dw100g1c08d, dw100g1c18u, dw100g1c18d, dw100g1c28u, dw100g1c28d,
+                scw70g1c27d,
+                epu49g1c23u, epu49g1c23d,
+                _phaserg1c23c]
+    """
+
+    with gzip.GzipFile(ELEM_PV_MV_PGZ_FILEPATHS["SR"], "wb") as f:
+        pickle.dump(d, f)
+
+
 if __name__ == "__main__":
 
     if False:  # Run on 01/14/2022
@@ -1000,7 +1156,10 @@ if __name__ == "__main__":
     elif False:  # Run on 11/23/2022
         add_2nd_channels_to_C27_HEX_cch6thru9(exist_ok=False)
 
-    elif True:  # Last run on 11/23/2022
+    elif False:  # Run on 01/12/2023
+        update_C28_BNL_PSI_upgrade()
+
+    elif True:  # Last run on 01/12/2023
         save_pgz_db_contents_to_json(machine_list=["SR"])
 
     print("Finished")

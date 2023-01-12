@@ -126187,134 +126187,32 @@
     "map": {
       "cch[0]": {
         "get": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28D",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch0:current",
-          "epsilon": 5.0
-        },
-        "put": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28D",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch0:readback",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW2_ID28}U1-I-I"
         }
       },
       "cch[1]": {
         "get": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28D",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch1:current",
-          "epsilon": 5.0
-        },
-        "put": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28D",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch1:readback",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW2_ID28}U2-I-I"
         }
       },
       "cch[2]": {
         "get": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28D",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch2:current",
-          "epsilon": 5.0
-        },
-        "put": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28D",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch2:readback",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW2_ID28}U3-I-I"
         }
       },
       "cch[3]": {
         "get": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28D",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch3:current",
-          "epsilon": 5.0
-        },
-        "put": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28D",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch3:readback",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW2_ID28}U4-I-I"
         }
       },
       "cch[4]": {
         "get": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28D",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch4:current",
-          "epsilon": 5.0
-        },
-        "put": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28D",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch4:readback",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW2_ID28}U5-I-I"
         }
       },
       "cch[5]": {
         "get": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28D",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch5:current",
-          "epsilon": 5.0
-        },
-        "put": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28D",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch5:readback",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW2_ID28}U6-I-I"
         }
       },
       "gap": {
@@ -126356,8 +126254,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch0:setpoint",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW2_ID28}U1-I-SP",
+          "epsilon": 0.05
         },
         "get": {
           "mv": {
@@ -126366,8 +126264,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch0:readback",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW2_ID28}U1-I-I",
+          "epsilon": 0.05
         }
       },
       "cch0rb1": {
@@ -126378,20 +126276,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch0:current",
+          "pv": "SR:C27-MG{PS:DW2_ID28}U1-I-I",
           "epsilon": 10.0
-        }
-      },
-      "cch0_on": {
-        "put": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28D",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch0:enable",
-          "epsilon": 5.0
         }
       },
       "cch1": {
@@ -126402,8 +126288,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch1:setpoint",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW2_ID28}U2-I-SP",
+          "epsilon": 0.05
         },
         "get": {
           "mv": {
@@ -126412,8 +126298,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch1:readback",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW2_ID28}U2-I-I",
+          "epsilon": 0.05
         }
       },
       "cch1rb1": {
@@ -126424,20 +126310,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch1:current",
+          "pv": "SR:C27-MG{PS:DW2_ID28}U2-I-I",
           "epsilon": 10.0
-        }
-      },
-      "cch1_on": {
-        "put": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28D",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch1:enable",
-          "epsilon": 5.0
         }
       },
       "cch2": {
@@ -126448,8 +126322,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch2:setpoint",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW2_ID28}U3-I-SP",
+          "epsilon": 0.05
         },
         "get": {
           "mv": {
@@ -126458,8 +126332,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch2:readback",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW2_ID28}U3-I-I",
+          "epsilon": 0.05
         }
       },
       "cch2rb1": {
@@ -126470,20 +126344,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch2:current",
+          "pv": "SR:C27-MG{PS:DW2_ID28}U3-I-I",
           "epsilon": 10.0
-        }
-      },
-      "cch2_on": {
-        "put": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28D",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch2:enable",
-          "epsilon": 5.0
         }
       },
       "cch3": {
@@ -126494,8 +126356,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch3:setpoint",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW2_ID28}U4-I-SP",
+          "epsilon": 0.05
         },
         "get": {
           "mv": {
@@ -126504,8 +126366,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch3:readback",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW2_ID28}U4-I-I",
+          "epsilon": 0.05
         }
       },
       "cch3rb1": {
@@ -126516,20 +126378,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch3:current",
+          "pv": "SR:C27-MG{PS:DW2_ID28}U4-I-I",
           "epsilon": 10.0
-        }
-      },
-      "cch3_on": {
-        "put": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28D",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch3:enable",
-          "epsilon": 5.0
         }
       },
       "cch4": {
@@ -126540,8 +126390,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch4:setpoint",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW2_ID28}U5-I-SP",
+          "epsilon": 0.05
         },
         "get": {
           "mv": {
@@ -126550,8 +126400,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch4:readback",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW2_ID28}U5-I-I",
+          "epsilon": 0.05
         }
       },
       "cch4rb1": {
@@ -126562,20 +126412,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch4:current",
+          "pv": "SR:C27-MG{PS:DW2_ID28}U5-I-I",
           "epsilon": 10.0
-        }
-      },
-      "cch4_on": {
-        "put": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28D",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch4:enable",
-          "epsilon": 5.0
         }
       },
       "cch5": {
@@ -126586,8 +126424,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch5:setpoint",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW2_ID28}U6-I-SP",
+          "epsilon": 0.05
         },
         "get": {
           "mv": {
@@ -126596,8 +126434,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch5:readback",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW2_ID28}U6-I-I",
+          "epsilon": 0.05
         }
       },
       "cch5rb1": {
@@ -126608,20 +126446,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch5:current",
+          "pv": "SR:C27-MG{PS:DW2_ID28}U6-I-I",
           "epsilon": 10.0
-        }
-      },
-      "cch5_on": {
-        "put": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28D",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch5:enable",
-          "epsilon": 5.0
         }
       },
       "aianglex": {
@@ -127182,7 +127008,7 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch0:setpoint"
+          "pv": "SR:C27-MG{PS:DW1_ID28}U1-I-SP"
         }
       },
       "orbff1_output": {
@@ -127193,7 +127019,7 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch1:setpoint"
+          "pv": "SR:C27-MG{PS:DW1_ID28}U2-I-SP"
         }
       },
       "orbff2_output": {
@@ -127204,7 +127030,7 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch2:setpoint"
+          "pv": "SR:C27-MG{PS:DW1_ID28}U3-I-SP"
         }
       },
       "orbff3_output": {
@@ -127215,7 +127041,7 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch3:setpoint"
+          "pv": "SR:C27-MG{PS:DW1_ID28}U4-I-SP"
         }
       },
       "orbff4_output": {
@@ -127226,7 +127052,7 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch4:setpoint"
+          "pv": "SR:C27-MG{PS:DW1_ID28}U5-I-SP"
         }
       },
       "orbff5_output": {
@@ -127237,7 +127063,7 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch5:setpoint"
+          "pv": "SR:C27-MG{PS:DW1_ID28}U6-I-SP"
         }
       },
       "orbff6_output": {
@@ -127248,7 +127074,7 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch0:setpoint"
+          "pv": "SR:C27-MG{PS:DW2_ID28}U1-I-SP"
         }
       },
       "orbff7_output": {
@@ -127259,7 +127085,7 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch1:setpoint"
+          "pv": "SR:C27-MG{PS:DW2_ID28}U2-I-SP"
         }
       },
       "orbff8_output": {
@@ -127270,7 +127096,7 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch2:setpoint"
+          "pv": "SR:C27-MG{PS:DW2_ID28}U3-I-SP"
         }
       },
       "orbff9_output": {
@@ -127281,7 +127107,7 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch3:setpoint"
+          "pv": "SR:C27-MG{PS:DW2_ID28}U4-I-SP"
         }
       },
       "orbff10_output": {
@@ -127292,7 +127118,7 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch4:setpoint"
+          "pv": "SR:C27-MG{PS:DW2_ID28}U5-I-SP"
         }
       },
       "orbff11_output": {
@@ -127303,7 +127129,7 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch5:setpoint"
+          "pv": "SR:C27-MG{PS:DW2_ID28}U6-I-SP"
         }
       },
       "orbff12_output": {
@@ -127393,134 +127219,32 @@
     "map": {
       "cch[0]": {
         "get": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28U",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch0:current",
-          "epsilon": 5.0
-        },
-        "put": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28U",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch0:readback",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW1_ID28}U1-I-I"
         }
       },
       "cch[1]": {
         "get": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28U",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch1:current",
-          "epsilon": 5.0
-        },
-        "put": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28U",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch1:readback",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW1_ID28}U2-I-I"
         }
       },
       "cch[2]": {
         "get": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28U",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch2:current",
-          "epsilon": 5.0
-        },
-        "put": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28U",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch2:readback",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW1_ID28}U3-I-I"
         }
       },
       "cch[3]": {
         "get": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28U",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch3:current",
-          "epsilon": 5.0
-        },
-        "put": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28U",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch3:readback",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW1_ID28}U4-I-I"
         }
       },
       "cch[4]": {
         "get": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28U",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch4:current",
-          "epsilon": 5.0
-        },
-        "put": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28U",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch4:readback",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW1_ID28}U5-I-I"
         }
       },
       "cch[5]": {
         "get": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28U",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch5:current",
-          "epsilon": 5.0
-        },
-        "put": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28U",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch5:readback",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW1_ID28}U6-I-I"
         }
       },
       "gap": {
@@ -127562,8 +127286,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch0:setpoint",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW1_ID28}U1-I-SP",
+          "epsilon": 0.05
         },
         "get": {
           "mv": {
@@ -127572,8 +127296,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch0:readback",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW1_ID28}U1-I-I",
+          "epsilon": 0.05
         }
       },
       "cch0rb1": {
@@ -127584,20 +127308,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch0:current",
+          "pv": "SR:C27-MG{PS:DW1_ID28}U1-I-I",
           "epsilon": 10.0
-        }
-      },
-      "cch0_on": {
-        "put": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28U",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch0:enable",
-          "epsilon": 5.0
         }
       },
       "cch1": {
@@ -127608,8 +127320,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch1:setpoint",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW1_ID28}U2-I-SP",
+          "epsilon": 0.05
         },
         "get": {
           "mv": {
@@ -127618,8 +127330,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch1:readback",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW1_ID28}U2-I-I",
+          "epsilon": 0.05
         }
       },
       "cch1rb1": {
@@ -127630,20 +127342,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch1:current",
+          "pv": "SR:C27-MG{PS:DW1_ID28}U2-I-I",
           "epsilon": 10.0
-        }
-      },
-      "cch1_on": {
-        "put": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28U",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch1:enable",
-          "epsilon": 5.0
         }
       },
       "cch2": {
@@ -127654,8 +127354,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch2:setpoint",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW1_ID28}U3-I-SP",
+          "epsilon": 0.05
         },
         "get": {
           "mv": {
@@ -127664,8 +127364,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch2:readback",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW1_ID28}U3-I-I",
+          "epsilon": 0.05
         }
       },
       "cch2rb1": {
@@ -127676,20 +127376,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch2:current",
+          "pv": "SR:C27-MG{PS:DW1_ID28}U3-I-I",
           "epsilon": 10.0
-        }
-      },
-      "cch2_on": {
-        "put": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28U",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch2:enable",
-          "epsilon": 5.0
         }
       },
       "cch3": {
@@ -127700,8 +127388,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch3:setpoint",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW1_ID28}U4-I-SP",
+          "epsilon": 0.05
         },
         "get": {
           "mv": {
@@ -127710,8 +127398,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch3:readback",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW1_ID28}U4-I-I",
+          "epsilon": 0.05
         }
       },
       "cch3rb1": {
@@ -127722,20 +127410,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch3:current",
+          "pv": "SR:C27-MG{PS:DW1_ID28}U4-I-I",
           "epsilon": 10.0
-        }
-      },
-      "cch3_on": {
-        "put": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28U",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch3:enable",
-          "epsilon": 5.0
         }
       },
       "cch4": {
@@ -127746,8 +127422,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch4:setpoint",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW1_ID28}U5-I-SP",
+          "epsilon": 0.05
         },
         "get": {
           "mv": {
@@ -127756,8 +127432,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch4:readback",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW1_ID28}U5-I-I",
+          "epsilon": 0.05
         }
       },
       "cch4rb1": {
@@ -127768,20 +127444,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch4:current",
+          "pv": "SR:C27-MG{PS:DW1_ID28}U5-I-I",
           "epsilon": 10.0
-        }
-      },
-      "cch4_on": {
-        "put": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28U",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch4:enable",
-          "epsilon": 5.0
         }
       },
       "cch5": {
@@ -127792,8 +127456,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch5:setpoint",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW1_ID28}U6-I-SP",
+          "epsilon": 0.05
         },
         "get": {
           "mv": {
@@ -127802,8 +127466,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch5:readback",
-          "epsilon": 5.0
+          "pv": "SR:C27-MG{PS:DW1_ID28}U6-I-I",
+          "epsilon": 0.05
         }
       },
       "cch5rb1": {
@@ -127814,20 +127478,8 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch5:current",
+          "pv": "SR:C27-MG{PS:DW1_ID28}U6-I-I",
           "epsilon": 10.0
-        }
-      },
-      "cch5_on": {
-        "put": {
-          "mv": {
-            "pyelegant": {
-              "elem_name": "DW100G1C28U",
-              "property": null
-            }
-          },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch5:enable",
-          "epsilon": 5.0
         }
       },
       "orbff0_on": {
@@ -128300,7 +127952,7 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch0:setpoint"
+          "pv": "SR:C27-MG{PS:DW1_ID28}U1-I-SP"
         }
       },
       "orbff1_output": {
@@ -128311,7 +127963,7 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch1:setpoint"
+          "pv": "SR:C27-MG{PS:DW1_ID28}U2-I-SP"
         }
       },
       "orbff2_output": {
@@ -128322,7 +127974,7 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch2:setpoint"
+          "pv": "SR:C27-MG{PS:DW1_ID28}U3-I-SP"
         }
       },
       "orbff3_output": {
@@ -128333,7 +127985,7 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch3:setpoint"
+          "pv": "SR:C27-MG{PS:DW1_ID28}U4-I-SP"
         }
       },
       "orbff4_output": {
@@ -128344,7 +127996,7 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch4:setpoint"
+          "pv": "SR:C27-MG{PS:DW1_ID28}U5-I-SP"
         }
       },
       "orbff5_output": {
@@ -128355,7 +128007,7 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:1}MPS:ch5:setpoint"
+          "pv": "SR:C27-MG{PS:DW1_ID28}U6-I-SP"
         }
       },
       "orbff6_output": {
@@ -128366,7 +128018,7 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch0:setpoint"
+          "pv": "SR:C27-MG{PS:DW2_ID28}U1-I-SP"
         }
       },
       "orbff7_output": {
@@ -128377,7 +128029,7 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch1:setpoint"
+          "pv": "SR:C27-MG{PS:DW2_ID28}U2-I-SP"
         }
       },
       "orbff8_output": {
@@ -128388,7 +128040,7 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch2:setpoint"
+          "pv": "SR:C27-MG{PS:DW2_ID28}U3-I-SP"
         }
       },
       "orbff9_output": {
@@ -128399,7 +128051,7 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch3:setpoint"
+          "pv": "SR:C27-MG{PS:DW2_ID28}U4-I-SP"
         }
       },
       "orbff10_output": {
@@ -128410,7 +128062,7 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch4:setpoint"
+          "pv": "SR:C27-MG{PS:DW2_ID28}U5-I-SP"
         }
       },
       "orbff11_output": {
@@ -128421,7 +128073,7 @@
               "property": null
             }
           },
-          "pv": "SR:C28-ID:G1{DW100:2}MPS:ch5:setpoint"
+          "pv": "SR:C27-MG{PS:DW2_ID28}U6-I-SP"
         }
       },
       "orbff12_output": {
