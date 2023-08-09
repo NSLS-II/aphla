@@ -1,0 +1,32 @@
+[tool.poetry]
+name = "aphla"
+version = "2.0.0"
+description = "A Python toolkit for control and experiment at particle accelerators"
+authors = ["Lingyun Yang <lyyang@bnl.gov>",
+           "Yoshiteru Hidaka <yhidaka@bnl.gov>"]
+maintainers = ["Yoshiteru Hidaka <yhidaka@bnl.gov>"]
+license = "BSD-3-Clause"
+readme = "README.md"
+repository = "https://github.com/NSLS-II/aphla"
+
+include = ["aphla/machines/__init__.py"]
+exclude = [
+    "aphla/machines", "aphla/tests", "aphla/web", "aphla/gui",
+    "aphla/contrib", "aphla/mpfit", "aphla/dms",
+]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+numpy = "^1.24.4"
+"ruamel.yaml" = "^0.17.32"
+cothread = "^2.16"
+Pint = "^0.22"
+h5py = "^3.9.0"
+matplotlib = "^3.7.2"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

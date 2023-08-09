@@ -29,7 +29,6 @@ import itertools
 
 from . import CONFIG
 from . import ureg, Q_
-from . import facility_d
 from .defaults import Default, set_defaults, getDynamicDefault
 
 _logger = logging.getLogger("aphla.hlalib")

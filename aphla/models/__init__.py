@@ -5,6 +5,7 @@ import tempfile
 
 import numpy as np
 
+from .. import facility_name
 from .. import facility_d
 from .. import machines
 from .. import engines
@@ -172,7 +173,7 @@ class VariableModel():
         self.model_name = model_name
 
         self.model_data_filepath = Path(machines.HLA_CONFIG_DIR).joinpath(
-            facility_d['name'],
+            facility_name,
             'models',
             submachine,
             engine_name,

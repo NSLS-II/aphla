@@ -13,7 +13,8 @@ A procedural interface is provided.
 from __future__ import print_function, division, absolute_import
 
 try:
-    from .version import version as __version__
+    import importlib.metadata
+    __version__ = importlib.metadata.version(__name__)
 except:
     raise
 
@@ -30,6 +31,12 @@ set_application_registry(ureg) # needed for pickling/unpickling
 Q_ = Quantity = ureg.Quantity
 
 CONFIG = dict(unitless_quantities=True)
+
+HLA_CONFIG_DIR = Path(os.environ["APHLA_CONFIG_DIR"])
+facility_name = os.environ["APHLA_FACILITY"]
+
+facility_d = yaml.YAML().load((
+    HLA_CONFIG_DIR / facility_name / 'facility.yaml').read_text())
 
 # for compatibilities with Python < 2.7
 class _NullHandler(logging.Handler):
@@ -176,11 +183,6 @@ def useQuantitiesWithUnits():
 def is_unitless():
     """"""
     return CONFIG['unitless_quantities']
-
-
-this_folder = os.path.dirname(os.path.abspath(__file__))
-facility_d = yaml.YAML().load(Path(this_folder).joinpath('facility.yaml').read_text())
-facility_name = facility_d['name']
 
 from . import catools
 from .catools import *

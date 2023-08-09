@@ -16,7 +16,6 @@ from .catools import caget, caput
 import time
 import numpy as np
 
-from . import facility_d
 from . import defaults
 from .defaults import Default, set_defaults, getDynamicDefault
 from .hlalib import (getOrbit, getElements, getClosest, getNeighbors, getTunes,

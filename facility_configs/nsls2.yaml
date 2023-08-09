@@ -1,4 +1,10 @@
-name: nsls2
+# This YAML file must be renamed to "facility.yaml" and copied to
+# the folder "$APHLA_CONFIG_DIR/$APHLA_FACILITY".
+
+# $APHLA_FACILITY should be "nsls2".
+
+output_dir: /epics/aphla
+
 submachines:
   available: [LN, LTD1, LTD2, LTB, BR, BTD, BTS, SR]
   default: SR

@@ -33,7 +33,7 @@ import warnings
 
 from ruamel import yaml
 
-from ..version import short_version
+from .. import __version__
 from .. import Q_
 from .. import facility_d
 from .. import defaults
@@ -89,7 +89,7 @@ _cf_map = {'elemName': 'name',
 CACHE_FILEPATH_TEMPLATE = {}
 for k in ['machine', 'models']:
     CACHE_FILEPATH_TEMPLATE[k] = str(Path(_home_hla).joinpath(
-        f'{{machine}}_{{submachine}}_{k}_v{short_version}.pgz'))
+        f'{{machine}}_{{submachine}}_{k}_v{__version__}.pgz'))
 
 # keep all loaded lattice
 _lattice_dict = {}
@@ -171,7 +171,7 @@ def load(machine, submachine = "*", **kwargs):
 
     _logger.info("importing '%s' from '%s'" % (machine, machdir))
 
-    config_filepath = Path(machdir).joinpath('aphla.yaml')
+    config_filepath = Path(machdir).joinpath('submachines.yaml')
     if config_filepath.exists():
         try:
             cfg = yaml.YAML().load(config_filepath.read_text())
@@ -179,25 +179,24 @@ def load(machine, submachine = "*", **kwargs):
         except:
             raise RuntimeError(f"can not open '{config_filepath}' to read configurations")
 
-        d = cfg['COMMON']
         # set proper output directory in the order of env > aphla.yaml > $HOME
         HLA_OUTPUT_DIR = os.environ.get("HLA_DATA_DIR",
-                                        d.get("output_dir",
+                                        facility_d.get("output_dir",
                                               os.path.expanduser('~')))
         # the default submachine
-        accdefault = d.get("default_submachine", "")
+        accdefault = facility_d["submachines"].get("default", "")
+        submachines_avail = facility_d["submachines"].get("available", [])
 
         if not update_cache:
             if submachine == '*':
-                selected_submachine = d.get("default_submachine", "")
+                selected_submachine = accdefault
                 if selected_submachine == "":
-                    _submachines = d.get("submachines", [])
-                    if len(_submachines) == 0:
+                    if len(submachines_avail) == 0:
                         raise ValueError
                     else: # Pick the first one
-                        selected_submachine = _submachines[0]
+                        selected_submachine = submachines_avail[0]
             else:
-                matched_submachines = [subm for subm in d.get("submachines", [])
+                matched_submachines = [subm for subm in submachines_avail
                                        if fnmatch.fnmatch(subm, submachine)]
                 if len(matched_submachines) == 1:
                     selected_submachine = matched_submachines[0]
@@ -281,7 +280,7 @@ def load(machine, submachine = "*", **kwargs):
         print('* Constructing the machine lattice from the database files...')
 
         # For all submachines specified in the config file that matches the pattern
-        msects = [subm for subm in d.get("submachines", [])
+        msects = [subm for subm in submachines_avail
                   if fnmatch.fnmatch(subm, submachine)]
         # print(msect)
         for msect in msects:
