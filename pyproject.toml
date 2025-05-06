@@ -9,9 +9,11 @@ license = "BSD-3-Clause"
 readme = "README.md"
 repository = "https://github.com/NSLS-II/aphla"
 
-include = ["aphla/machines/__init__.py"]
+#include = ["aphla/machines/__init__.py"]
 exclude = [
-    "aphla/machines", "aphla/tests", "aphla/web", "aphla/gui",
+    "aphla/machines/*/*",
+    "aphla/machines/utils.py",
+    "aphla/tests", "aphla/web", "aphla/gui",
     "aphla/contrib", "aphla/mpfit", "aphla/dms",
 ]
 
