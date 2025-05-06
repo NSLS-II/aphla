@@ -14,7 +14,7 @@ ap.machines.load("nsls2", "SR")
 SR_CIRCUMF = ap.machines.getMachine("SR").se  # [m]
 
 # V2DB_FOLDER = Path(__file__).joinpath('../../v2tests').resolve()
-V2DB_FOLDER = Path("/epics/aphla/apconf/nsls2")
+V2DB_FOLDER = Path("/epics/aphla/apconf_v2/nsls2")
 
 ELEM_PV_MV_PGZ_FILEPATHS = dict(
     LN=V2DB_FOLDER.joinpath("nsls2_sr_elems_pvs_mvs.pgz"),
@@ -55,13 +55,11 @@ BPM_PV_SUFFIX = {
 
 
 def jsonify(o):
-
     if isinstance(o, (np.int64, np.int32)):
         return int(o)
 
 
 def save_pgz_db_contents_to_json(machine_list=None):
-
     for machine, pgz_filepath in ELEM_PV_MV_PGZ_FILEPATHS.items():
         if machine_list is not None:
             if machine not in machine_list:
@@ -123,7 +121,6 @@ def update_C23u_BNL_PSI_upgrade():
     print("###################################################")
 
     for fld in list(d[idname]["map"]):
-
         v1 = d[idname]["map"][fld]
 
         if "get" in v1:
@@ -172,7 +169,6 @@ def update_C23u_BNL_PSI_upgrade():
                 raise NotImplementedError
 
             if fld in d[idname]["map"]:
-
                 if "get" in v1:
                     new_pvrb = v1["get"]["pv"]
                 else:
@@ -269,7 +265,6 @@ def update_C23d_BNL_PSI_upgrade():
     print("###################################################")
 
     for fld in list(d[idname]["map"]):
-
         v1 = d[idname]["map"][fld]
 
         if "get" in v1:
@@ -318,7 +313,6 @@ def update_C23d_BNL_PSI_upgrade():
                 raise NotImplementedError
 
             if fld in d[idname]["map"]:
-
                 if "get" in v1:
                     new_pvrb = v1["get"]["pv"]
                 else:
@@ -365,7 +359,6 @@ index 3856168..e7cce7e 100644
 
 
 def get_new_id(database_dict):
-
     d = database_dict
 
     all_ids = []  # Likely SQL related
@@ -380,7 +373,6 @@ def get_new_id(database_dict):
 
 
 def get_elem_pv_mv_pgz_database_dict(machine):
-
     with gzip.GzipFile(ELEM_PV_MV_PGZ_FILEPATHS[machine], "rb") as f:
         d = pickle.load(f)
 
@@ -500,7 +492,6 @@ def update_C27_straight(exist_ok=False):
         print(new_elem_info["name"], new_elem_info["index"])
 
     for info in bpm_info_list + id_info_list:
-
         elem_name = info["name"]
         upper_elem_name = elem_name.upper()
 
@@ -523,7 +514,6 @@ def update_C27_straight(exist_ok=False):
         new["tags"] = ["aphla.sys.SR"]
 
         if "UBPM" in info["groups"]:
-
             new["devName"] = info["devname"]
             bpm_num = int(info["devname"].split("-")[1][len("BPM") :])
 
@@ -547,7 +537,6 @@ def update_C27_straight(exist_ok=False):
                 "xbba",
                 "ybba",
             ]:
-
                 fld_d = {}
 
                 if fld in BPM_PV_SUFFIX["get"]:
@@ -571,7 +560,6 @@ def update_C27_straight(exist_ok=False):
                 new["map"][fld] = fld_d
 
         elif "ID" in info["groups"]:
-
             new["map"] = {}
 
             # Field "gap" == "mainI" [A] (442 A maximum according to T. Tanabe)
@@ -692,7 +680,6 @@ def update_C27_straight(exist_ok=False):
                 # Downstream reg. V slow cor. 2nd channel
                 (9, "SR:C27-MG{PS:CL1A}I:Sp2_2-SP", "SR:C27-MG{PS:CL1A}I:Ps2DCCT1-I"),
             ]:
-
                 fld = f"cch{iCh}"
                 fld_d = {}
                 get_d = dict(pv=pvrb)
@@ -813,7 +800,6 @@ def update_C27_straight(exist_ok=False):
 
 
 def add_C27_HEX_unitconv_table_for_mainI_vs_By_Tesla():
-
     unitconv_pkl_filepath = "../v2tests/nsls2sr_unitconv_tables.pkl"
 
     with open(unitconv_pkl_filepath, "rb") as f:
@@ -846,7 +832,6 @@ def add_C27_HEX_unitconv_table_for_mainI_vs_By_Tesla():
 
 
 def add_2nd_channels_to_C27_HEX_FF_quads(exist_ok=False):
-
     d = get_elem_pv_mv_pgz_database_dict("SR")
 
     scw = ap.getElements("scw*c27*")[0]
@@ -867,7 +852,6 @@ def add_2nd_channels_to_C27_HEX_FF_quads(exist_ok=False):
 
 
 def add_2nd_channels_to_C27_HEX_cch6thru9(exist_ok=False):
-
     d = get_elem_pv_mv_pgz_database_dict("SR")
 
     scw = ap.getElements("scw*c27*")[0]
@@ -934,7 +918,6 @@ def update_C28_BNL_PSI_upgrade():
         d = pickle.load(f)
 
     for dw_index, idname in enumerate(["dw100g1c28u", "dw100g1c28d"]):
-
         print(f'{"#"*20} {idname} {"#"*20}')
 
         dw_num = dw_index + 1
@@ -955,7 +938,6 @@ def update_C28_BNL_PSI_upgrade():
         print("###################################################")
 
         for fld in list(d[idname]["map"]):
-
             v1 = d[idname]["map"][fld]
 
             if "get" in v1:
@@ -1010,7 +992,6 @@ def update_C28_BNL_PSI_upgrade():
                     raise NotImplementedError
 
                 if fld in d[idname]["map"]:
-
                     if "get" in v1:
                         new_pvrb = v1["get"]["pv"]
                     else:
@@ -1056,10 +1037,270 @@ index 23bc5b5..645296e 100644
         pickle.dump(d, f)
 
 
+def update_C20_straight(exist_ok=False):
+    """C20 IFE"""
+
+    cell_num = 20
+
+    # s-pos of center of straight
+    straight_sc = SR_CIRCUMF / 30 * cell_num  # [m]
+
+    bpm_info_list = [
+        dict(
+            name="pu1g1c20a",
+            sc=float(f"{straight_sc - 3.66234:.6f}"),
+            devname=f"C{cell_num:02d}-BPM7",
+            groups=["UBPM", "PU1"],
+        ),
+        dict(
+            name="pu4g1c20a",
+            sc=float(f"{straight_sc + 3.67766:.6f}"),
+            devname=f"C{cell_num:02d}-BPM8",
+            groups=["UBPM", "PU4"],
+        ),
+    ]
+
+    id_info_list = [
+        dict(
+            name="ovu68g1c20d",
+            type="OVU",
+            symmetry="D",
+            groups=["ID", "OVU68", "U68", "Internal", "IFE"],
+            sc=straight_sc + 1.88416,
+            L=3.4,
+        )
+    ]
+
+    id_pvs = {
+        "gap": dict(
+            setpoint="SR:C20-ID:G1{U68:2-Ax:Gap}-Mtr-SP",  # [um]; need "gap_trig" to start moving
+            readback="SR:C20-ID:G1{U68:2-Ax:Gap}-Mtr.RBV",  # [um]
+        ),
+        "gap_trig": dict(setpoint="SR:C20-ID:G1{U68:2-Ax:Gap}-Mtr-Go"),
+        "gap_go": dict(
+            setpoint="SR:C20-ID:G1{U68:2-Ax:Gap}-Mtr-SP-Go",  # [um]; starts moving immediately after SP value change
+            readback="SR:C20-ID:G1{U68:2-Ax:Gap}-Mtr.RBV",  # [um]
+        ),
+        "gap_hinominal": dict(readback="SR:C20-ID:NomOpen-Sp"),
+        "gap_lonominal": dict(readback="SR:C20-ID:NomClose-Sp"),
+        "gap_ramping": dict(readback="SR:C20-ID:G1{U68:2-Ax:Gap}-Mtr.MOVN"),
+        "gap_speed": dict(
+            setpoint="SR:C20-ID:G1{U68:2}GapSpeed-SP", # [um/s]
+            readback="SR:C20-ID:G1{U68:2}GapSpeed-RB", # [um/s]
+        ),
+    }
+    id_pvs["gap_hilim"] = dict(readback=f'{id_pvs["gap"]["setpoint"]}.DRVH')
+    id_pvs["gap_lolim"] = dict(readback=f'{id_pvs["gap"]["setpoint"]}.DRVL')
+
+    # Add "cch*" fields
+    epsion = 0.05
+    # PS1 H
+    id_pvs["cch0"] = dict(setpoint="SR:C19-MG{PS:ID19_U68_1}I:Sp1-SP",
+                          readback="SR:C19-MG{PS:ID19_U68_1}I:Ps1DCCT1-I",
+                          epsilon=epsion)
+    # PS1 V
+    id_pvs["cch1"] = dict(setpoint="SR:C19-MG{PS:ID19_U68_1}I:Sp2-SP",
+                          readback="SR:C19-MG{PS:ID19_U68_1}I:Ps2DCCT1-I",
+                          epsilon=epsion)
+    # PS2 H
+    id_pvs["cch2"] = dict(setpoint="SR:C19-MG{PS:ID19_U68_2}I:Sp1-SP",
+                          readback="SR:C19-MG{PS:ID19_U68_2}I:Ps1DCCT1-I",
+                          epsilon=epsion)
+    # PS2 V
+    id_pvs["cch3"] = dict(setpoint="SR:C19-MG{PS:ID19_U68_2}I:Sp2-SP",
+                          readback="SR:C19-MG{PS:ID19_U68_2}I:Ps2DCCT1-I",
+                          epsilon=epsion)
+
+    # Add "cch[]" readback fields
+    for iCh in range(4):
+        id_pvs[f"cch[{iCh}]"] = dict(
+            readback=id_pvs[f"cch{iCh}"]["readback"],
+            epsilon=epsion)
+
+    # Add orbit-feedforward fields
+    nCh = 4
+    for iCh in range(nCh):
+        orbff_pv_prefix = f"SR:C19-MG{{IFE:Orbit-FF:{iCh}}}"
+
+        id_pvs[f"orbff{iCh}_on"] = dict(setpoint=f"{orbff_pv_prefix}Ena-Sel")
+        id_pvs[f"orbff{iCh}_m0_gap"] = dict(setpoint=f"{orbff_pv_prefix}L2-Calc_.C")
+        id_pvs[f"orbff{iCh}_m0_I"] = dict(setpoint=f"{orbff_pv_prefix}L2-Calc_.D")
+
+        id_pvs[f"orbff{iCh}_output"] = dict(setpoint=id_pvs[f"cch{iCh}"]["setpoint"])
+
+    d = _add_new_ID_and_IDBPMs(exist_ok, cell_num, bpm_info_list, id_info_list, id_pvs)
+
+    with gzip.GzipFile(ELEM_PV_MV_PGZ_FILEPATHS["SR"], "wb") as f:
+        pickle.dump(d, f)
+
+
+def _add_new_ID_and_IDBPMs(exist_ok, cell_num, bpm_info_list, id_info_list, id_pvs):
+    print_elems_around_straight(cell_num, n=5)
+
+    us_sext = sorted(
+        ap.getGroupMembers(["SEXT", f"C{cell_num-1:02d}"], op="intersection")
+    )[-1]
+    ds_sext = sorted(
+        ap.getGroupMembers(["SEXT", f"C{cell_num:02d}"], op="intersection")
+    )[0]
+
+    us_i = ap.getElements("*").index(us_sext)
+    ds_i = ap.getElements("*").index(ds_sext)
+    existing_elems = ap.getElements("*")[us_i : (ds_i + 1)]
+
+    print("Elem Name, Index,     sb,       se")
+    print(
+        "\n".join(
+            [
+                f"{elem.name}, {elem.index}, {elem.sb:.6f}, {elem.se:.6f}"
+                for elem in existing_elems
+            ]
+        )
+    )
+
+    existing_elem_props = dict(sc=[], index=[])
+    for e in existing_elems:
+        existing_elem_props["sc"].append((e.sb + e.se) / 2)
+        existing_elem_props["index"].append(e.index)
+
+    for info in bpm_info_list:
+        info["sb"] = info["sc"]
+        info["se"] = info["sc"]
+        info["L"] = 0.0
+        info["type"] = "UBPM_"
+        info["cell"] = f"C{cell_num:02d}"
+        info["girder"] = "G1"
+        info["symmetry"] = "A"
+
+    for info in id_info_list:
+        info["sb"] = info["sc"] - info["L"] / 2
+        info["se"] = info["sc"] + info["L"] / 2
+        info["cell"] = f"C{cell_num:02d}"
+        info["girder"] = "G1"
+
+    print("\n* New [element name] [index]")
+    for new_elem_info in bpm_info_list + id_info_list:
+        new_elem_info["index"] = int(
+            np.round(
+                np.interp(
+                    new_elem_info["sc"],
+                    existing_elem_props["sc"],
+                    existing_elem_props["index"],
+                    left=np.nan,
+                    right=np.nan,
+                )
+            )
+        )
+        print(new_elem_info["name"], new_elem_info["index"])
+
+    d = get_elem_pv_mv_pgz_database_dict("SR")
+
+    for info in bpm_info_list + id_info_list:
+        elem_name = info["name"]
+        upper_elem_name = elem_name.upper()
+
+        if (not exist_ok) and (elem_name in d):
+            print(f'Specified element "{elem_name}" aready exists. Aborting.')
+            return
+
+        new = {}
+        new["id"] = get_new_id(d)
+        for k in ["archive", "size", "virtual"]:
+            new[k] = 0
+        new["elemType"] = info["type"]
+        new["cell"] = info["cell"]
+        new["girder"] = info["girder"]
+        new["symmetry"] = info["symmetry"]
+        new["elemLength"] = info["L"]
+        new["elemPosition"] = info["se"]
+        new["elemIndex"] = info["index"]
+        new["elemGroups"] = ";".join(info["groups"])
+        new["tags"] = ["aphla.sys.SR"]
+
+        if "UBPM" in info["groups"]:
+            new["devName"] = info["devname"]
+            bpm_num = int(info["devname"].split("-")[1][len("BPM") :])
+
+            new["map"] = {}
+            for fld in [
+                "x0",
+                "y0",
+                "x",
+                "y",
+                "xref1",
+                "yref1",
+                "xref2",
+                "yref2",
+                "ampl",
+                "xtbt",
+                "ytbt",
+                "Itbt",
+                "xfa",
+                "yfa",
+                "Ifa",
+                "xbba",
+                "ybba",
+            ]:
+                fld_d = {}
+
+                if fld in BPM_PV_SUFFIX["get"]:
+                    get_d = {}
+                    pv_suffix = BPM_PV_SUFFIX["get"][fld]
+                    get_d["pv"] = f"SR:{new['cell']}-BI{{BPM:{bpm_num}}}{pv_suffix}"
+                    get_d["mv"] = {
+                        "pyelegant": dict(elem_name=upper_elem_name, property=fld)
+                    }
+                    fld_d["get"] = get_d
+
+                if fld in BPM_PV_SUFFIX["put"]:
+                    put_d = {}
+                    pv_suffix = BPM_PV_SUFFIX["put"][fld]
+                    put_d["pv"] = f"SR:{new['cell']}-BI{{BPM:{bpm_num}}}{pv_suffix}"
+                    put_d["mv"] = {
+                        "pyelegant": dict(elem_name=upper_elem_name, property=fld)
+                    }
+                    fld_d["put"] = put_d
+
+                new["map"][fld] = fld_d
+
+        elif "ID" in info["groups"]:
+            new["map"] = {}
+
+            for fld, pv_d in id_pvs.items():
+                fld_d = {}
+
+                non_handle_keys = []
+                for handle, pvname in pv_d.items():
+                    if handle == "readback":
+                        k = "get"
+                    elif handle == "setpoint":
+                        k = "put"
+                    else:
+                        non_handle_keys.append(handle)
+                        k = None
+
+                    if k is not None:
+                        fld_d[k] = dict(pv=pvname)
+
+                for k in non_handle_keys:
+                    if k == 'epsilon':
+                        for get_or_put in list(fld_d):
+                            fld_d[get_or_put]['epsilon'] = pv_d['epsilon']
+                    else:
+                        raise ValueError
+
+                new["map"][fld] = fld_d
+
+        else:
+            raise NotImplementedError
+
+        d[elem_name] = new
+
+    return d
+
+
 if __name__ == "__main__":
-
     if False:  # Run on 01/14/2022
-
         if False:  # Run on 01/14/2022
             # This WILL modify the database file. Be careful.
             update_C23u_BNL_PSI_upgrade()
@@ -1102,7 +1343,6 @@ if __name__ == "__main__":
                         raise
 
     elif False:  # Run on 05/16/2022
-
         if False:  # Run on 05/16/2022
             # This WILL modify the database file. Be careful.
             update_C23d_BNL_PSI_upgrade()
@@ -1159,7 +1399,10 @@ if __name__ == "__main__":
     elif False:  # Run on 01/12/2023
         update_C28_BNL_PSI_upgrade()
 
-    elif True:  # Last run on 01/12/2023
+    elif True:  # Last run on 09/18/2023
+        update_C20_straight(exist_ok=True)
+
+    elif False:  # Last run on 01/12/2023
         save_pgz_db_contents_to_json(machine_list=["SR"])
 
     print("Finished")

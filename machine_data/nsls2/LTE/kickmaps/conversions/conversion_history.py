@@ -72,6 +72,20 @@ def gen_C27_HEX():
 
     _gen_radia_sdds_with_without_km2sdds(radia_file_base_name, common_kwargs)
 
+def gen_C27_HEX_1o2m_unofficial():
+
+    radia_file_base_name = "SCW_HEX70_4_3_T_1_2m"
+
+    common_kwargs = dict(
+        input_filepath=f"../orig_Radia/{radia_file_base_name}.txt",
+        input_format="radia",
+        output_length=1.2,
+        design_energy_GeV=3.0,
+        output_decimal=16,
+    )
+
+    _gen_radia_sdds_with_without_km2sdds(radia_file_base_name, common_kwargs)
+
 
 def gen_C03_1o5m():
 
@@ -118,13 +132,47 @@ def gen_C17_0o75m():
     _gen_radia_sdds_with_without_km2sdds(radia_file_base_name, common_kwargs)
 
 
+def gen_C20_IFE():
+
+    radia_file_base_name = "U68kickmap"
+
+    common_kwargs = dict(
+        input_filepath=f"../orig_Radia/{radia_file_base_name}.txt",
+        input_format="radia",
+        output_length=3.4,
+        design_energy_GeV=3.0,
+        output_decimal=16,
+    )
+
+    _gen_radia_sdds_with_without_km2sdds(radia_file_base_name, common_kwargs)
+
+def gen_DW_3o4m():
+
+    radia_file_base_name = "W100_DF_asbuilt"
+
+    common_kwargs = dict(
+        input_filepath=f"../orig_Radia/{radia_file_base_name}.txt",
+        input_format="radia",
+        output_length=3.4,
+        design_energy_GeV=3.0,
+        output_decimal=16,
+    )
+
+    _gen_radia_sdds_with_without_km2sdds(radia_file_base_name, common_kwargs)
+
+
 if __name__ == "__main__":
 
     if sys.argv[1] == "C27":
         gen_C27_HEX()
+        # gen_C27_HEX_1o2m_unofficial()
     elif sys.argv[1] == "C03":
         gen_C03_1o5m()
     elif sys.argv[1] == "C16":
         gen_C16_1o4m()
     elif sys.argv[1] == "C17":
         gen_C17_0o75m()
+    elif sys.argv[1] == "C20":
+        gen_C20_IFE()
+    elif sys.argv[1] == "DW":
+        gen_DW_3o4m()

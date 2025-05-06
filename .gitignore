@@ -11,7 +11,12 @@ aphla/facility.yaml
 
 machine_data/nsls2/LTE/kickmaps/conversions/*.sdds
 machine_data/nsls2/LTE/kickmaps/conversions/*.txt
+machine_data/nsls2/LTE/kickmaps/official/*.sdds
+
+machine_data/nsls2/LTE/20221027/20221027_aphla_twiss.pgz
+machine_data/nsls2/LTE/20230915/20230915_aphla_twiss.pgz
 
 v2tests/nsls2unitconv_quads_sexts.yaml
 v2tests/test_load_*.log
 v2tests/test_unitconv_sp_values*.pkl
+
