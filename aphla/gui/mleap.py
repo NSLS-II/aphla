@@ -5,9 +5,6 @@
 This is the main file for GUI app `mleap`. A high level viewer and editor.
 """
 
-from pkg_resources import require
-require('cothread>=2.2')
-
 import cothread
 app = cothread.iqt()
 
@@ -73,7 +70,7 @@ class OrbitPlotMainWindow(QMainWindow):
         self.logdock = QDockWidget("Log")
         self.logdock.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
         textedit = QPlainTextEdit(self.logdock)
-        
+
         self.logger = logging.getLogger(__name__)
 
         self.guilogger = logging.getLogger("aphla.gui")
@@ -145,19 +142,19 @@ class OrbitPlotMainWindow(QMainWindow):
         #self.elemeditor.setWidget(self._elemed)
         #self.elemeditor.show()
         #self.elemeditor.hide()
-        #self.connect(self.elemeditor, 
+        #self.connect(self.elemeditor,
         #             SIGNAL("elementChecked(PyQt_PyObject, bool)"),
         #             self.physics.elementChecked)
         #self.addDockWidget(Qt.RightDockWidgetArea, self.elemeditor)
 
         self.createMenuToolBar()
-        
+
         # the first machine is the default
         self.machBox.addItems([v for v in self._mach.keys()])
         self.reloadLatticeNames(self.machBox.currentText())
         self.connect(self.machBox, SIGNAL("currentIndexChanged(QString)"),
                      self.reloadLatticeNames)
-        
+
         # update at 1/2Hz
         self.dt, self.itimer = 1500, 0
         #self.timerId = None
@@ -167,7 +164,7 @@ class OrbitPlotMainWindow(QMainWindow):
         self.statusBar().showMessage("Welcome")
 
         #self.initMachine("nsls2v2")
-        #self._newVelemPlot("V2SR", aphla.machines.HLA_VBPM, 'x', 
+        #self._newVelemPlot("V2SR", aphla.machines.HLA_VBPM, 'x',
         #                   "H Orbit", c = None)
         #print "Thread started", self.machinit.isRunning()
 
@@ -177,7 +174,7 @@ class OrbitPlotMainWindow(QMainWindow):
         #self.newElementPlot("VCOR", "y")
         #self.newElementPlot("QUAD", "b1")
         #self.newElementPlot("SEXT", "b2")
-        
+
 
     def updateMachineLatticeNames(self, wsub):
         i = self.machBox.findText(wsub.machlat[0])
@@ -218,7 +215,7 @@ class OrbitPlotMainWindow(QMainWindow):
         self.openMenu.addSeparator()
         self.openMenu.addAction("Open ORM", self.loadOrm)
 
-        self.openMenu.addSeparator()        
+        self.openMenu.addSeparator()
         self.openMenu.addAction("Save Lattice ...", self.saveSnapshot)
 
         fileQuitAction = QAction(QIcon(":/file_quit.png"), "&Quit", self)
@@ -239,8 +236,8 @@ class OrbitPlotMainWindow(QMainWindow):
             famAct.setCheckable(True)
             self.connect(famAct, SIGNAL("toggled(bool)"), self.click_markfam)
             mkmenu.addAction(famAct)
-        # 
-        
+        #
+
         # errorbar
         #viewErrorBarAction = QAction(QIcon(":/view_errorbar.png"),
         #                            "Errorbar", self)
@@ -284,7 +281,7 @@ class OrbitPlotMainWindow(QMainWindow):
         #sep.setText("Drift")
         #self.connect(drift_from_now, SIGNAL("triggered()"), self.setDriftNow)
         #self.connect(drift_from_none, SIGNAL("triggered()"), self.setDriftNone)
-        #self.connect(drift_from_golden, SIGNAL("triggered()"), 
+        #self.connect(drift_from_golden, SIGNAL("triggered()"),
         #             self.setDriftGolden)
 
         #viewStyle = QMenu("Line Style", self.viewMenu)
@@ -314,7 +311,7 @@ class OrbitPlotMainWindow(QMainWindow):
 
         #
         self.controlMenu = self.menuBar().addMenu("&Tools")
-        
+
         self.controlMenu.addAction(
             QIcon(":/control_choosebpm.png"), "En-/Disable BPM",
             partial(chooseElement, 'BPM'))
@@ -374,12 +371,12 @@ class OrbitPlotMainWindow(QMainWindow):
         # help
         self.helpMenu = self.menuBar().addMenu("&Help")
         self.helpMenu.addAction("About mleap", self.showAbout)
-                                                                         
+
         #toolbar
         machToolBar = self.addToolBar("Machines")
         self.machBox = QtGui.QComboBox()
         self.latBox = QtGui.QComboBox()
-        #self.connect(self.latBox, SIGNAL("currentIndexChanged(QString)"), 
+        #self.connect(self.latBox, SIGNAL("currentIndexChanged(QString)"),
         #             self.__setLattice)
         machToolBar.addWidget(self.machBox)
         machToolBar.addWidget(self.latBox)
@@ -445,11 +442,11 @@ class OrbitPlotMainWindow(QMainWindow):
         QMessageBox.about(
             self, self.tr("mleap"),
             (self.tr("""<b>Machine/Lattice Editor And Plotter</b> v %1
-                <p>Copyright &copy; Lingyun Yang, BNL, 2013-2014. 
+                <p>Copyright &copy; Lingyun Yang, BNL, 2013-2014.
                 All rights reserved.
                 <p>This application can be used to perform
                 high level accelerator controls.
-                <p>Python %2 - Qt %3 - PyQt %4 
+                <p>Python %2 - Qt %3 - PyQt %4
                 on %5""").arg(aphla.version.version)
                 .arg(platform.python_version()).arg(QtCore.QT_VERSION_STR)
                 .arg(QtCore.PYQT_VERSION_STR).arg(platform.system())))
@@ -495,7 +492,7 @@ class OrbitPlotMainWindow(QMainWindow):
                               "and field '{1}'".format(elem, field))
             return
 
-        p = ApMdiSubPlot(pvs=pvs, x = x, 
+        p = ApMdiSubPlot(pvs=pvs, x = x,
                          labels=["%s.%s" % (elem,fld) for fld in field_list],
                          magprof = lat.getBeamlineProfile(),
                          iqt = self.iqtApp,
@@ -510,7 +507,7 @@ class OrbitPlotMainWindow(QMainWindow):
         if len(str_field) > 12: str_field = str_field[:9] + "..."
         p.setWindowTitle("[%s.%s] %s %s" % (
                 mach, lat.name, str_elem, str_field))
-        self.connect(p, SIGNAL("elementSelected(PyQt_PyObject)"), 
+        self.connect(p, SIGNAL("elementSelected(PyQt_PyObject)"),
                      self.elementSelected)
         self.connect(p, SIGNAL("destroyed()"), self.subPlotDestroyed)
         #p.updatePlot()
@@ -627,7 +624,7 @@ class OrbitPlotMainWindow(QMainWindow):
         #                       label="{0}.{1}".format(elem,field))
         p.setAttribute(Qt.WA_DeleteOnClose)
         p.setWindowTitle("[%s.%s] Tunes" % (mach, lat.name))
-        self.connect(p, SIGNAL("elementSelected(PyQt_PyObject)"), 
+        self.connect(p, SIGNAL("elementSelected(PyQt_PyObject)"),
                      self.elementSelected)
         self.connect(p, SIGNAL("destroyed()"), self.subPlotDestroyed)
         #p.updatePlot()
@@ -740,7 +737,7 @@ class OrbitPlotMainWindow(QMainWindow):
         elif st == "Zoom In X":
             p.scaleXBottom(1.0/1.5)
         elif st == "Zoom Out X":
-            p.scaleXBottom(1.5)            
+            p.scaleXBottom(1.5)
         elif st == "Move Left":
             p.moveCurves(Qwt.QwtPlot.xBottom, 0.8)
         elif st == "Move Right":
@@ -750,19 +747,19 @@ class OrbitPlotMainWindow(QMainWindow):
 
     def getVisibleRange(self):
         w = self.mdiarea.currentSubWindow()
-        if not w: 
+        if not w:
             mach, lat = self.getCurrentMachLattice()
             self.logger.warn("no active plot, use full range of {0}.{1}".format(
                 mach, lat.name))
             return lat.getLocationRange()
         else:
             return w.currentXlim()
-        
+
     def getVisibleElements(self, elemname, sb = None, se = None):
         w = self.mdiarea.currentSubWindow()
         mach, lat = self.getCurrentMachLattice()
         elems = lat.getElementList(elemname)
-        if sb is not None: 
+        if sb is not None:
             elems = [e for e in elems if e.sb >= sb]
         if se is not None:
             elems = [e for e in elems if e.se <= se]
@@ -790,8 +787,8 @@ class OrbitPlotMainWindow(QMainWindow):
         #        time.strftime("%F %T")))
         #else:
         #    self.statusBar().showMessage("live update disabled")
-            
-            
+
+
     def singleShot(self):
         for w in self.mdiarea.subWindowList():
             if not isinstance(w, ApMdiSubPlot):  continue
@@ -849,19 +846,19 @@ class OrbitPlotMainWindow(QMainWindow):
 
     def runBba(self):
         mach, lat = self.getCurrentMachLattice()
-        bpms = [e for e in lat.getElementList('BPM') 
+        bpms = [e for e in lat.getElementList('BPM')
                 if e not in self.physics.deadelems]
         self.physics.runBba(bpms)
 
     def plotSVD(self):
         mach, lat = self.getCurrentMachLattice()
         if not lat.ormdata:
-            QMessageBox.critical(self, "ORM SVD", 
+            QMessageBox.critical(self, "ORM SVD",
                                  "machine '%s' ORM data is not available" % \
                                  mach,
                                  QMessageBox.Ok)
             return
-        m, brec, trec = lat.ormdata.getMatrix(None, None, full=False, 
+        m, brec, trec = lat.ormdata.getMatrix(None, None, full=False,
                                               ignore=self.getDeadElements())
         U, s, V = np.linalg.svd(m, full_matrices=True)
         #print np.shape(s), s
@@ -892,7 +889,7 @@ def main(par=None):
     rect = app.desktop().availableGeometry()
     splash.move((rect.width() - splash_px.width()) / 2,
                 (rect.height() - splash_px.height()) / 2)
-    
+
     mlist = os.environ.get('APHLA_MACHINES', '').split(";")
     splash.showMessage("Initializing {0}".format(mlist),
                        Qt.AlignRight | Qt.AlignBottom)
@@ -916,13 +913,13 @@ def main(par=None):
         pvs = set()
         for latname, latobj in latdict.items():
             splash.showMessage("checking {0}.{1}".format(m, latname),
-                               Qt.AlignRight | Qt.AlignBottom)            
+                               Qt.AlignRight | Qt.AlignBottom)
             app.processEvents()
             for elem in latobj.getElementList("*"):
                 pvs.update(elem.pv())
 
 
-        # pv manager 
+        # pv manager
         #pvm = CaDataMonitor(timeout=5)
         #pvm.addPv(pvs)
         machs.append((m, latdict, lat0, None))
@@ -930,11 +927,11 @@ def main(par=None):
         #infos.append("%d out of %d PVs are alive" % (
         #    pvm.activeCount(), len(pvm)))
         infos.append("pvm is disabled")
-    
+
     splash.showMessage("Using {0} as default machine".format(m),
                        Qt.AlignRight | Qt.AlignBottom)
     app.processEvents()
-    
+
     mwin = OrbitPlotMainWindow(machines=machs, infos=infos, iqt=app)
     mwin.setWindowTitle("mleap - a high level lattice viewer and editor")
     splash.showMessage("Window created", Qt.AlignRight | Qt.AlignBottom)

@@ -21,7 +21,7 @@ import time
 import glob
 import re
 from pathlib import Path
-from pkg_resources import resource_string, resource_exists, resource_filename
+from importlib.resources import files, as_file
 from six.moves import cPickle as pickle
 from six.moves import configparser
 import fnmatch
@@ -110,11 +110,12 @@ def _findMachinePath(machine):
         mname = os.path.basename(os.path.realpath(machine))
         return home_machine, mname
     # try the package
-    pkg_machine = resource_filename(__name__, machine)
-    _logger.info("trying system dir '%s'" % pkg_machine)
-    if os.path.isdir(pkg_machine):
-        mname = os.path.basename(os.path.realpath(pkg_machine))
-        return pkg_machine, mname
+    pkg_trav = files(__name__).joinpath(machine)
+    _logger.info("trying system dir '%s'" % pkg_trav)
+    if pkg_trav.is_dir():
+        with as_file(pkg_trav) as p:
+            mname = os.path.basename(os.path.realpath(str(p)))
+            return str(p), mname
 
     _logger.warn("can not find machine dir")
     return None, ""
@@ -732,24 +733,25 @@ def findCfaConfig(srcname, machine, submachines):
         #cfa.downloadCfs(HLA_CFS_URL, property=[
         #        ('hostName', '*'), ('iocName', '*')], tagName='aphla.sys.*')
         cfa.downloadCfs(HLA_CFS_URL, tagName='aphla.sys.*')
-    elif resource_exists(__name__, os.path.join(machine, srcname + '.csv')):
-        name = resource_filename(__name__, os.path.join(machine,
-                                                        srcname + '.csv'))
-        #src_pkg_csv = conf.filename(cfs_filename)
-        msg = "Creating lattice from '%s'" % name
-        _logger.info(msg)
-        cfa.importCsv(name)
-    elif resource_exists(__name__, os.path.join(machine, srcname + '.sqlite')):
-        name = resource_filename(__name__, os.path.join(machine,
-                                                        srcname + '.sqlite'))
-        msg = "Creating lattice from '%s'" % name
-        _logger.info(msg)
-        cfa.importSqlite(name)
-        #for k,v in _db_map.items(): cfa.renameProperty(k, v)
     else:
-        _logger.error("Lattice data are available for machine '%s'" % machine)
-        raise RuntimeError("Failed at loading data file '%s' from '%s'" % (
-            machine, srcname))
+        csv_trav = files(__name__) / machine / (srcname + '.csv')
+        sqlite_trav = files(__name__) / machine / (srcname + '.sqlite')
+        if csv_trav.is_file():
+            with as_file(csv_trav) as p:
+                name = str(p)
+            msg = "Creating lattice from '%s'" % name
+            _logger.info(msg)
+            cfa.importCsv(name)
+        elif sqlite_trav.is_file():
+            with as_file(sqlite_trav) as p:
+                name = str(p)
+            msg = "Creating lattice from '%s'" % name
+            _logger.info(msg)
+            cfa.importSqlite(name)
+        else:
+            _logger.error("Lattice data are unavailable for machine '%s'" % machine)
+            raise RuntimeError("Failed at loading data file '%s' from '%s'" % (
+                machine, srcname))
 
     return cfa
 
@@ -948,9 +950,7 @@ def names():
 
 def machines():
     """all available machines"""
-    from pkg_resources import resource_listdir, resource_isdir
-    return [d for d in resource_listdir(__name__, ".")
-            if resource_isdir(__name__, d)]
+    return [d.name for d in files(__name__).iterdir() if d.is_dir()]
 
 
 def getControlLimits():
