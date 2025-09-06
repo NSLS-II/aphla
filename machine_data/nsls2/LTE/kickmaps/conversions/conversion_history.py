@@ -161,6 +161,53 @@ def gen_DW_3o4m():
     _gen_radia_sdds_with_without_km2sdds(radia_file_base_name, common_kwargs)
 
 
+def gen_C09_CDI():
+    """
+    Because of the following error, the "_wKm2sdds" files are not generated,
+    which is OK:
+
+    ERROR:
+    /usr/bin/km2sdds: line 3: exec: oagtclsh: not found
+    """
+
+    radia_file_base_name = "U18kickmap"
+    # Original length in the file is 2.34 m (= 18 mm * 130 periods)
+
+    common_kwargs = dict(
+        input_filepath=f"../orig_Radia/{radia_file_base_name}.txt",
+        input_format="radia",
+        output_length=2.4, # Magnet core length shown in CAD drawing is 2.4 m
+        design_energy_GeV=3.0,
+        output_decimal=16,
+    )
+
+    _gen_radia_sdds_with_without_km2sdds(radia_file_base_name, common_kwargs)
+
+def gen_C09_CDI_half():
+    """
+    Because of the following error, the "_wKm2sdds" files are not generated,
+    which is OK:
+
+    ERROR:
+    /usr/bin/km2sdds: line 3: exec: oagtclsh: not found
+    """
+
+    radia_file_base_name = "U18kickmap"
+    # Original length in the file is 2.34 m (= 18 mm * 130 periods)
+
+    common_kwargs = dict(
+        input_filepath=f"../orig_Radia/{radia_file_base_name}.txt",
+        input_format="radia",
+        # Magnet core length shown in CAD drawing is 2.4 m, but also need to
+        # halve it here because we are inserting X-BPM at the center.
+        output_length=1.2,
+        design_energy_GeV=3.0,
+        output_decimal=16,
+    )
+
+    _gen_radia_sdds_with_without_km2sdds(radia_file_base_name, common_kwargs)
+
+
 if __name__ == "__main__":
 
     if sys.argv[1] == "C27":
@@ -176,3 +223,6 @@ if __name__ == "__main__":
         gen_C20_IFE()
     elif sys.argv[1] == "DW":
         gen_DW_3o4m()
+    elif sys.argv[1] == "C09":
+        gen_C09_CDI()
+        gen_C09_CDI_half()
