@@ -312,7 +312,8 @@ SR:
 
 
   ID_IVU_gap: &ID_IVU_gap
-    elements: [ivu20g1c03c, ivu23g1c04u, ivu21g1c05d, ovu42g1c07u, ivu22g1c10c,
+    elements: [ivu20g1c03c, ivu23g1c04u, ivu21g1c05d, ovu42g1c07u,
+               ivu18g1c09c, ivu22g1c10c,
                ivu20g1c11c, ivu23g1c12d, ivu23g1c16c, ivu21g1c17u, ivu21g1c17d,
                ivu18g1c19u, ovu68g1c20d]
     fields: [
@@ -336,7 +337,8 @@ SR:
     handles: [readback]
 
   ID_IVU_gap_speed:
-    elements: [ivu20g1c03c, ivu23g1c04u, ivu21g1c05d, ovu42g1c07u, ivu22g1c10c,
+    elements: [ivu20g1c03c, ivu23g1c04u, ivu21g1c05d, ovu42g1c07u,
+               ivu18g1c09c, ivu22g1c10c,
                ivu20g1c11c, ivu23g1c12d, ivu23g1c16c, ivu21g1c17u, ivu21g1c17d,
                ivu18g1c19u, ovu68g1c20d]
     fields: [gap_speed]
@@ -348,6 +350,36 @@ SR:
     class: polynomial
     invertible: True
     coeffs: [1e-3, 0.0]
+
+  ID_IVU_taper: &ID_IVU_taper
+    elements: [ivu18g1c09c]
+    fields: [taper]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: um
+    dst_unit: mm
+    class: polynomial
+    invertible: True
+    coeffs: [1e-3, 0.0]
+
+  ID_IVU_taper_readonly:
+    <<: *ID_IVU_taper
+    fields: [taper_hilim, taper_lolim]
+    handles: [readback]
+
+  ID_IVU_taper_speed:
+    elements: [ivu18g1c09c]
+    fields: [taper_speed]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: "um/s"
+    dst_unit: "mm/s"
+    class: polynomial
+    invertible: True
+    coeffs: [1e-3, 0.0]
+
 
   ID_EPU_gap_phase_type1: &ID_EPU_gap_phase_type1
     elements: [epu57g1c02c, epu57g1c21u, epu105g1c21d]
@@ -471,7 +503,8 @@ SR:
 
   ID_orb_cor_channel_type2: &ID_orb_cor_channel_type2
     elements: [epu57g1c02c, epu60g1c07d, epu57g1c21u, epu105g1c21d,
-               ivu20g1c03c, ivu23g1c04u, ivu21g1c05d, ovu42g1c07u, ivu22g1c10c,
+               ivu20g1c03c, ivu23g1c04u, ivu21g1c05d, ovu42g1c07u,
+               ivu18g1c09c, ivu22g1c10c,
                ivu20g1c11c, ivu23g1c12d, ivu23g1c16c, ivu21g1c17u, ivu21g1c17d,
                ivu18g1c19u, ovu68g1c20d,
                dw100g1c08u, dw100g1c08d, dw100g1c18u, dw100g1c18d, dw100g1c28u, dw100g1c28d,

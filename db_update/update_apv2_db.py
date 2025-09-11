@@ -1134,8 +1134,7 @@ def update_C20_straight(exist_ok=False):
         pickle.dump(d, f)
 
 
-def _add_new_ID_and_IDBPMs(exist_ok, cell_num, bpm_info_list, id_info_list, id_pvs):
-    print_elems_around_straight(cell_num, n=5)
+def _get_existing_straight_elems(cell_num):
 
     us_sext = sorted(
         ap.getGroupMembers(["SEXT", f"C{cell_num-1:02d}"], op="intersection")
@@ -1147,6 +1146,14 @@ def _add_new_ID_and_IDBPMs(exist_ok, cell_num, bpm_info_list, id_info_list, id_p
     us_i = ap.getElements("*").index(us_sext)
     ds_i = ap.getElements("*").index(ds_sext)
     existing_elems = ap.getElements("*")[us_i : (ds_i + 1)]
+
+    return existing_elems
+
+def _add_new_ID_and_IDBPMs(exist_ok, cell_num, ubpm_info_list, id_info_list, id_pvs):
+
+    print_elems_around_straight(cell_num, n=5)
+
+    existing_elems = _get_existing_straight_elems(cell_num)
 
     print("Elem Name, Index,     sb,       se")
     print(
@@ -1163,7 +1170,7 @@ def _add_new_ID_and_IDBPMs(exist_ok, cell_num, bpm_info_list, id_info_list, id_p
         existing_elem_props["sc"].append((e.sb + e.se) / 2)
         existing_elem_props["index"].append(e.index)
 
-    for info in bpm_info_list:
+    for info in ubpm_info_list:
         info["sb"] = info["sc"]
         info["se"] = info["sc"]
         info["L"] = 0.0
@@ -1179,7 +1186,7 @@ def _add_new_ID_and_IDBPMs(exist_ok, cell_num, bpm_info_list, id_info_list, id_p
         info["girder"] = "G1"
 
     print("\n* New [element name] [index]")
-    for new_elem_info in bpm_info_list + id_info_list:
+    for new_elem_info in ubpm_info_list + id_info_list:
         new_elem_info["index"] = int(
             np.round(
                 np.interp(
@@ -1195,7 +1202,7 @@ def _add_new_ID_and_IDBPMs(exist_ok, cell_num, bpm_info_list, id_info_list, id_p
 
     d = get_elem_pv_mv_pgz_database_dict("SR")
 
-    for info in bpm_info_list + id_info_list:
+    for info in ubpm_info_list + id_info_list:
         elem_name = info["name"]
         upper_elem_name = elem_name.upper()
 
@@ -1298,6 +1305,252 @@ def _add_new_ID_and_IDBPMs(exist_ok, cell_num, bpm_info_list, id_info_list, id_p
 
     return d
 
+def _add_new_XBPMs(exist_ok, cell_num, xbpm_info_list):
+
+    raise NotImplementedError
+
+    print_elems_around_straight(cell_num, n=5)
+
+    existing_elems = _get_existing_straight_elems(cell_num)
+
+    print("Elem Name, Index,     sb,       se")
+    print(
+        "\n".join(
+            [
+                f"{elem.name}, {elem.index}, {elem.sb:.6f}, {elem.se:.6f}"
+                for elem in existing_elems
+            ]
+        )
+    )
+
+    existing_elem_props = dict(sc=[], index=[])
+    for e in existing_elems:
+        existing_elem_props["sc"].append((e.sb + e.se) / 2)
+        existing_elem_props["index"].append(e.index)
+
+    for info in xbpm_info_list:
+        info["sb"] = info["sc"]
+        info["se"] = info["sc"]
+        info["L"] = 0.0
+        info["type"] = "XBPM_"
+        info["cell"] = f"C{cell_num:02d}"
+        info["girder"] = "G1"
+        info["symmetry"] = "A"
+
+    print("\n* New [element name] [index]")
+    for new_elem_info in xbpm_info_list:
+        # new_elem_info["index"] = int(
+        #     np.round(
+        #         np.interp(
+        #             new_elem_info["sc"],
+        #             existing_elem_props["sc"],
+        #             existing_elem_props["index"],
+        #             left=np.nan,
+        #             right=np.nan,
+        #         )
+        #     )
+        # )
+        print(new_elem_info["name"], new_elem_info["index"])
+
+    d = get_elem_pv_mv_pgz_database_dict("SR")
+
+    for info in xbpm_info_list:
+        elem_name = info["name"]
+        upper_elem_name = elem_name.upper()
+
+        if (not exist_ok) and (elem_name in d):
+            print(f'Specified element "{elem_name}" aready exists. Aborting.')
+            return
+
+        new = {}
+        new["id"] = get_new_id(d)
+        for k in ["archive", "size", "virtual"]:
+            new[k] = 0
+        new["elemType"] = info["type"]
+        new["cell"] = info["cell"]
+        new["girder"] = info["girder"]
+        new["symmetry"] = info["symmetry"]
+        new["elemLength"] = info["L"]
+        new["elemPosition"] = info["se"]
+        new["elemIndex"] = info["index"]
+        new["elemGroups"] = ";".join(info["groups"])
+        new["tags"] = ["aphla.sys.SR"]
+
+        if "XBPM" in info["groups"]:
+            new["devName"] = info["devname"]
+            bpm_num = int(info["devname"].split("-")[1][len("BPM") :])
+
+            new["map"] = {}
+            for fld in [
+                "x0",
+                "y0",
+                "x",
+                "y",
+            ]:
+                fld_d = {}
+
+                if fld in BPM_PV_SUFFIX["get"]:
+                    get_d = {}
+                    pv_suffix = BPM_PV_SUFFIX["get"][fld]
+                    get_d["pv"] = f"SR:{new['cell']}-BI{{BPM:{bpm_num}}}{pv_suffix}"
+                    get_d["mv"] = {
+                        "pyelegant": dict(elem_name=upper_elem_name, property=fld)
+                    }
+                    fld_d["get"] = get_d
+
+                if fld in BPM_PV_SUFFIX["put"]:
+                    put_d = {}
+                    pv_suffix = BPM_PV_SUFFIX["put"][fld]
+                    put_d["pv"] = f"SR:{new['cell']}-BI{{BPM:{bpm_num}}}{pv_suffix}"
+                    put_d["mv"] = {
+                        "pyelegant": dict(elem_name=upper_elem_name, property=fld)
+                    }
+                    fld_d["put"] = put_d
+
+                new["map"][fld] = fld_d
+        else:
+            raise NotImplementedError
+
+        d[elem_name] = new
+
+    return d
+
+def update_C09_straight(exist_ok=False):
+    """C09 CDI"""
+
+    cell_num = 9
+
+    # s-pos of center of straight
+    straight_sc = SR_CIRCUMF / 30 * cell_num  # [m]
+
+    ubpm_info_list = [
+        dict(
+            name="pu1g1c09a",
+            sc=float(f"{straight_sc - 2.5428:.6f}"),
+            devname=f"C{cell_num:02d}-BPM7",
+            groups=["UBPM", "PU1"],
+        ),
+        dict(
+            name="pu4g1c09a",
+            sc=float(f"{straight_sc + 2.6786:.6f}"),
+            devname=f"C{cell_num:02d}-BPM8",
+            groups=["UBPM", "PU4"],
+        ),
+    ]
+
+    id_info_list = [
+        dict(
+            name="ivu18g1c09c",
+            type="IVU",
+            symmetry="C",
+            groups=["ID", "IVU18", "U18", "CDI"],
+            sc=straight_sc + 0.0,
+            L=2.4,
+        )
+    ]
+
+    id_pvs = {
+        "gap": dict(
+            setpoint="SR:C09-ID:G1{IVU18:1-CS2:Gap}-Mtr-SP",  # [um]; need "gap_trig" to start moving
+            readback="SR:C09-ID:G1{IVU18:1-CS2:Gap}-Mtr.RBV",  # [um]
+        ),
+        "taper": dict(
+            setpoint="SR:C09-ID:G1{IVU18:1-CS2:Taper}-Mtr-SP", # [um]; need "gap_trig" to start moving
+            readback="SR:C09-ID:G1{IVU18:1-CS2:Taper}-Mtr.RBV", # [um]
+        ),
+        "gap_trig": dict(setpoint="SR:C09-ID:G1{IVU18:1-CS2:Gap}-Mtr-Go"),
+        "gap_go": dict(
+            setpoint="SR:C09-ID:G1{IVU18:1-CS2:Gap}-Mtr-Go",  # [um]; starts moving immediately after SP value change
+            readback="SR:C09-ID:G1{IVU18:1-CS2:Gap}-Mtr.RBV",  # [um]
+        ),
+        "gap_hinominal": dict(readback="SR:C09-ID:NomOpen-Sp"),
+        "gap_lonominal": dict(readback="SR:C09-ID:NomClose-Sp"),
+        "gap_ramping": dict(readback="SR:C09-ID:G1{IVU18:1-CS2:Gap}-Mtr.MOVN"),
+        "gap_speed": dict(
+            setpoint="SR:C09-ID:G1{IVU18:1}GapSpeed-SP", # [um/s]
+            readback="SR:C09-ID:G1{IVU18:1}GapSpeed-RB", # [um/s]
+        ),
+        "taper_speed": dict(
+            setpoint="SR:C09-ID:G1{IVU18:1}TaperSpeed-SP", # [um/s]
+            readback="SR:C09-ID:G1{IVU18:1}TaperSpeed-RB", # [um/s]
+        ),
+    }
+    id_pvs["gap_hilim"] = dict(readback=f'{id_pvs["gap"]["setpoint"]}.DRVH')
+    id_pvs["gap_lolim"] = dict(readback=f'{id_pvs["gap"]["setpoint"]}.DRVL')
+    id_pvs["taper_hilim"] = dict(readback=f'{id_pvs["taper"]["setpoint"]}.DRVH')
+    id_pvs["taper_lolim"] = dict(readback=f'{id_pvs["taper"]["setpoint"]}.DRVL')
+
+    # Add "cch*" fields
+    epsion = 0.05
+    # PS1 H
+    id_pvs["cch0"] = dict(setpoint="SR:C08-MG{zPSC1_IVU_ID9:Chan1}I-sp",
+                          readback="SR:C08-MG{zPSC1_IVU_ID9}dcct1ADC:Chan1",
+                          epsilon=epsion)
+    # PS1 V
+    id_pvs["cch1"] = dict(setpoint="SR:C08-MG{zPSC1_IVU_ID9:Chan2}I-sp",
+                          readback="SR:C08-MG{zPSC1_IVU_ID9}dcct1ADC:Chan2",
+                          epsilon=epsion)
+    # PS2 H
+    id_pvs["cch2"] = dict(setpoint="SR:C08-MG{zPSC1_IVU_ID9:Chan3}I-sp",
+                          readback="SR:C08-MG{zPSC1_IVU_ID9}dcct1ADC:Chan3",
+                          epsilon=epsion)
+    # PS2 V
+    id_pvs["cch3"] = dict(setpoint="SR:C08-MG{zPSC1_IVU_ID9:Chan4}I-sp",
+                          readback="SR:C08-MG{zPSC1_IVU_ID9}dcct1ADC:Chan4",
+                          epsilon=epsion)
+
+    # Add "cch[]" readback fields
+    for iCh in range(4):
+        id_pvs[f"cch[{iCh}]"] = dict(
+            readback=id_pvs[f"cch{iCh}"]["readback"],
+            epsilon=epsion)
+
+    # Add orbit-feedforward fields
+    nCh = 4
+    for iCh in range(nCh):
+        # orbff_pv_prefix = f"SR:C19-MG{{IFE:Orbit-FF:{iCh}}}"
+        orbff_pv_prefix = f"SR:C09-MG{{CDI:Orbit-FF:{iCh}}}"
+
+        id_pvs[f"orbff{iCh}_on"] = dict(setpoint=f"{orbff_pv_prefix}Ena-Sel")
+        id_pvs[f"orbff{iCh}_m0_gap"] = dict(setpoint=f"{orbff_pv_prefix}L2-Calc_.F")
+        id_pvs[f"orbff{iCh}_m0_taper"] = dict(setpoint=f"{orbff_pv_prefix}L2-Calc_.G")
+        id_pvs[f"orbff{iCh}_m0_I"] = dict(setpoint=f"{orbff_pv_prefix}L2-Calc_.H")
+
+        id_pvs[f"orbff{iCh}_output"] = dict(setpoint=id_pvs[f"cch{iCh}"]["setpoint"])
+
+    d = _add_new_ID_and_IDBPMs(
+        exist_ok, cell_num, ubpm_info_list, id_info_list, id_pvs)
+
+    with gzip.GzipFile(ELEM_PV_MV_PGZ_FILEPATHS["SR"], "wb") as f:
+        pickle.dump(d, f)
+
+def add_C09_XBPM(exist_ok=False):
+    """C09 CDI"""
+
+    cell_num = 9
+
+    idobj = ap.getElements("ivu18g1c09c")[0]
+    id_sc = (idobj.sb + idobj.se) / 2
+
+    ds_ubpm = ap.getNeighbors(idobj, "*", n=1)[-1]
+    new_xbpm_index = (idobj.index + ds_ubpm.index) // 2
+
+    xbpm_info_list = [
+        dict(name="px1g1c09a",
+             sc=float(f"{id_sc:.6f}"),
+             devname=f"C{cell_num:02d}-XBPM1",
+             groups=["XBPM", "PX1"],
+             index=new_xbpm_index,
+        ),
+    ]
+
+    d = _add_new_XBPMs(exist_ok, cell_num, xbpm_info_list)
+
+    with gzip.GzipFile(ELEM_PV_MV_PGZ_FILEPATHS["SR"], "wb") as f:
+        pickle.dump(d, f)
+
+
+
 
 if __name__ == "__main__":
     if False:  # Run on 01/14/2022
@@ -1399,8 +1652,13 @@ if __name__ == "__main__":
     elif False:  # Run on 01/12/2023
         update_C28_BNL_PSI_upgrade()
 
-    elif True:  # Last run on 09/18/2023
+    elif False:  # Last run on 09/18/2023
         update_C20_straight(exist_ok=True)
+
+    elif False:  # Last run on 09/11/2025
+        update_C09_straight(exist_ok=False)
+    elif True:  # TO-BE-RUN: Need to know which PVs for new XBPM
+        add_C09_XBPM(exist_ok=False)
 
     elif False:  # Last run on 01/12/2023
         save_pgz_db_contents_to_json(machine_list=["SR"])
