@@ -26,6 +26,9 @@ ELEM_PV_MV_PGZ_FILEPATHS = dict(
     BTS=V2DB_FOLDER.joinpath("nsls2_bts_elems_pvs_mvs.pgz"),
     SR=V2DB_FOLDER.joinpath("nsls2_sr_elems_pvs_mvs.pgz"),
 )
+ELEM_PV_MV_PGZ_NUMPY2_FILEPATHS = {
+    k: v.with_suffix(".numpy2.pgz") for k, v in ELEM_PV_MV_PGZ_FILEPATHS.items()}
+
 
 BPM_PV_SUFFIX = {
     "get": {
@@ -1418,6 +1421,8 @@ def _add_new_XBPMs(exist_ok, cell_num, xbpm_info_list):
 def update_C09_straight(exist_ok=False):
     """C09 CDI"""
 
+    assert np.__version__.startswith("2.")
+
     cell_num = 9
 
     # s-pos of center of straight
@@ -1521,8 +1526,38 @@ def update_C09_straight(exist_ok=False):
     d = _add_new_ID_and_IDBPMs(
         exist_ok, cell_num, ubpm_info_list, id_info_list, id_pvs)
 
-    with gzip.GzipFile(ELEM_PV_MV_PGZ_FILEPATHS["SR"], "wb") as f:
+    save_pgz_files_for_both_np1_and_np2(d, "SR")
+
+def save_pgz_files_for_both_np1_and_np2(d: dict, submachine_name: str):
+
+    assert np.__version__.startswith("2.")
+
+    np2_pgz_filepath = ELEM_PV_MV_PGZ_NUMPY2_FILEPATHS[submachine_name]
+    np1_pgz_filepath = ELEM_PV_MV_PGZ_FILEPATHS[submachine_name]
+
+    # First save the np2 version
+    with gzip.GzipFile(np2_pgz_filepath, "wb") as f:
         pickle.dump(d, f)
+
+    import os
+    from subprocess import Popen, PIPE
+
+    cmd_list = [
+        os.path.expanduser("~/.conda/envs/apv2-2023-rc2/bin/python"),
+        'save_np1_loadable_pgz.py',
+        str(np2_pgz_filepath.resolve()),
+        str(np1_pgz_filepath.resolve()),
+    ]
+
+    # Then save the np1 version using an NumPy1 apv2 environment
+    p = Popen(cmd_list, stdout=PIPE, stderr=PIPE, encoding='utf-8')
+    out, err = p.communicate()
+    if p.returncode != 0:
+        print(f"Error in running command: {' '.join(cmd_list)}")
+        print(f"Return code: {p.returncode}")
+        print(f"stdout: {out}")
+        print(f"stderr: {err}")
+        raise RuntimeError("Error in running the command.")
 
 def add_C09_XBPM(exist_ok=False):
     """C09 CDI"""
@@ -1655,9 +1690,9 @@ if __name__ == "__main__":
     elif False:  # Last run on 09/18/2023
         update_C20_straight(exist_ok=True)
 
-    elif False:  # Last run on 09/11/2025
+    elif True:  # Last run on 09/16/2025
         update_C09_straight(exist_ok=False)
-    elif True:  # TO-BE-RUN: Need to know which PVs for new XBPM
+    elif False:  # TO-BE-RUN: Need to know which PVs for new XBPM
         add_C09_XBPM(exist_ok=False)
 
     elif False:  # Last run on 01/12/2023

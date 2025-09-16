@@ -1,0 +1,135 @@
+# This YAML file must be renamed to "submachines_np2.yaml" and copied to
+# the folder "$APHLA_CONFIG_DIR/$APHLA_FACILITY".
+
+# $APHLA_FACILITY should be "nsls2".
+
+LN:
+  controls_protocol: EPICS
+  #cfs_url: nsls2_LN.sqlite
+  #cfs_url: http://channelfinder.cs.nsls2.local/ChannelFinder
+  #cfs_tag: aphla.sys.LN
+  cfs:
+    type: pgz # gzipped pickle file
+    path: nsls2_ln_elems_pvs_mvs.pgz
+    tag: aphla.sys.LN
+  loop: 0
+
+LTD1:
+  controls_protocol: EPICS
+  #cfs_url: nsls2_LTD1.sqlite
+  #cfs_url: http://channelfinder.cs.nsls2.local/ChannelFinder
+  #cfs_tag: aphla.sys.LTD1
+  cfs:
+    type: pgz # gzipped pickle file
+    path: nsls2_ltd1_elems_pvs_mvs.pgz
+    tag: aphla.sys.LTD1
+  #unit_conversion: ltb_unitconv.ini
+  unit_conversion: [nsls2ltb_unitconv.yaml]
+  loop: 0
+
+LTD2:
+  controls_protocol: EPICS
+  #cfs_url: nsls2_LTD2.sqlite
+  #cfs_url: http://channelfinder.cs.nsls2.local/ChannelFinder
+  #cfs_tag: aphla.sys.LTD2
+  cfs:
+    type: pgz # gzipped pickle file
+    path: nsls2_ltd2_elems_pvs_mvs.pgz
+    tag: aphla.sys.LTD2
+  #unit_conversion: ltb_unitconv.ini
+  unit_conversion: [nsls2ltb_unitconv.yaml]
+  loop: 0
+
+LTB:
+  controls_protocol: EPICS
+  #cfs_url: nsls2_LTB.sqlite
+  #cfs_url: http://channelfinder.cs.nsls2.local/ChannelFinder
+  #cfs_url: http://web01.nsls2.bnl.gov:8080/ChannelFinder
+  #cfs_tag: aphla.sys.LTB
+  cfs:
+    type: pgz # gzipped pickle file
+    path: nsls2_ltb_elems_pvs_mvs.pgz
+    tag: aphla.sys.LTB
+  #unit_conversion: ltb_unitconv.ini
+  unit_conversion: [nsls2ltb_unitconv.yaml]
+  loop: 0
+
+BR:
+  controls_protocol: EPICS
+  #cfs_url: nsls2_BR.sqlite
+  #cfs_url: http://channelfinder.cs.nsls2.local/ChannelFinder
+  #cfs_url: http://web01.nsls2.bnl.gov:8080/ChannelFinder
+  cfs:
+    type: pgz # gzipped pickle file
+    path: nsls2_br_elems_pvs_mvs.pgz
+    tag: aphla.sys.BR
+  #cfs_tag: aphla.sys.BR
+  #unit_conversion: [br_unitconv.hdf5, UnitConversion]
+  unit_conversion: [nsls2br_unitconv.yaml]
+  loop: 1
+  #virtual_bpm_exclude:
+
+BTD:
+  controls_protocol: EPICS
+  #cfs_url: nsls2_BTD.sqlite
+  #cfs_url: http://channelfinder.cs.nsls2.local/ChannelFinder
+  #cfs_url: http://web01.nsls2.bnl.gov:8080/ChannelFinder
+  #cfs_tag: aphla.sys.BTD
+  cfs:
+    type: pgz # gzipped pickle file
+    path: nsls2_btd_elems_pvs_mvs.pgz
+    tag: aphla.sys.BTD
+  #unit_conversion: [bts_unitconv.hdf5, UnitConversion]
+  unit_conversion: [nsls2bts_unitconv.yaml]
+  loop: 0
+  #virtual_bpm_exclude:
+
+BTS:
+  controls_protocol: EPICS
+  #cfs_url: nsls2_BTS.sqlite
+  #cfs_url: http://channelfinder.cs.nsls2.local/ChannelFinder
+  #cfs_url: http://web01.nsls2.bnl.gov:8080/ChannelFinder
+  #cfs_url: nsls2_bts.sqlite
+  #cfs_tag: aphla.sys.BTS
+  cfs:
+    type: pgz # gzipped pickle file
+    path: nsls2_bts_elems_pvs_mvs.pgz
+    tag: aphla.sys.BTS
+  #unit_conversion: [bts_unitconv.hdf5, UnitConversion]
+  unit_conversion: [nsls2bts_unitconv.yaml]
+  s_begin: 0.0
+  s_end: 48.2133
+  loop: 0
+  #virtual_bpm_exclude:
+
+SR:
+  controls_protocol: EPICS
+  # mark the s-location for begin and end.
+  s_begin: 0.0
+  s_end: 791.958
+  loop: True
+  E_MeV: 3000.0
+  # momentum compaction factor
+  alphac: 3.6261976841792413e-04
+  # defines the accelerator elements and associated PVs.
+  cfs:
+    #type: url
+    #type: sqlite
+    type: pgz # gzipped pickle file
+    #path: http://web01.nsls2.bnl.gov:8080/ChannelFinder
+    #path: nsls2_sr.sqlite
+    path: nsls2_sr_elems_pvs_mvs.numpy2.pgz
+    tag: aphla.sys.SR
+  physics_data: sr.hdf5
+  #golden: v2sr_golden.hdf5
+  #twiss: v2sr_twiss.hdf5
+  #orbit_response_matrix: v2sr_orm.hdf5
+  #beam_based_alignment: v2sr_bba.hdf5
+  #unit_conversion: [sr_unitconv.hdf5, UnitConversion]
+  unit_conversion: [nsls2sr_unitconv.yaml]
+  # aphla will create virtual elements which is a combination of elements in one
+  # family, e.g. BPM, COR, HCOR, VCOR, QUAD, SEXT.
+  # in case you want to exclude some elements from this
+  #virtual_bpm_exclude:
+  archive_pvs: nsls2_sr_pvs.txt
+

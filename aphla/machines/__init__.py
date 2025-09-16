@@ -172,7 +172,14 @@ def load(machine, submachine = "*", **kwargs):
 
     _logger.info("importing '%s' from '%s'" % (machine, machdir))
 
-    config_filepath = Path(machdir).joinpath('submachines.yaml')
+    import numpy as np
+    from packaging import version
+    if version.parse(np.__version__) >= version.parse("1.26.0"):
+        submachine_filename = "submachines_np2.yaml"
+    else:
+        submachine_filename = "submachines.yaml"
+
+    config_filepath = Path(machdir).joinpath(submachine_filename)
     if config_filepath.exists():
         try:
             cfg = yaml.YAML().load(config_filepath.read_text())
