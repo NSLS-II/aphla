@@ -504,7 +504,7 @@ SR:
   ID_orb_cor_channel_type2: &ID_orb_cor_channel_type2
     elements: [epu57g1c02c, epu60g1c07d, epu57g1c21u, epu105g1c21d,
                ivu20g1c03c, ivu23g1c04u, ivu21g1c05d, ovu42g1c07u,
-               ivu18g1c09c, ivu22g1c10c,
+               ivu22g1c10c,
                ivu20g1c11c, ivu23g1c12d, ivu23g1c16c, ivu21g1c17u, ivu21g1c17d,
                ivu18g1c19u, ovu68g1c20d,
                dw100g1c08u, dw100g1c08d, dw100g1c18u, dw100g1c18d, dw100g1c28u, dw100g1c28d,
@@ -546,6 +546,35 @@ SR:
       cch0rb1, cch1rb1, cch2rb1, cch3rb1, cch4rb1, cch5rb1,
       ]
     handles: [readback]
+
+  ID_orb_cor_channel_type3_setpoint: &ID_orb_cor_channel_type3_setpoint
+    elements: [ivu18g1c09c]
+    # *) ivu18g1c09c has the setpoint and readback in opposite polarity,
+    #    as of 10/18/2025.
+    fields: [
+      cch0, cch1, cch2, cch3,
+      orbff0_m0_I, orbff1_m0_I, orbff2_m0_I, orbff3_m0_I,
+      ]
+    handles: [setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: A
+    class: polynomial
+    invertible: True
+    coeffs: [1.0, 0.0]
+
+  ID_orb_cor_channel_type3_readback:
+    <<: *ID_orb_cor_channel_type3_setpoint
+    handles: [readback]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: A
+    class: polynomial
+    invertible: True
+    coeffs: [-1.0, 0.0]
+
 
   ID_DW_orbff_channel_regcors:
     elements: [dw100g1c08u, dw100g1c08d, dw100g1c18u, dw100g1c18d,

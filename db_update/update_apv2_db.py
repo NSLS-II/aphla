@@ -1528,6 +1528,65 @@ def update_C09_straight(exist_ok=False):
 
     save_pgz_files_for_both_np1_and_np2(d, "SR")
 
+def fix_C09():
+
+    id_pvs = {}
+
+    # Fix the PV prefixes for the orbit-feedforward fields
+    nCh = 4
+    for iCh in range(nCh):
+        orbff_pv_prefix = f"SR:C09-ID:G1{{IVU18:1-FF:{iCh}}}"
+
+        id_pvs[f"orbff{iCh}_on"] = dict(setpoint=f"{orbff_pv_prefix}Ena-Sel")
+        id_pvs[f"orbff{iCh}_m0_gap"] = dict(setpoint=f"{orbff_pv_prefix}L2-Calc_.F")
+        id_pvs[f"orbff{iCh}_m0_taper"] = dict(setpoint=f"{orbff_pv_prefix}L2-Calc_.G")
+        id_pvs[f"orbff{iCh}_m0_I"] = dict(setpoint=f"{orbff_pv_prefix}L2-Calc_.H")
+
+    d = get_elem_pv_mv_pgz_database_dict("SR")
+
+    elem_name = "ivu18g1c09c"
+    for fld, pv_d in id_pvs.items():
+        fld_d = {}
+
+        non_handle_keys = []
+        for handle, pvname in pv_d.items():
+            if handle == "readback":
+                k = "get"
+            elif handle == "setpoint":
+                k = "put"
+            else:
+                non_handle_keys.append(handle)
+                k = None
+
+            if k is not None:
+                fld_d[k] = dict(pv=pvname)
+
+        for k in non_handle_keys:
+            if k == 'epsilon':
+                for get_or_put in list(fld_d):
+                    fld_d[get_or_put]['epsilon'] = pv_d['epsilon']
+            else:
+                raise ValueError
+
+        print('#-----------------------------------')
+        print(f'Updating field "{fld}"')
+        print('  from')
+        print(d[elem_name]["map"][fld])
+        print('  to')
+        print(fld_d)
+
+        d[elem_name]["map"][fld] = fld_d
+
+    # Add a new status PV that indicates:
+    # 0 is the normal/good state.  1 is the error state which occurs if you make a
+    # request that has a girder end going below hte minimum aperture.
+    # There is no check for the maximum aperture side.
+    fld = 'valid_gap_taper_target'
+    d[elem_name]["map"][fld] = {'get': {'pv': 'SR:C09-ID:G1{IVU18:1}GapEndAperError-Sts'}}
+
+    save_pgz_files_for_both_np1_and_np2(d, "SR")
+
+
 def save_pgz_files_for_both_np1_and_np2(d: dict, submachine_name: str):
 
     assert np.__version__.startswith("2.")
@@ -1690,8 +1749,10 @@ if __name__ == "__main__":
     elif False:  # Last run on 09/18/2023
         update_C20_straight(exist_ok=True)
 
-    elif True:  # Last run on 09/16/2025
+    elif False:  # Last run on 09/16/2025
         update_C09_straight(exist_ok=False)
+    elif True: # Last run on 10/17/2025
+        fix_C09()
     elif False:  # TO-BE-RUN: Need to know which PVs for new XBPM
         add_C09_XBPM(exist_ok=False)
 
