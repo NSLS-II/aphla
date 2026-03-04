@@ -22,7 +22,7 @@ python = "^3.11"
 # numpy = "^1.24.3"
 # numpy = "^2.0"
 numpy = ">=1.24.3,<3.0"
-"ruamel.yaml" = ">=0.18"
+"ruamel.yaml" = "0.17.*" # matching w/ pyelegant v0.16.0
 cothread = "^2.16"
 Pint = ">=0.22"
 h5py = "^3.9.0"
