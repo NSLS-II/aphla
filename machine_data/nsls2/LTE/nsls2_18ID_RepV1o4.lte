@@ -864,7 +864,7 @@ DL06G1C27A: DRIF
 CU1XG1C27ID2: DRIF
 CU1YG1C27ID2: DRIF
 SCW70G1C27D: UKICKMAP, L=1.19, &
-   INPUT_FILE="/nsls2/data3/staff/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/SCW_HEX70_4_3_T_1_2m_1o19m_T2m2_woKm2sdds.sdds", &
+   INPUT_FILE="/nsls2/users/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/SCW_HEX70_4_3_T_1_2m_1o19m_T2m2_woKm2sdds.sdds", &
    N_KICKS=17, PERIODS=17, KREF=28.1
 CU2XG1C27ID2: DRIF
 CU2YG1C27ID2: DRIF
@@ -2443,73 +2443,73 @@ B1G5C28B: CSBEND, L=2.62, ANGLE=0.10471976, E1=0.05236, E2=0.05236
 B1G3C29A: CSBEND, L=2.62, ANGLE=0.10471976, E1=0.05236, E2=0.05236
 B1G5C29B: CSBEND, L=2.62, ANGLE=0.10471976, E1=0.05236, E2=0.05236
 EPU57G1C02CM: UKICKMAP, L=3.5, &
-   INPUT_FILE="/nsls2/data3/staff/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/EPU57v2LVG16KickMapRes_3o5m_T2m2.sdds", &
+   INPUT_FILE="/nsls2/users/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/EPU57v2LVG16KickMapRes_3o5m_T2m2.sdds", &
    N_KICKS=60, PERIODS=60, KREF=4.4
 IVU20G1C03CM_HALF: UKICKMAP, L=1.5, &
-   INPUT_FILE="/nsls2/data3/staff/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/U20_asbuilt_g52_1o5m_T2m2_woKm2sdds.sdds", &
+   INPUT_FILE="/nsls2/users/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/U20_asbuilt_g52_1o5m_T2m2_woKm2sdds.sdds", &
    N_KICKS=75, PERIODS=75, KREF=1.83
 IVU23G1C04UM: UKICKMAP, L=2.8, &
-   INPUT_FILE="/nsls2/data3/staff/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/U23L_asbuilt_g61_2o8m_T2m2.sdds", &
+   INPUT_FILE="/nsls2/users/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/U23L_asbuilt_g61_2o8m_T2m2.sdds", &
    N_KICKS=121, PERIODS=121, KREF=2.05
 IVU21G1C05DM: UKICKMAP, L=1.5, &
-   INPUT_FILE="/nsls2/data3/staff/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/U21_asbuilt_g64_1o5m_T2m2.sdds", &
+   INPUT_FILE="/nsls2/users/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/U21_asbuilt_g64_1o5m_T2m2.sdds", &
    N_KICKS=71, PERIODS=71, KREF=1.79
 OVU42G1C07UM: UKICKMAP, L=1.6, &
-   INPUT_FILE="/nsls2/data3/staff/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/U42_1o6m_T2m2.sdds", &
+   INPUT_FILE="/nsls2/users/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/U42_1o6m_T2m2.sdds", &
    N_KICKS=38, PERIODS=38, KREF=3.27
 EPU60G1C07DM: UKICKMAP, L=0.89, &
-   INPUT_FILE="/nsls2/data3/staff/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/EU60_g15_vert_0o89m_T2m2.sdds", &
+   INPUT_FILE="/nsls2/users/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/EU60_g15_vert_0o89m_T2m2.sdds", &
    N_KICKS=15, PERIODS=15, KREF=5.7
 DW100G1C08U: UKICKMAP, L=3.4, &
-   INPUT_FILE="/nsls2/data3/staff/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/W100_DF_asbuilt_3o4m_T2m2.sdds", &
+   INPUT_FILE="/nsls2/users/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/W100_DF_asbuilt_3o4m_T2m2.sdds", &
    N_KICKS=34, PERIODS=34, KREF=16.5
 DW100G1C08D: UKICKMAP, L=3.4, &
-   INPUT_FILE="/nsls2/data3/staff/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/W100_DF_asbuilt_3o4m_T2m2.sdds", &
+   INPUT_FILE="/nsls2/users/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/W100_DF_asbuilt_3o4m_T2m2.sdds", &
    N_KICKS=34, PERIODS=34, KREF=16.5
 IVU22G1C10CM: UKICKMAP, L=3, &
-   INPUT_FILE="/nsls2/data3/staff/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/U22_asbuilt_6m_g75mm_3o0m_T2m2.sdds", &
+   INPUT_FILE="/nsls2/users/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/U22_asbuilt_6m_g75mm_3o0m_T2m2.sdds", &
    N_KICKS=136, PERIODS=136, KREF=1.56
 IVU20G1C11CM: UKICKMAP, L=3, &
-   INPUT_FILE="/nsls2/data3/staff/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/U20_asbuilt_g52_3o0m_T2m2.sdds", &
+   INPUT_FILE="/nsls2/users/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/U20_asbuilt_g52_3o0m_T2m2.sdds", &
    N_KICKS=150, PERIODS=150, KREF=1.83
 IVU23G1C12DM: UKICKMAP, L=2.8, &
-   INPUT_FILE="/nsls2/data3/staff/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/U23L_asbuilt_g61_2o8m_T2m2.sdds", &
+   INPUT_FILE="/nsls2/users/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/U23L_asbuilt_g61_2o8m_T2m2.sdds", &
    N_KICKS=121, PERIODS=121, KREF=2.05
 IVU23G1C16CM_HALF: UKICKMAP, L=1.4, &
-   INPUT_FILE="/nsls2/data3/staff/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/U23L_asbuilt_g57_1o4m_T2m2_woKm2sdds.sdds", &
+   INPUT_FILE="/nsls2/users/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/U23L_asbuilt_g57_1o4m_T2m2_woKm2sdds.sdds", &
    N_KICKS=61, PERIODS=61, KREF=2.2
 IVU21G1C17UM_HALF: UKICKMAP, L=0.75, &
-   INPUT_FILE="/nsls2/data3/staff/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/U21_asbuilt_g64_0o75m_T2m2_woKm2sdds.sdds", &
+   INPUT_FILE="/nsls2/users/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/U21_asbuilt_g64_0o75m_T2m2_woKm2sdds.sdds", &
    N_KICKS=36, PERIODS=36, KREF=1.79
 IVU21G1C17DM_HALF: UKICKMAP, L=0.75, &
-   INPUT_FILE="/nsls2/data3/staff/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/U21_asbuilt_g64_0o75m_T2m2_woKm2sdds.sdds", &
+   INPUT_FILE="/nsls2/users/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/U21_asbuilt_g64_0o75m_T2m2_woKm2sdds.sdds", &
    N_KICKS=36, PERIODS=36, KREF=1.79
 DW100G1C18U: UKICKMAP, L=3.4, &
-   INPUT_FILE="/nsls2/data3/staff/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/W100_DF_asbuilt_3o4m_T2m2.sdds", &
+   INPUT_FILE="/nsls2/users/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/W100_DF_asbuilt_3o4m_T2m2.sdds", &
    N_KICKS=34, PERIODS=34, KREF=16.5
 DW100G1C18D: UKICKMAP, L=3.4, &
-   INPUT_FILE="/nsls2/data3/staff/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/W100_DF_asbuilt_3o4m_T2m2.sdds", &
+   INPUT_FILE="/nsls2/users/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/W100_DF_asbuilt_3o4m_T2m2.sdds", &
    N_KICKS=34, PERIODS=34, KREF=16.5
 IVU18G1C19UM: UKICKMAP, L=1, &
-   INPUT_FILE="/nsls2/data3/staff/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/X25MGU_1o0m_T2m2.sdds", &
+   INPUT_FILE="/nsls2/users/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/X25MGU_1o0m_T2m2.sdds", &
    N_KICKS=55, PERIODS=55, KREF=1.55
 EPU57G1C21UM: UKICKMAP, L=1.4, &
-   INPUT_FILE="/nsls2/data3/staff/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/ESM_EPU57v2LVG16KickMapRes_1o4m_T2m2.sdds", &
+   INPUT_FILE="/nsls2/users/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/ESM_EPU57v2LVG16KickMapRes_1o4m_T2m2.sdds", &
    N_KICKS=24, PERIODS=24, KREF=4.4
 EPU105G1C21DM: UKICKMAP, L=2.8, &
-   INPUT_FILE="/nsls2/data3/staff/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/EPU105ESMv2LVG19PS14L2800mmKickMapRes_2o8m_T2m2.sdds", &
+   INPUT_FILE="/nsls2/users/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/EPU105ESMv2LVG19PS14L2800mmKickMapRes_2o8m_T2m2.sdds", &
    N_KICKS=26, PERIODS=26, KREF=11.2
 EPU49G1C23UM: UKICKMAP, L=2, &
-   INPUT_FILE="/nsls2/data3/staff/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/EPU49v2LVG11KickMap2Pure_2o0m_T2m2.sdds", &
+   INPUT_FILE="/nsls2/users/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/EPU49v2LVG11KickMap2Pure_2o0m_T2m2.sdds", &
    N_KICKS=40, PERIODS=40, KREF=4.3
 EPU49G1C23DM: UKICKMAP, L=2, &
-   INPUT_FILE="/nsls2/data3/staff/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/EPU49v2LVG11KickMap2Pure_2o0m_T2m2.sdds", &
+   INPUT_FILE="/nsls2/users/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/EPU49v2LVG11KickMap2Pure_2o0m_T2m2.sdds", &
    N_KICKS=40, PERIODS=40, KREF=4.3
 DW100G1C28U: UKICKMAP, L=3.4, &
-   INPUT_FILE="/nsls2/data3/staff/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/W100_DF_asbuilt_3o4m_T2m2.sdds", &
+   INPUT_FILE="/nsls2/users/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/W100_DF_asbuilt_3o4m_T2m2.sdds", &
    N_KICKS=34, PERIODS=34, KREF=16.5
 DW100G1C28D: UKICKMAP, L=3.4, &
-   INPUT_FILE="/nsls2/data3/staff/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/W100_DF_asbuilt_3o4m_T2m2.sdds", &
+   INPUT_FILE="/nsls2/users/yhidaka/git_repos/nsls2cb/lat_reports/report_nsls2_18ID_RepV1o4/W100_DF_asbuilt_3o4m_T2m2.sdds", &
    N_KICKS=34, PERIODS=34, KREF=16.5
 PX1G1C03A: MONI
 PX1G1C16A: MONI
