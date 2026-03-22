@@ -95,6 +95,31 @@ SR:
     invertible: True
     coeffs: [3.968e-4, 0.0]
 
+  # SQ3H skew quads (2026-03-21): beam-based calibration coefficients
+  sq3hg6c01b: &sq3h_skquad
+    elements: [sq3hg6c01b]
+    fields: [b1]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: "m^{-1}"
+    class: polynomial
+    invertible: True
+    coeffs: [0.000403, 0.0]
+  sq3hg6c03b:
+    <<: *sq3h_skquad
+    elements: [sq3hg6c03b]
+    coeffs: [0.000504, 0.0]
+  sq3hg6c05b:
+    <<: *sq3h_skquad
+    elements: [sq3hg6c05b]
+    coeffs: [0.000542, 0.0]
+  sq3hg6c07b:
+    <<: *sq3h_skquad
+    elements: [sq3hg6c07b]
+    coeffs: [0.000411, 0.0]
+
   ID_DW_gap: &ID_DW_gap
     groups: [DW]
     fields: [

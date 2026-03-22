@@ -186123,5 +186123,209 @@
         }
       }
     }
+  },
+  "px1g1c09a": {
+    "id": 1305,
+    "archive": 0,
+    "size": 0,
+    "virtual": 0,
+    "elemType": "XBPM_",
+    "cell": "C09",
+    "girder": "G1",
+    "symmetry": "A",
+    "elemLength": 0.0,
+    "elemPosition": 237.5874,
+    "elemIndex": 88103,
+    "elemGroups": "XBPM;PX1",
+    "tags": [
+      "aphla.sys.SR"
+    ],
+    "devName": "C09-XBPM1",
+    "map": {
+      "x": {
+        "get": {
+          "pv": "SR:C09-BI{XBPM:1}PosX:MeanValue_RBV",
+          "mv": {}
+        }
+      },
+      "x0": {
+        "get": {
+          "pv": "SR:C09-BI{XBPM:1}PosX:MeanValue_RBV",
+          "mv": {}
+        }
+      },
+      "y": {
+        "get": {
+          "pv": "SR:C09-BI{XBPM:1}PosY:MeanValue_RBV",
+          "mv": {}
+        }
+      },
+      "y0": {
+        "get": {
+          "pv": "SR:C09-BI{XBPM:1}PosY:MeanValue_RBV",
+          "mv": {}
+        }
+      }
+    }
+  },
+  "sq3hg6c01b": {
+    "id": 1306,
+    "archive": 0,
+    "size": 0,
+    "virtual": 0,
+    "elemType": "SKQUAD",
+    "cell": "C01",
+    "girder": "G6",
+    "symmetry": "B",
+    "elemLength": 0.2,
+    "elemPosition": 47.3897,
+    "elemIndex": 17200,
+    "elemGroups": "SQ3H",
+    "tags": [
+      "aphla.sys.SR"
+    ],
+    "map": {
+      "b1": {
+        "get": {
+          "pv": "SR:C04-MG{zPSC1}dcct1ADC:Chan1",
+          "epsilon": 0.1,
+          "mv": {
+            "pyelegant": {
+              "elem_name": "SQ3HG6C01B",
+              "property": "K1"
+            }
+          }
+        },
+        "put": {
+          "pv": "SR:C04-MG{zPSC1:Chan1}I-sp",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "SQ3HG6C01B",
+              "property": "K1"
+            }
+          }
+        }
+      }
+    }
+  },
+  "sq3hg6c03b": {
+    "id": 1307,
+    "archive": 0,
+    "size": 0,
+    "virtual": 0,
+    "elemType": "SKQUAD",
+    "cell": "C03",
+    "girder": "G6",
+    "symmetry": "B",
+    "elemLength": 0.2,
+    "elemPosition": 100.18699999999998,
+    "elemIndex": 36900,
+    "elemGroups": "SQ3H",
+    "tags": [
+      "aphla.sys.SR"
+    ],
+    "map": {
+      "b1": {
+        "get": {
+          "pv": "SR:C04-MG{zPSC1}dcct1ADC:Chan2",
+          "epsilon": 0.1,
+          "mv": {
+            "pyelegant": {
+              "elem_name": "SQ3HG6C03B",
+              "property": "K1"
+            }
+          }
+        },
+        "put": {
+          "pv": "SR:C04-MG{zPSC1:Chan2}I-sp",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "SQ3HG6C03B",
+              "property": "K1"
+            }
+          }
+        }
+      }
+    }
+  },
+  "sq3hg6c05b": {
+    "id": 1308,
+    "archive": 0,
+    "size": 0,
+    "virtual": 0,
+    "elemType": "SKQUAD",
+    "cell": "C05",
+    "girder": "G6",
+    "symmetry": "B",
+    "elemLength": 0.2,
+    "elemPosition": 152.984,
+    "elemIndex": 56700,
+    "elemGroups": "SQ3H",
+    "tags": [
+      "aphla.sys.SR"
+    ],
+    "map": {
+      "b1": {
+        "get": {
+          "pv": "SR:C04-MG{zPSC1}dcct1ADC:Chan3",
+          "epsilon": 0.1,
+          "mv": {
+            "pyelegant": {
+              "elem_name": "SQ3HG6C05B",
+              "property": "K1"
+            }
+          }
+        },
+        "put": {
+          "pv": "SR:C04-MG{zPSC1:Chan3}I-sp",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "SQ3HG6C05B",
+              "property": "K1"
+            }
+          }
+        }
+      }
+    }
+  },
+  "sq3hg6c07b": {
+    "id": 1309,
+    "archive": 0,
+    "size": 0,
+    "virtual": 0,
+    "elemType": "SKQUAD",
+    "cell": "C07",
+    "girder": "G6",
+    "symmetry": "B",
+    "elemLength": 0.2,
+    "elemPosition": 205.781,
+    "elemIndex": 75100,
+    "elemGroups": "SQ3H",
+    "tags": [
+      "aphla.sys.SR"
+    ],
+    "map": {
+      "b1": {
+        "get": {
+          "pv": "SR:C04-MG{zPSC1}dcct1ADC:Chan4",
+          "epsilon": 0.1,
+          "mv": {
+            "pyelegant": {
+              "elem_name": "SQ3HG6C07B",
+              "property": "K1"
+            }
+          }
+        },
+        "put": {
+          "pv": "SR:C04-MG{zPSC1:Chan4}I-sp",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "SQ3HG6C07B",
+              "property": "K1"
+            }
+          }
+        }
+      }
+    }
   }
 }

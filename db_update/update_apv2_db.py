@@ -376,7 +376,11 @@ def get_new_id(database_dict):
 
 
 def get_elem_pv_mv_pgz_database_dict(machine):
-    with gzip.GzipFile(ELEM_PV_MV_PGZ_FILEPATHS[machine], "rb") as f:
+    if np.__version__.startswith("2."):
+        filepath = ELEM_PV_MV_PGZ_NUMPY2_FILEPATHS[machine]
+    else:
+        filepath = ELEM_PV_MV_PGZ_FILEPATHS[machine]
+    with gzip.GzipFile(filepath, "rb") as f:
         d = pickle.load(f)
 
     return d
@@ -1309,27 +1313,11 @@ def _add_new_ID_and_IDBPMs(exist_ok, cell_num, ubpm_info_list, id_info_list, id_
     return d
 
 def _add_new_XBPMs(exist_ok, cell_num, xbpm_info_list):
-
-    raise NotImplementedError
-
-    print_elems_around_straight(cell_num, n=5)
-
-    existing_elems = _get_existing_straight_elems(cell_num)
-
-    print("Elem Name, Index,     sb,       se")
-    print(
-        "\n".join(
-            [
-                f"{elem.name}, {elem.index}, {elem.sb:.6f}, {elem.se:.6f}"
-                for elem in existing_elems
-            ]
-        )
-    )
-
-    existing_elem_props = dict(sc=[], index=[])
-    for e in existing_elems:
-        existing_elem_props["sc"].append((e.sb + e.se) / 2)
-        existing_elem_props["index"].append(e.index)
+    """
+    Each entry in xbpm_info_list must have:
+      name, sc, devname, groups, index,
+      pvs: dict mapping field name -> PV string (readback only)
+    """
 
     for info in xbpm_info_list:
         info["sb"] = info["sc"]
@@ -1341,28 +1329,16 @@ def _add_new_XBPMs(exist_ok, cell_num, xbpm_info_list):
         info["symmetry"] = "A"
 
     print("\n* New [element name] [index]")
-    for new_elem_info in xbpm_info_list:
-        # new_elem_info["index"] = int(
-        #     np.round(
-        #         np.interp(
-        #             new_elem_info["sc"],
-        #             existing_elem_props["sc"],
-        #             existing_elem_props["index"],
-        #             left=np.nan,
-        #             right=np.nan,
-        #         )
-        #     )
-        # )
-        print(new_elem_info["name"], new_elem_info["index"])
+    for info in xbpm_info_list:
+        print(info["name"], info["index"])
 
     d = get_elem_pv_mv_pgz_database_dict("SR")
 
     for info in xbpm_info_list:
         elem_name = info["name"]
-        upper_elem_name = elem_name.upper()
 
         if (not exist_ok) and (elem_name in d):
-            print(f'Specified element "{elem_name}" aready exists. Aborting.')
+            print(f'Specified element "{elem_name}" already exists. Aborting.')
             return
 
         new = {}
@@ -1378,41 +1354,77 @@ def _add_new_XBPMs(exist_ok, cell_num, xbpm_info_list):
         new["elemIndex"] = info["index"]
         new["elemGroups"] = ";".join(info["groups"])
         new["tags"] = ["aphla.sys.SR"]
+        new["devName"] = info["devname"]
+        new["map"] = {
+            fld: {"get": {"pv": pv, "mv": {}}}
+            for fld, pv in info["pvs"].items()
+        }
 
-        if "XBPM" in info["groups"]:
-            new["devName"] = info["devname"]
-            bpm_num = int(info["devname"].split("-")[1][len("BPM") :])
+        d[elem_name] = new
 
-            new["map"] = {}
-            for fld in [
-                "x0",
-                "y0",
-                "x",
-                "y",
-            ]:
-                fld_d = {}
+    return d
 
-                if fld in BPM_PV_SUFFIX["get"]:
-                    get_d = {}
-                    pv_suffix = BPM_PV_SUFFIX["get"][fld]
-                    get_d["pv"] = f"SR:{new['cell']}-BI{{BPM:{bpm_num}}}{pv_suffix}"
-                    get_d["mv"] = {
-                        "pyelegant": dict(elem_name=upper_elem_name, property=fld)
-                    }
-                    fld_d["get"] = get_d
 
-                if fld in BPM_PV_SUFFIX["put"]:
-                    put_d = {}
-                    pv_suffix = BPM_PV_SUFFIX["put"][fld]
-                    put_d["pv"] = f"SR:{new['cell']}-BI{{BPM:{bpm_num}}}{pv_suffix}"
-                    put_d["mv"] = {
-                        "pyelegant": dict(elem_name=upper_elem_name, property=fld)
-                    }
-                    fld_d["put"] = put_d
+def _add_new_SkewQuads(exist_ok, skquad_info_list):
+    """
+    Each entry in skquad_info_list must have:
+      name, ref_elem (corrector aphla name at same sc), L,
+      cell, girder, symmetry, groups,
+      b1_rb_pv, b1_sp_pv
+    Optional:
+      epsilon (default 0.1)
+    """
 
-                new["map"][fld] = fld_d
-        else:
-            raise NotImplementedError
+    d = get_elem_pv_mv_pgz_database_dict("SR")
+
+    for info in skquad_info_list:
+        elem_name = info["name"]
+        upper_elem_name = elem_name.upper()
+
+        if (not exist_ok) and (elem_name in d):
+            print(f'Specified element "{elem_name}" already exists. Aborting.')
+            return
+
+        # Derive sc from the co-located corrector already in the aphla database
+        ref_elem = ap.getElements(info["ref_elem"])[0]
+        sc = (ref_elem.sb + ref_elem.se) / 2
+        sb = sc - info["L"] / 2
+        se = sc + info["L"] / 2
+        # Place SQ3H just before the corrector in the index sequence:
+        # SQ3H starts at sb < sc(corrector), so its index must be less than
+        # the corrector's. Use the midpoint between the upstream neighbor and
+        # the corrector.
+        us_elem = ap.getNeighbors(ref_elem, "*", n=1)[0]
+        elem_index = (us_elem.index + ref_elem.index) // 2
+
+        print(f"{elem_name}: sc={sc:.6f}, sb={sb:.6f}, se={se:.6f}, index={elem_index}")
+
+        new = {}
+        new["id"] = get_new_id(d)
+        for k in ["archive", "size", "virtual"]:
+            new[k] = 0
+        new["elemType"] = "SKQUAD"
+        new["cell"] = info["cell"]
+        new["girder"] = info["girder"]
+        new["symmetry"] = info["symmetry"]
+        new["elemLength"] = info["L"]
+        new["elemPosition"] = se
+        new["elemIndex"] = elem_index
+        new["elemGroups"] = ";".join(info["groups"])
+        new["tags"] = ["aphla.sys.SR"]
+        new["map"] = {
+            "b1": {
+                "get": {
+                    "pv": info["b1_rb_pv"],
+                    "epsilon": info.get("epsilon", 0.1),
+                    "mv": {"pyelegant": {"elem_name": upper_elem_name, "property": "K1"}},
+                },
+                "put": {
+                    "pv": info["b1_sp_pv"],
+                    "mv": {"pyelegant": {"elem_name": upper_elem_name, "property": "K1"}},
+                },
+            }
+        }
 
         d[elem_name] = new
 
@@ -1603,7 +1615,7 @@ def save_pgz_files_for_both_np1_and_np2(d: dict, submachine_name: str):
 
     cmd_list = [
         os.path.expanduser("~/.conda/envs/apv2-2023-rc2/bin/python"),
-        'save_np1_loadable_pgz.py',
+        str(Path(__file__).parent / 'save_np1_loadable_pgz.py'),
         str(np2_pgz_filepath.resolve()),
         str(np1_pgz_filepath.resolve()),
     ]
@@ -1630,20 +1642,87 @@ def add_C09_XBPM(exist_ok=False):
     new_xbpm_index = (idobj.index + ds_ubpm.index) // 2
 
     xbpm_info_list = [
-        dict(name="px1g1c09a",
-             sc=float(f"{id_sc:.6f}"),
-             devname=f"C{cell_num:02d}-XBPM1",
-             groups=["XBPM", "PX1"],
-             index=new_xbpm_index,
+        dict(
+            name="px1g1c09a",
+            sc=float(f"{id_sc:.6f}"),
+            devname=f"C{cell_num:02d}-XBPM1",
+            groups=["XBPM", "PX1"],
+            index=new_xbpm_index,
+            pvs={
+                "x":  "SR:C09-BI{XBPM:1}PosX:MeanValue_RBV",
+                "x0": "SR:C09-BI{XBPM:1}PosX:MeanValue_RBV",
+                "y":  "SR:C09-BI{XBPM:1}PosY:MeanValue_RBV",
+                "y0": "SR:C09-BI{XBPM:1}PosY:MeanValue_RBV",
+            },
         ),
     ]
 
     d = _add_new_XBPMs(exist_ok, cell_num, xbpm_info_list)
 
-    with gzip.GzipFile(ELEM_PV_MV_PGZ_FILEPATHS["SR"], "wb") as f:
-        pickle.dump(d, f)
+    save_pgz_files_for_both_np1_and_np2(d, "SR")
 
 
+def add_C09_XBPM_and_4_new_skew_quads(exist_ok=False):
+    """Add px1g1c09a (XBPM) and sq3hg6c01b/03b/05b/07b (SQ3H skew quads)."""
+
+    assert np.__version__.startswith("2.")
+
+    # --- XBPM ---
+    add_C09_XBPM(exist_ok=exist_ok)
+
+    # --- SQ3H skew quads (C01, C03, C05, C07) ---
+    # All 4 share PS zPSC1 (channels 1-4), located at SR:C04-MG{zPSC1...}
+    # sc is derived at runtime from the co-located corrector in the aphla DB.
+    skquad_info_list = [
+        dict(
+            name="sq3hg6c01b",
+            ref_elem="ch1g6c01b",
+            L=0.2,
+            cell="C01",
+            girder="G6",
+            symmetry="B",
+            groups=["SQ3H"],
+            b1_rb_pv="SR:C04-MG{zPSC1}dcct1ADC:Chan1",
+            b1_sp_pv="SR:C04-MG{zPSC1:Chan1}I-sp",
+        ),
+        dict(
+            name="sq3hg6c03b",
+            ref_elem="ch1g6c03b",
+            L=0.2,
+            cell="C03",
+            girder="G6",
+            symmetry="B",
+            groups=["SQ3H"],
+            b1_rb_pv="SR:C04-MG{zPSC1}dcct1ADC:Chan2",
+            b1_sp_pv="SR:C04-MG{zPSC1:Chan2}I-sp",
+        ),
+        dict(
+            name="sq3hg6c05b",
+            ref_elem="ch1g6c05b",
+            L=0.2,
+            cell="C05",
+            girder="G6",
+            symmetry="B",
+            groups=["SQ3H"],
+            b1_rb_pv="SR:C04-MG{zPSC1}dcct1ADC:Chan3",
+            b1_sp_pv="SR:C04-MG{zPSC1:Chan3}I-sp",
+        ),
+        dict(
+            name="sq3hg6c07b",
+            ref_elem="ch1g6c07b",
+            L=0.2,
+            cell="C07",
+            girder="G6",
+            symmetry="B",
+            groups=["SQ3H"],
+            b1_rb_pv="SR:C04-MG{zPSC1}dcct1ADC:Chan4",
+            b1_sp_pv="SR:C04-MG{zPSC1:Chan4}I-sp",
+        ),
+    ]
+
+    d = _add_new_SkewQuads(exist_ok, skquad_info_list)
+
+    save_pgz_files_for_both_np1_and_np2(d, "SR")
 
 
 if __name__ == "__main__":
@@ -1751,12 +1830,15 @@ if __name__ == "__main__":
 
     elif False:  # Last run on 09/16/2025
         update_C09_straight(exist_ok=False)
-    elif True: # Last run on 10/17/2025
+    elif False:  # Last run on 10/17/2025
         fix_C09()
-    elif False:  # TO-BE-RUN: Need to know which PVs for new XBPM
-        add_C09_XBPM(exist_ok=False)
+    elif False:  # Last run on 2026-03-21
+        add_C09_XBPM_and_4_new_skew_quads(exist_ok=False)
+        # Remember to run `save_pgz_db_contents_to_json(machine_list=["SR"])`
+        # after this run to update the JSON version of the database, so
+        # the changes can be easily git-diff'ed.
 
-    elif False:  # Last run on 01/12/2023
+    elif True:  # Last run on 03/21/2026
         save_pgz_db_contents_to_json(machine_list=["SR"])
 
     print("Finished")

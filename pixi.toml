@@ -1,0 +1,16 @@
+[project]
+name = "aphla-db-update"
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+[dependencies]
+python = "3.11.*"
+numpy = "2.*"
+epics-base = "*"  # required for cothread to work
+
+[pypi-dependencies]
+aphla = { path = ".", editable = true }
+
+[activation.env]
+APHLA_CONFIG_DIR = "/epics/aphla/apconf_v2"
+APHLA_FACILITY = "nsls2"
