@@ -184738,5 +184738,1390 @@
         }
       }
     }
+  },
+  "pu1g1c20a": {
+    "id": 1299,
+    "archive": 0,
+    "size": 0,
+    "virtual": 0,
+    "elemType": "UBPM_",
+    "cell": "C20",
+    "girder": "G1",
+    "symmetry": "A",
+    "elemLength": 0.0,
+    "elemPosition": 524.30966,
+    "elemIndex": 194019,
+    "elemGroups": "UBPM;PU1",
+    "tags": [
+      "aphla.sys.SR"
+    ],
+    "devName": "C20-BPM7",
+    "map": {
+      "x0": {
+        "get": {
+          "pv": "SR:C20-BI{BPM:7}Pos:X-I",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C20A",
+              "property": "x0"
+            }
+          }
+        }
+      },
+      "y0": {
+        "get": {
+          "pv": "SR:C20-BI{BPM:7}Pos:Y-I",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C20A",
+              "property": "y0"
+            }
+          }
+        }
+      },
+      "x": {
+        "get": {
+          "pv": "SR:C20-BI{BPM:7}Pos:XwUsrOff-Calc",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C20A",
+              "property": "x"
+            }
+          }
+        }
+      },
+      "y": {
+        "get": {
+          "pv": "SR:C20-BI{BPM:7}Pos:YwUsrOff-Calc",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C20A",
+              "property": "y"
+            }
+          }
+        }
+      },
+      "xref1": {
+        "put": {
+          "pv": "SR:C20-BI{BPM:7}Pos:Href-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C20A",
+              "property": "xref1"
+            }
+          }
+        }
+      },
+      "yref1": {
+        "put": {
+          "pv": "SR:C20-BI{BPM:7}Pos:Vref-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C20A",
+              "property": "yref1"
+            }
+          }
+        }
+      },
+      "xref2": {
+        "put": {
+          "pv": "SR:C20-BI{BPM:7}Pos:UsrXoffset-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C20A",
+              "property": "xref2"
+            }
+          }
+        }
+      },
+      "yref2": {
+        "put": {
+          "pv": "SR:C20-BI{BPM:7}Pos:UsrYoffset-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C20A",
+              "property": "yref2"
+            }
+          }
+        }
+      },
+      "ampl": {
+        "get": {
+          "pv": "SR:C20-BI{BPM:7}Ampl:SSA-Calc",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C20A",
+              "property": "ampl"
+            }
+          }
+        }
+      },
+      "xtbt": {
+        "get": {
+          "pv": "SR:C20-BI{BPM:7}TBT-X",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C20A",
+              "property": "xtbt"
+            }
+          }
+        }
+      },
+      "ytbt": {
+        "get": {
+          "pv": "SR:C20-BI{BPM:7}TBT-Y",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C20A",
+              "property": "ytbt"
+            }
+          }
+        }
+      },
+      "Itbt": {
+        "get": {
+          "pv": "SR:C20-BI{BPM:7}TBT-S",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C20A",
+              "property": "Itbt"
+            }
+          }
+        }
+      },
+      "xfa": {
+        "get": {
+          "pv": "SR:C20-BI{BPM:7}FA-X",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C20A",
+              "property": "xfa"
+            }
+          }
+        }
+      },
+      "yfa": {
+        "get": {
+          "pv": "SR:C20-BI{BPM:7}FA-Y",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C20A",
+              "property": "yfa"
+            }
+          }
+        }
+      },
+      "Ifa": {
+        "get": {
+          "pv": "SR:C20-BI{BPM:7}FA-S",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C20A",
+              "property": "Ifa"
+            }
+          }
+        }
+      },
+      "xbba": {
+        "get": {
+          "pv": "SR:C20-BI{BPM:7}BBA:X-I",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C20A",
+              "property": "xbba"
+            }
+          }
+        },
+        "put": {
+          "pv": "SR:C20-BI{BPM:7}BbaXOff-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C20A",
+              "property": "xbba"
+            }
+          }
+        }
+      },
+      "ybba": {
+        "get": {
+          "pv": "SR:C20-BI{BPM:7}BBA:Y-I",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C20A",
+              "property": "ybba"
+            }
+          }
+        },
+        "put": {
+          "pv": "SR:C20-BI{BPM:7}BbaYOff-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C20A",
+              "property": "ybba"
+            }
+          }
+        }
+      }
+    }
+  },
+  "pu4g1c20a": {
+    "id": 1300,
+    "archive": 0,
+    "size": 0,
+    "virtual": 0,
+    "elemType": "UBPM_",
+    "cell": "C20",
+    "girder": "G1",
+    "symmetry": "A",
+    "elemLength": 0.0,
+    "elemPosition": 531.64966,
+    "elemIndex": 194277,
+    "elemGroups": "UBPM;PU4",
+    "tags": [
+      "aphla.sys.SR"
+    ],
+    "devName": "C20-BPM8",
+    "map": {
+      "x0": {
+        "get": {
+          "pv": "SR:C20-BI{BPM:8}Pos:X-I",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C20A",
+              "property": "x0"
+            }
+          }
+        }
+      },
+      "y0": {
+        "get": {
+          "pv": "SR:C20-BI{BPM:8}Pos:Y-I",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C20A",
+              "property": "y0"
+            }
+          }
+        }
+      },
+      "x": {
+        "get": {
+          "pv": "SR:C20-BI{BPM:8}Pos:XwUsrOff-Calc",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C20A",
+              "property": "x"
+            }
+          }
+        }
+      },
+      "y": {
+        "get": {
+          "pv": "SR:C20-BI{BPM:8}Pos:YwUsrOff-Calc",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C20A",
+              "property": "y"
+            }
+          }
+        }
+      },
+      "xref1": {
+        "put": {
+          "pv": "SR:C20-BI{BPM:8}Pos:Href-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C20A",
+              "property": "xref1"
+            }
+          }
+        }
+      },
+      "yref1": {
+        "put": {
+          "pv": "SR:C20-BI{BPM:8}Pos:Vref-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C20A",
+              "property": "yref1"
+            }
+          }
+        }
+      },
+      "xref2": {
+        "put": {
+          "pv": "SR:C20-BI{BPM:8}Pos:UsrXoffset-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C20A",
+              "property": "xref2"
+            }
+          }
+        }
+      },
+      "yref2": {
+        "put": {
+          "pv": "SR:C20-BI{BPM:8}Pos:UsrYoffset-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C20A",
+              "property": "yref2"
+            }
+          }
+        }
+      },
+      "ampl": {
+        "get": {
+          "pv": "SR:C20-BI{BPM:8}Ampl:SSA-Calc",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C20A",
+              "property": "ampl"
+            }
+          }
+        }
+      },
+      "xtbt": {
+        "get": {
+          "pv": "SR:C20-BI{BPM:8}TBT-X",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C20A",
+              "property": "xtbt"
+            }
+          }
+        }
+      },
+      "ytbt": {
+        "get": {
+          "pv": "SR:C20-BI{BPM:8}TBT-Y",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C20A",
+              "property": "ytbt"
+            }
+          }
+        }
+      },
+      "Itbt": {
+        "get": {
+          "pv": "SR:C20-BI{BPM:8}TBT-S",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C20A",
+              "property": "Itbt"
+            }
+          }
+        }
+      },
+      "xfa": {
+        "get": {
+          "pv": "SR:C20-BI{BPM:8}FA-X",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C20A",
+              "property": "xfa"
+            }
+          }
+        }
+      },
+      "yfa": {
+        "get": {
+          "pv": "SR:C20-BI{BPM:8}FA-Y",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C20A",
+              "property": "yfa"
+            }
+          }
+        }
+      },
+      "Ifa": {
+        "get": {
+          "pv": "SR:C20-BI{BPM:8}FA-S",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C20A",
+              "property": "Ifa"
+            }
+          }
+        }
+      },
+      "xbba": {
+        "get": {
+          "pv": "SR:C20-BI{BPM:8}BBA:X-I",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C20A",
+              "property": "xbba"
+            }
+          }
+        },
+        "put": {
+          "pv": "SR:C20-BI{BPM:8}BbaXOff-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C20A",
+              "property": "xbba"
+            }
+          }
+        }
+      },
+      "ybba": {
+        "get": {
+          "pv": "SR:C20-BI{BPM:8}BBA:Y-I",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C20A",
+              "property": "ybba"
+            }
+          }
+        },
+        "put": {
+          "pv": "SR:C20-BI{BPM:8}BbaYOff-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C20A",
+              "property": "ybba"
+            }
+          }
+        }
+      }
+    }
+  },
+  "ovu68g1c20d": {
+    "id": 1301,
+    "archive": 0,
+    "size": 0,
+    "virtual": 0,
+    "elemType": "OVU",
+    "cell": "C20",
+    "girder": "G1",
+    "symmetry": "D",
+    "elemLength": 3.4,
+    "elemPosition": 531.55616,
+    "elemIndex": 194214,
+    "elemGroups": "ID;OVU68;U68;Internal;IFE",
+    "tags": [
+      "aphla.sys.SR"
+    ],
+    "map": {
+      "gap": {
+        "put": {
+          "pv": "SR:C20-ID:G1{U68:2-Ax:Gap}-Mtr-SP"
+        },
+        "get": {
+          "pv": "SR:C20-ID:G1{U68:2-Ax:Gap}-Mtr.RBV"
+        }
+      },
+      "gap_trig": {
+        "put": {
+          "pv": "SR:C20-ID:G1{U68:2-Ax:Gap}-Mtr-Go"
+        }
+      },
+      "gap_go": {
+        "put": {
+          "pv": "SR:C20-ID:G1{U68:2-Ax:Gap}-Mtr-SP-Go"
+        },
+        "get": {
+          "pv": "SR:C20-ID:G1{U68:2-Ax:Gap}-Mtr.RBV"
+        }
+      },
+      "gap_hinominal": {
+        "get": {
+          "pv": "SR:C20-ID:NomOpen-Sp"
+        }
+      },
+      "gap_lonominal": {
+        "get": {
+          "pv": "SR:C20-ID:NomClose-Sp"
+        }
+      },
+      "gap_ramping": {
+        "get": {
+          "pv": "SR:C20-ID:G1{U68:2-Ax:Gap}-Mtr.MOVN"
+        }
+      },
+      "gap_speed": {
+        "put": {
+          "pv": "SR:C20-ID:G1{U68:2}GapSpeed-SP"
+        },
+        "get": {
+          "pv": "SR:C20-ID:G1{U68:2}GapSpeed-RB"
+        }
+      },
+      "gap_hilim": {
+        "get": {
+          "pv": "SR:C20-ID:G1{U68:2-Ax:Gap}-Mtr-SP.DRVH"
+        }
+      },
+      "gap_lolim": {
+        "get": {
+          "pv": "SR:C20-ID:G1{U68:2-Ax:Gap}-Mtr-SP.DRVL"
+        }
+      },
+      "cch0": {
+        "put": {
+          "pv": "SR:C19-MG{PS:ID19_U68_1}I:Sp1-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C19-MG{PS:ID19_U68_1}I:Ps1DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "cch1": {
+        "put": {
+          "pv": "SR:C19-MG{PS:ID19_U68_1}I:Sp2-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C19-MG{PS:ID19_U68_1}I:Ps2DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "cch2": {
+        "put": {
+          "pv": "SR:C19-MG{PS:ID19_U68_2}I:Sp1-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C19-MG{PS:ID19_U68_2}I:Ps1DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "cch3": {
+        "put": {
+          "pv": "SR:C19-MG{PS:ID19_U68_2}I:Sp2-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C19-MG{PS:ID19_U68_2}I:Ps2DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "cch[0]": {
+        "get": {
+          "pv": "SR:C19-MG{PS:ID19_U68_1}I:Ps1DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "cch[1]": {
+        "get": {
+          "pv": "SR:C19-MG{PS:ID19_U68_1}I:Ps2DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "cch[2]": {
+        "get": {
+          "pv": "SR:C19-MG{PS:ID19_U68_2}I:Ps1DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "cch[3]": {
+        "get": {
+          "pv": "SR:C19-MG{PS:ID19_U68_2}I:Ps2DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "orbff0_on": {
+        "put": {
+          "pv": "SR:C19-MG{IFE:Orbit-FF:0}Ena-Sel"
+        }
+      },
+      "orbff0_m0_gap": {
+        "put": {
+          "pv": "SR:C19-MG{IFE:Orbit-FF:0}L2-Calc_.C"
+        }
+      },
+      "orbff0_m0_I": {
+        "put": {
+          "pv": "SR:C19-MG{IFE:Orbit-FF:0}L2-Calc_.D"
+        }
+      },
+      "orbff0_output": {
+        "put": {
+          "pv": "SR:C19-MG{PS:ID19_U68_1}I:Sp1-SP"
+        }
+      },
+      "orbff1_on": {
+        "put": {
+          "pv": "SR:C19-MG{IFE:Orbit-FF:1}Ena-Sel"
+        }
+      },
+      "orbff1_m0_gap": {
+        "put": {
+          "pv": "SR:C19-MG{IFE:Orbit-FF:1}L2-Calc_.C"
+        }
+      },
+      "orbff1_m0_I": {
+        "put": {
+          "pv": "SR:C19-MG{IFE:Orbit-FF:1}L2-Calc_.D"
+        }
+      },
+      "orbff1_output": {
+        "put": {
+          "pv": "SR:C19-MG{PS:ID19_U68_1}I:Sp2-SP"
+        }
+      },
+      "orbff2_on": {
+        "put": {
+          "pv": "SR:C19-MG{IFE:Orbit-FF:2}Ena-Sel"
+        }
+      },
+      "orbff2_m0_gap": {
+        "put": {
+          "pv": "SR:C19-MG{IFE:Orbit-FF:2}L2-Calc_.C"
+        }
+      },
+      "orbff2_m0_I": {
+        "put": {
+          "pv": "SR:C19-MG{IFE:Orbit-FF:2}L2-Calc_.D"
+        }
+      },
+      "orbff2_output": {
+        "put": {
+          "pv": "SR:C19-MG{PS:ID19_U68_2}I:Sp1-SP"
+        }
+      },
+      "orbff3_on": {
+        "put": {
+          "pv": "SR:C19-MG{IFE:Orbit-FF:3}Ena-Sel"
+        }
+      },
+      "orbff3_m0_gap": {
+        "put": {
+          "pv": "SR:C19-MG{IFE:Orbit-FF:3}L2-Calc_.C"
+        }
+      },
+      "orbff3_m0_I": {
+        "put": {
+          "pv": "SR:C19-MG{IFE:Orbit-FF:3}L2-Calc_.D"
+        }
+      },
+      "orbff3_output": {
+        "put": {
+          "pv": "SR:C19-MG{PS:ID19_U68_2}I:Sp2-SP"
+        }
+      }
+    }
+  },
+  "pu1g1c09a": {
+    "id": 1302,
+    "archive": 0,
+    "size": 0,
+    "virtual": 0,
+    "elemType": "UBPM_",
+    "cell": "C09",
+    "girder": "G1",
+    "symmetry": "A",
+    "elemLength": 0.0,
+    "elemPosition": 235.0446,
+    "elemIndex": 87635,
+    "elemGroups": "UBPM;PU1",
+    "tags": [
+      "aphla.sys.SR"
+    ],
+    "devName": "C09-BPM7",
+    "map": {
+      "x0": {
+        "get": {
+          "pv": "SR:C09-BI{BPM:7}Pos:X-I",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C09A",
+              "property": "x0"
+            }
+          }
+        }
+      },
+      "y0": {
+        "get": {
+          "pv": "SR:C09-BI{BPM:7}Pos:Y-I",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C09A",
+              "property": "y0"
+            }
+          }
+        }
+      },
+      "x": {
+        "get": {
+          "pv": "SR:C09-BI{BPM:7}Pos:XwUsrOff-Calc",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C09A",
+              "property": "x"
+            }
+          }
+        }
+      },
+      "y": {
+        "get": {
+          "pv": "SR:C09-BI{BPM:7}Pos:YwUsrOff-Calc",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C09A",
+              "property": "y"
+            }
+          }
+        }
+      },
+      "xref1": {
+        "put": {
+          "pv": "SR:C09-BI{BPM:7}Pos:Href-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C09A",
+              "property": "xref1"
+            }
+          }
+        }
+      },
+      "yref1": {
+        "put": {
+          "pv": "SR:C09-BI{BPM:7}Pos:Vref-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C09A",
+              "property": "yref1"
+            }
+          }
+        }
+      },
+      "xref2": {
+        "put": {
+          "pv": "SR:C09-BI{BPM:7}Pos:UsrXoffset-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C09A",
+              "property": "xref2"
+            }
+          }
+        }
+      },
+      "yref2": {
+        "put": {
+          "pv": "SR:C09-BI{BPM:7}Pos:UsrYoffset-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C09A",
+              "property": "yref2"
+            }
+          }
+        }
+      },
+      "ampl": {
+        "get": {
+          "pv": "SR:C09-BI{BPM:7}Ampl:SSA-Calc",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C09A",
+              "property": "ampl"
+            }
+          }
+        }
+      },
+      "xtbt": {
+        "get": {
+          "pv": "SR:C09-BI{BPM:7}TBT-X",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C09A",
+              "property": "xtbt"
+            }
+          }
+        }
+      },
+      "ytbt": {
+        "get": {
+          "pv": "SR:C09-BI{BPM:7}TBT-Y",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C09A",
+              "property": "ytbt"
+            }
+          }
+        }
+      },
+      "Itbt": {
+        "get": {
+          "pv": "SR:C09-BI{BPM:7}TBT-S",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C09A",
+              "property": "Itbt"
+            }
+          }
+        }
+      },
+      "xfa": {
+        "get": {
+          "pv": "SR:C09-BI{BPM:7}FA-X",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C09A",
+              "property": "xfa"
+            }
+          }
+        }
+      },
+      "yfa": {
+        "get": {
+          "pv": "SR:C09-BI{BPM:7}FA-Y",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C09A",
+              "property": "yfa"
+            }
+          }
+        }
+      },
+      "Ifa": {
+        "get": {
+          "pv": "SR:C09-BI{BPM:7}FA-S",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C09A",
+              "property": "Ifa"
+            }
+          }
+        }
+      },
+      "xbba": {
+        "get": {
+          "pv": "SR:C09-BI{BPM:7}BBA:X-I",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C09A",
+              "property": "xbba"
+            }
+          }
+        },
+        "put": {
+          "pv": "SR:C09-BI{BPM:7}BbaXOff-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C09A",
+              "property": "xbba"
+            }
+          }
+        }
+      },
+      "ybba": {
+        "get": {
+          "pv": "SR:C09-BI{BPM:7}BBA:Y-I",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C09A",
+              "property": "ybba"
+            }
+          }
+        },
+        "put": {
+          "pv": "SR:C09-BI{BPM:7}BbaYOff-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU1G1C09A",
+              "property": "ybba"
+            }
+          }
+        }
+      }
+    }
+  },
+  "pu4g1c09a": {
+    "id": 1303,
+    "archive": 0,
+    "size": 0,
+    "virtual": 0,
+    "elemType": "UBPM_",
+    "cell": "C09",
+    "girder": "G1",
+    "symmetry": "A",
+    "elemLength": 0.0,
+    "elemPosition": 240.266,
+    "elemIndex": 88265,
+    "elemGroups": "UBPM;PU4",
+    "tags": [
+      "aphla.sys.SR"
+    ],
+    "devName": "C09-BPM8",
+    "map": {
+      "x0": {
+        "get": {
+          "pv": "SR:C09-BI{BPM:8}Pos:X-I",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C09A",
+              "property": "x0"
+            }
+          }
+        }
+      },
+      "y0": {
+        "get": {
+          "pv": "SR:C09-BI{BPM:8}Pos:Y-I",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C09A",
+              "property": "y0"
+            }
+          }
+        }
+      },
+      "x": {
+        "get": {
+          "pv": "SR:C09-BI{BPM:8}Pos:XwUsrOff-Calc",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C09A",
+              "property": "x"
+            }
+          }
+        }
+      },
+      "y": {
+        "get": {
+          "pv": "SR:C09-BI{BPM:8}Pos:YwUsrOff-Calc",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C09A",
+              "property": "y"
+            }
+          }
+        }
+      },
+      "xref1": {
+        "put": {
+          "pv": "SR:C09-BI{BPM:8}Pos:Href-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C09A",
+              "property": "xref1"
+            }
+          }
+        }
+      },
+      "yref1": {
+        "put": {
+          "pv": "SR:C09-BI{BPM:8}Pos:Vref-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C09A",
+              "property": "yref1"
+            }
+          }
+        }
+      },
+      "xref2": {
+        "put": {
+          "pv": "SR:C09-BI{BPM:8}Pos:UsrXoffset-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C09A",
+              "property": "xref2"
+            }
+          }
+        }
+      },
+      "yref2": {
+        "put": {
+          "pv": "SR:C09-BI{BPM:8}Pos:UsrYoffset-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C09A",
+              "property": "yref2"
+            }
+          }
+        }
+      },
+      "ampl": {
+        "get": {
+          "pv": "SR:C09-BI{BPM:8}Ampl:SSA-Calc",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C09A",
+              "property": "ampl"
+            }
+          }
+        }
+      },
+      "xtbt": {
+        "get": {
+          "pv": "SR:C09-BI{BPM:8}TBT-X",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C09A",
+              "property": "xtbt"
+            }
+          }
+        }
+      },
+      "ytbt": {
+        "get": {
+          "pv": "SR:C09-BI{BPM:8}TBT-Y",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C09A",
+              "property": "ytbt"
+            }
+          }
+        }
+      },
+      "Itbt": {
+        "get": {
+          "pv": "SR:C09-BI{BPM:8}TBT-S",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C09A",
+              "property": "Itbt"
+            }
+          }
+        }
+      },
+      "xfa": {
+        "get": {
+          "pv": "SR:C09-BI{BPM:8}FA-X",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C09A",
+              "property": "xfa"
+            }
+          }
+        }
+      },
+      "yfa": {
+        "get": {
+          "pv": "SR:C09-BI{BPM:8}FA-Y",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C09A",
+              "property": "yfa"
+            }
+          }
+        }
+      },
+      "Ifa": {
+        "get": {
+          "pv": "SR:C09-BI{BPM:8}FA-S",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C09A",
+              "property": "Ifa"
+            }
+          }
+        }
+      },
+      "xbba": {
+        "get": {
+          "pv": "SR:C09-BI{BPM:8}BBA:X-I",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C09A",
+              "property": "xbba"
+            }
+          }
+        },
+        "put": {
+          "pv": "SR:C09-BI{BPM:8}BbaXOff-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C09A",
+              "property": "xbba"
+            }
+          }
+        }
+      },
+      "ybba": {
+        "get": {
+          "pv": "SR:C09-BI{BPM:8}BBA:Y-I",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C09A",
+              "property": "ybba"
+            }
+          }
+        },
+        "put": {
+          "pv": "SR:C09-BI{BPM:8}BbaYOff-SP",
+          "mv": {
+            "pyelegant": {
+              "elem_name": "PU4G1C09A",
+              "property": "ybba"
+            }
+          }
+        }
+      }
+    }
+  },
+  "ivu18g1c09c": {
+    "id": 1304,
+    "archive": 0,
+    "size": 0,
+    "virtual": 0,
+    "elemType": "IVU",
+    "cell": "C09",
+    "girder": "G1",
+    "symmetry": "C",
+    "elemLength": 2.4,
+    "elemPosition": 238.78739999999996,
+    "elemIndex": 87942,
+    "elemGroups": "ID;IVU18;U18;CDI",
+    "tags": [
+      "aphla.sys.SR"
+    ],
+    "map": {
+      "gap": {
+        "put": {
+          "pv": "SR:C09-ID:G1{IVU18:1-CS2:Gap}-Mtr-SP"
+        },
+        "get": {
+          "pv": "SR:C09-ID:G1{IVU18:1-CS2:Gap}-Mtr.RBV"
+        }
+      },
+      "taper": {
+        "put": {
+          "pv": "SR:C09-ID:G1{IVU18:1-CS2:Taper}-Mtr-SP"
+        },
+        "get": {
+          "pv": "SR:C09-ID:G1{IVU18:1-CS2:Taper}-Mtr.RBV"
+        }
+      },
+      "gap_trig": {
+        "put": {
+          "pv": "SR:C09-ID:G1{IVU18:1-CS2:Gap}-Mtr-Go"
+        }
+      },
+      "gap_go": {
+        "put": {
+          "pv": "SR:C09-ID:G1{IVU18:1-CS2:Gap}-Mtr-Go"
+        },
+        "get": {
+          "pv": "SR:C09-ID:G1{IVU18:1-CS2:Gap}-Mtr.RBV"
+        }
+      },
+      "gap_hinominal": {
+        "get": {
+          "pv": "SR:C09-ID:NomOpen-Sp"
+        }
+      },
+      "gap_lonominal": {
+        "get": {
+          "pv": "SR:C09-ID:NomClose-Sp"
+        }
+      },
+      "gap_ramping": {
+        "get": {
+          "pv": "SR:C09-ID:G1{IVU18:1-CS2:Gap}-Mtr.MOVN"
+        }
+      },
+      "gap_speed": {
+        "put": {
+          "pv": "SR:C09-ID:G1{IVU18:1}GapSpeed-SP"
+        },
+        "get": {
+          "pv": "SR:C09-ID:G1{IVU18:1}GapSpeed-RB"
+        }
+      },
+      "taper_speed": {
+        "put": {
+          "pv": "SR:C09-ID:G1{IVU18:1}TaperSpeed-SP"
+        },
+        "get": {
+          "pv": "SR:C09-ID:G1{IVU18:1}TaperSpeed-RB"
+        }
+      },
+      "gap_hilim": {
+        "get": {
+          "pv": "SR:C09-ID:G1{IVU18:1-CS2:Gap}-Mtr-SP.DRVH"
+        }
+      },
+      "gap_lolim": {
+        "get": {
+          "pv": "SR:C09-ID:G1{IVU18:1-CS2:Gap}-Mtr-SP.DRVL"
+        }
+      },
+      "taper_hilim": {
+        "get": {
+          "pv": "SR:C09-ID:G1{IVU18:1-CS2:Taper}-Mtr-SP.DRVH"
+        }
+      },
+      "taper_lolim": {
+        "get": {
+          "pv": "SR:C09-ID:G1{IVU18:1-CS2:Taper}-Mtr-SP.DRVL"
+        }
+      },
+      "cch0": {
+        "put": {
+          "pv": "SR:C08-MG{zPSC1_IVU_ID9:Chan1}I-sp",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C08-MG{zPSC1_IVU_ID9}dcct1ADC:Chan1",
+          "epsilon": 0.05
+        }
+      },
+      "cch1": {
+        "put": {
+          "pv": "SR:C08-MG{zPSC1_IVU_ID9:Chan2}I-sp",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C08-MG{zPSC1_IVU_ID9}dcct1ADC:Chan2",
+          "epsilon": 0.05
+        }
+      },
+      "cch2": {
+        "put": {
+          "pv": "SR:C08-MG{zPSC1_IVU_ID9:Chan3}I-sp",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C08-MG{zPSC1_IVU_ID9}dcct1ADC:Chan3",
+          "epsilon": 0.05
+        }
+      },
+      "cch3": {
+        "put": {
+          "pv": "SR:C08-MG{zPSC1_IVU_ID9:Chan4}I-sp",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C08-MG{zPSC1_IVU_ID9}dcct1ADC:Chan4",
+          "epsilon": 0.05
+        }
+      },
+      "cch[0]": {
+        "get": {
+          "pv": "SR:C08-MG{zPSC1_IVU_ID9}dcct1ADC:Chan1",
+          "epsilon": 0.05
+        }
+      },
+      "cch[1]": {
+        "get": {
+          "pv": "SR:C08-MG{zPSC1_IVU_ID9}dcct1ADC:Chan2",
+          "epsilon": 0.05
+        }
+      },
+      "cch[2]": {
+        "get": {
+          "pv": "SR:C08-MG{zPSC1_IVU_ID9}dcct1ADC:Chan3",
+          "epsilon": 0.05
+        }
+      },
+      "cch[3]": {
+        "get": {
+          "pv": "SR:C08-MG{zPSC1_IVU_ID9}dcct1ADC:Chan4",
+          "epsilon": 0.05
+        }
+      },
+      "orbff0_on": {
+        "put": {
+          "pv": "SR:C09-ID:G1{IVU18:1-FF:0}Ena-Sel"
+        }
+      },
+      "orbff0_m0_gap": {
+        "put": {
+          "pv": "SR:C09-ID:G1{IVU18:1-FF:0}L2-Calc_.F"
+        }
+      },
+      "orbff0_m0_taper": {
+        "put": {
+          "pv": "SR:C09-ID:G1{IVU18:1-FF:0}L2-Calc_.G"
+        }
+      },
+      "orbff0_m0_I": {
+        "put": {
+          "pv": "SR:C09-ID:G1{IVU18:1-FF:0}L2-Calc_.H"
+        }
+      },
+      "orbff0_output": {
+        "put": {
+          "pv": "SR:C08-MG{zPSC1_IVU_ID9:Chan1}I-sp"
+        }
+      },
+      "orbff1_on": {
+        "put": {
+          "pv": "SR:C09-ID:G1{IVU18:1-FF:1}Ena-Sel"
+        }
+      },
+      "orbff1_m0_gap": {
+        "put": {
+          "pv": "SR:C09-ID:G1{IVU18:1-FF:1}L2-Calc_.F"
+        }
+      },
+      "orbff1_m0_taper": {
+        "put": {
+          "pv": "SR:C09-ID:G1{IVU18:1-FF:1}L2-Calc_.G"
+        }
+      },
+      "orbff1_m0_I": {
+        "put": {
+          "pv": "SR:C09-ID:G1{IVU18:1-FF:1}L2-Calc_.H"
+        }
+      },
+      "orbff1_output": {
+        "put": {
+          "pv": "SR:C08-MG{zPSC1_IVU_ID9:Chan2}I-sp"
+        }
+      },
+      "orbff2_on": {
+        "put": {
+          "pv": "SR:C09-ID:G1{IVU18:1-FF:2}Ena-Sel"
+        }
+      },
+      "orbff2_m0_gap": {
+        "put": {
+          "pv": "SR:C09-ID:G1{IVU18:1-FF:2}L2-Calc_.F"
+        }
+      },
+      "orbff2_m0_taper": {
+        "put": {
+          "pv": "SR:C09-ID:G1{IVU18:1-FF:2}L2-Calc_.G"
+        }
+      },
+      "orbff2_m0_I": {
+        "put": {
+          "pv": "SR:C09-ID:G1{IVU18:1-FF:2}L2-Calc_.H"
+        }
+      },
+      "orbff2_output": {
+        "put": {
+          "pv": "SR:C08-MG{zPSC1_IVU_ID9:Chan3}I-sp"
+        }
+      },
+      "orbff3_on": {
+        "put": {
+          "pv": "SR:C09-ID:G1{IVU18:1-FF:3}Ena-Sel"
+        }
+      },
+      "orbff3_m0_gap": {
+        "put": {
+          "pv": "SR:C09-ID:G1{IVU18:1-FF:3}L2-Calc_.F"
+        }
+      },
+      "orbff3_m0_taper": {
+        "put": {
+          "pv": "SR:C09-ID:G1{IVU18:1-FF:3}L2-Calc_.G"
+        }
+      },
+      "orbff3_m0_I": {
+        "put": {
+          "pv": "SR:C09-ID:G1{IVU18:1-FF:3}L2-Calc_.H"
+        }
+      },
+      "orbff3_output": {
+        "put": {
+          "pv": "SR:C08-MG{zPSC1_IVU_ID9:Chan4}I-sp"
+        }
+      },
+      "valid_gap_taper_target": {
+        "get": {
+          "pv": "SR:C09-ID:G1{IVU18:1}GapEndAperError-Sts"
+        }
+      }
+    }
   }
 }
