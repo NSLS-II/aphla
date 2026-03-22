@@ -340,12 +340,12 @@ def calcLifetime(t, I, data_subdiv_method = 'NoSubdiv',
 
     minNPoints = 6
 
-    if data_subdiv_method is 'NoSubdiv' :
+    if data_subdiv_method == 'NoSubdiv' :
         t_list = [t]
         I_list = [I]
         t_avg = [(t[0]+t[-1])/2]
 
-    elif data_subdiv_method is 'SubdivEqualNPoints' :
+    elif data_subdiv_method == 'SubdivEqualNPoints' :
         if subNPoints < minNPoints:
             raise ValueError('Number of data points for lifetime estimation ' +
                              'should be larger than ' + str(minNPoints) + '.')
@@ -374,7 +374,7 @@ def calcLifetime(t, I, data_subdiv_method = 'NoSubdiv',
 
         t_avg = [(t[0]+t[-1])/2 for t in t_list]
 
-    elif data_subdiv_method is 'SubdivEqualSeconds' :
+    elif data_subdiv_method == 'SubdivEqualSeconds' :
 
         subDurationSeconds = float(subDurationSeconds)
 
@@ -423,7 +423,7 @@ def calcLifetime(t, I, data_subdiv_method = 'NoSubdiv',
 
     import hla.curve_fitting as curve_fitting
 
-    if calc_method is 'expDecayFit' :
+    if calc_method == 'expDecayFit' :
 
         def exp_decay (t_vec, I_0, tau) :
             return I_0 * np.exp( - (t_vec-t_vec[0]) / tau )
@@ -466,7 +466,7 @@ def calcLifetime(t, I, data_subdiv_method = 'NoSubdiv',
         result["t_fit_list"] = t_fit_list
         result["I_fit_list"] = I_fit_list
 
-    elif calc_method is 'avg_I_over_MaxDropRate' :
+    elif calc_method == 'avg_I_over_MaxDropRate' :
 
         lifetime_hr_list = []
 
@@ -485,7 +485,7 @@ def calcLifetime(t, I, data_subdiv_method = 'NoSubdiv',
 
         result["lifetime_hr_list"] = lifetime_hr_list
 
-    elif calc_method is 'avg_I_over_LinearFitDropRate' :
+    elif calc_method == 'avg_I_over_LinearFitDropRate' :
 
         fit_object_list = []
         lifetime_hr_list = []

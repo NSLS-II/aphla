@@ -285,7 +285,7 @@ def caRmCorrect(resp, kker, m, **kwarg):
     ------------
     resp : PV list of the response target, e.g. orbit, tune
     kker : PV list of the controllers, e.g. corrector
-    m : response matrix where :math:`m_{ij}=\Delta resp_i/\Delta kker_j`
+    m : response matrix where :math:`m_{ij}=\\Delta resp_i/\\Delta kker_j`
     scale : scaling factor applied to the calculated kker
     ref : the targeting value of resp PVs
     rcond : the rcond for cutting singular values.

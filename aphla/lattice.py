@@ -535,7 +535,7 @@ class Lattice:
             >>> addGroup(group)
 
         Input *group* is a combination of alphabetic and numeric
-        characters and underscores. i.e. "[a-zA-Z0-9\_]"
+        characters and underscores. i.e. "[a-zA-Z0-9\\_]"
 
         raise ValueError if the name is illegal or the group already exists.
         """

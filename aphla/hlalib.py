@@ -971,7 +971,7 @@ def addGroup(group):
     """
     add a new group to current submachine.
 
-    *group* should be plain string, characters in \[a-zA-Z0-9\_\]
+    *group* should be plain string, characters in \\[a-zA-Z0-9\\_\\]
 
     raise *ValueError* if *group* is an illegal name.
 
@@ -2099,7 +2099,7 @@ def calcBetaBeatRm(bpms, quads, **kwargs):
 
     db/b is measured at BPMs.
 
-    db/b = -\sum dkl_j*\beta_j\cos(2\nu_0(\pi+phi_i-phi_j)
+    db/b = -\\sum dkl_j*\beta_j\cos(2\nu_0(\pi+phi_i-phi_j)
 
     where phi_i is the phase normalized within 2\pi range.
 
