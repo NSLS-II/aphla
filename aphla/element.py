@@ -521,6 +521,13 @@ class CaAction:
                         try:
                             self.pvlim[i] = (rawret[i].lower_ctrl_limit,
                                              rawret[i].upper_ctrl_limit)
+                            if not CONFIG['unitless_quantities']:
+                                warnings.warn(
+                                    "pvlim is stored in raw EPICS units, but "
+                                    "pint units mode (unitless_quantities=False) "
+                                    "is active. Boundary checking in putSetpoint() "
+                                    "may not work correctly.",
+                                    UserWarning, stacklevel=2)
                         except:
                             pass
                 if len(self.pvsp) == 1:
