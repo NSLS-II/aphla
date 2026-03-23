@@ -519,12 +519,8 @@ class CaAction:
                 for i in range(len(self.pvsp)):
                     if self.pvlim[i] is None:
                         try:
-                            self.pvlim[i] = (
-                                self._unit_conv(rawret[i].lower_ctrl_limit,
-                                                None, unitsys, 'setpoint'),
-                                self._unit_conv(rawret[i].upper_ctrl_limit,
-                                                None, unitsys, 'setpoint')
-                            )
+                            self.pvlim[i] = (rawret[i].lower_ctrl_limit,
+                                             rawret[i].upper_ctrl_limit)
                         except:
                             pass
                 if len(self.pvsp) == 1:
