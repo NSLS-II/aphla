@@ -21,6 +21,7 @@ machine_data/nsls2/LTE/20250905/*_states.yaml
 machine_data/nsls2/LTE/20250905/*/
 
 machine_data/nsls2/LTE/20260304/*.pgz
+machine_data/nsls2/LTE/20260304/*.png
 machine_data/nsls2/LTE/20260304/*_states.yaml
 machine_data/nsls2/LTE/20260304/new_LTEs
 machine_data/nsls2/LTE/20260304/respmats
