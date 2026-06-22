@@ -4,6 +4,11 @@ dist/
 
 *.pyc
 
+*bak*
+
+.vscode/
+*.code-workspace
+
 */.ipynb_checkpoints/*
 
 aphla/version.py
@@ -30,4 +35,4 @@ machine_data/nsls2/LTE/20260304/twis_for_matching
 v2tests/nsls2unitconv_quads_sexts.yaml
 v2tests/test_load_*.log
 v2tests/test_unitconv_sp_values*.pkl
-
+v2tests/nsls2_sr_elems_pvs_mvs.pgz
