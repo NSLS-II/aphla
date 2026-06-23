@@ -106,11 +106,29 @@ Created `20260623_add_C29_SXN_ARI_to_LTE.py` by copying from
 - `new_LTEs/20260623_aphla_layout_RelKMPaths.lte`
 - `new_LTEs/20260623_aphla_layout_w_xbpms_RelKMPaths.lte`
 
+### Phase 2 — `gen_ids_quads_states_yaml` (DONE)
+
+Ran without errors. Output: `20260623_aphla_IDs_quads_states.yaml`.
+
+No state key changes were needed — the `22ids_*` naming (22 non-DW IDs) correctly
+includes the new C29 SXN and ARI EPUs. No new `_wo_SXN` or `_wo_ARI` states were
+added, as no pre-matched quad-strengths LTE exists for those configurations.
+
+### Phase 3 — `gen_insertion_device_states_yaml` (DONE)
+
+Ran without errors. Output: `20260623_aphla_IDs_states.yaml`.
+
+State definitions carried over from C09 CDI script:
+- `22ids`: all 22 non-DW IDs closed (includes C29 SXN & ARI)
+- `22ids_wo_HEX`: C27 HEX open
+- `22ids_wo_IFE`: C20 IFE open
+- `22ids_wo_IFE_HEX`: C20 IFE and C27 HEX open
+
 ### Steps Remaining
 
 - [x] **Phase 1** — `gen_new_layout_LTE_file`
-- [ ] **Phase 2** — `gen_ids_quads_states_yaml`
-- [ ] **Phase 3** — `gen_insertion_device_states_yaml`
+- [x] **Phase 2** — `gen_ids_quads_states_yaml`
+- [x] **Phase 3** — `gen_insertion_device_states_yaml`
 - [ ] **Phase 4** — `gen_new_model_LTE_files`
 - [ ] **Phase 5** — `validate_new_LTE_files`
 - [ ] **Phase 6** — `match_quads` (optional)

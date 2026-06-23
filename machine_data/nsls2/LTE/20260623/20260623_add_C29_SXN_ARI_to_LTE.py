@@ -1493,20 +1493,19 @@ def validate_new_LTE_files(
         "EPU50G1C29U": 1.8,
         "EPU70G1C29D": 1.82,
     }
-    # TODO: fill in actual center offsets after Phase 1 (gen_new_layout_LTE_file) runs.
-    # id_center_offsets are relative to straight_center_spos.
+    # id_center_offsets are relative to straight_center_spos (3.3 m).
+    # Values derived from Phase 1 (gen_new_layout_LTE_file) output.
     id_center_offsets = {
-        "EPU50G1C29U": 0.0,  # TODO: update from Phase 1 output
-        "EPU70G1C29D": 0.0,  # TODO: update from Phase 1 output
+        "EPU50G1C29U": -1.124,  # se=3.076; center at 2.176 m
+        "EPU70G1C29D": +1.259,  # se=5.469; center at 4.559 m
     }
     expected_ses = {
         "EPU50G1C29U": straight_center_spos + id_center_offsets["EPU50G1C29U"] + expected_Ls["EPU50G1C29U"] / 2,
         "EPU70G1C29D": straight_center_spos + id_center_offsets["EPU70G1C29D"] + expected_Ls["EPU70G1C29D"] / 2,
-        # TODO: fill in PU1-PU4 s-pos offsets after Phase 1 runs.
-        # "PU1G1C29A": straight_center_spos - ???,
-        # "PU2G1C29A": straight_center_spos - ???,
-        # "PU3G1C29A": straight_center_spos + ???,
-        # "PU4G1C29A": straight_center_spos + ???,
+        "PU1G1C29A": straight_center_spos - 2.244,
+        "PU2G1C29A": straight_center_spos - 0.004,
+        "PU3G1C29A": straight_center_spos + 0.139,
+        "PU4G1C29A": straight_center_spos + 2.379,
     }
 
     d_list = [twi_layouts['new']]
@@ -2562,7 +2561,7 @@ if __name__ == "__main__":
     # Run the following functions one by one in this order while adjusting the
     # script.
     funcs_to_run = {
-        "gen_new_layout_LTE_file": True,
+        "gen_new_layout_LTE_file": False,
         "gen_ids_quads_states_yaml": False,
         "gen_insertion_device_states_yaml": False,
         "gen_new_model_LTE_files": False,
