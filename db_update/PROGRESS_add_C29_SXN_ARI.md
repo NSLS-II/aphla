@@ -73,7 +73,7 @@ For each EPU (EPU50 and EPU70):
 - [x] Step 2 — Back up production files
 - [x] Step 3 — Sync JSON snapshot (if needed) — verified in sync, skipped
 - [ ] Step 4 — Write update function
-- [ ] Step 5 — Flip if/elif block
+- [ ] Step 5 — Add to _FUNCTIONS and run
 - [ ] Step 6 — Add unit conversion entries
 - [ ] Step 7 — Run update script
 - [ ] Step 8 — Copy unitconv to production

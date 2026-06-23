@@ -1726,119 +1726,46 @@ def add_C09_XBPM_and_4_new_skew_quads(exist_ok=False):
 
 
 if __name__ == "__main__":
-    if False:  # Run on 01/14/2022
-        if False:  # Run on 01/14/2022
-            # This WILL modify the database file. Be careful.
-            update_C23u_BNL_PSI_upgrade()
+    import argparse
 
-        # Also manually confirmed that these new setpoint PVs have
-        # .DRVL and .DRVH, which are needed for the orbit feedforward script to
-        # work correctly. Just run the following section.
-        if True:  # Run on 01/14/2022
-            id_list = ap.getElements("epu49g1c23u")
-            for idobj in id_list:
-                print(idobj.name)
-                for iCh in range(6):
-                    try:
-                        pv = idobj.pv(field="cch{0:d}".format(iCh), handle="setpoint")[
-                            0
-                        ]
-                        print(caget([pv + ".DRVL", pv + ".DRVH"]))
-                    except IndexError:
-                        break
-                    except:
-                        raise
-        # DRVL & DRVH had to be adjusted from +/-10 to +/-8.0001
-        if False:  # Run on 05/16/2022
-            from cothread.catools import caput
+    # Run history:
+    # 2022-01-14 — update_C23u_BNL_PSI_upgrade(); cch DRVL/DRVH checked (±10 A)
+    # 2022-05-16 — update_C23d_BNL_PSI_upgrade(); cch DRVL/DRVH adjusted to ±8.0001 A
+    # 2022-11-03 — add_2nd_channels_to_C27_HEX_FF_quads(exist_ok=False)
+    # 2022-11-11 — update_C27_straight(exist_ok=False)
+    # 2022-11-08 — add_C27_HEX_unitconv_table_for_mainI_vs_By_Tesla()
+    # 2022-11-23 — add_2nd_channels_to_C27_HEX_cch6thru9(exist_ok=False)
+    # 2023-01-12 — update_C28_BNL_PSI_upgrade()
+    # 2023-09-18 — update_C20_straight(exist_ok=True)
+    # 2025-09-16 — update_C09_straight(exist_ok=False)
+    # 2025-10-17 — fix_C09()
+    # 2026-03-21 — add_C09_XBPM_and_4_new_skew_quads(exist_ok=False)
+    # 2026-03-21 — save_pgz_db_contents_to_json(machine_list=["SR"])
 
-            id_list = ap.getElements("epu49g1c23u")
-            for idobj in id_list:
-                print(idobj.name)
-                for iCh in range(6):
-                    try:
-                        pv = idobj.pv(field="cch{0:d}".format(iCh), handle="setpoint")[
-                            0
-                        ]
-                        caput(f"{pv}.DRVL", -8.0001)
-                        caput(f"{pv}.DRVH", +8.0001)
-                        print(caget([pv + ".DRVL", pv + ".DRVH"]))
-                    except IndexError:
-                        break
-                    except:
-                        raise
+    _FUNCTIONS = {
+        "save_pgz_db_contents_to_json": lambda: save_pgz_db_contents_to_json(
+            machine_list=["SR"]
+        ),
+    }
 
-    elif False:  # Run on 05/16/2022
-        if False:  # Run on 05/16/2022
-            # This WILL modify the database file. Be careful.
-            update_C23d_BNL_PSI_upgrade()
+    parser = argparse.ArgumentParser(
+        description="aphla v2 database update script",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="Available functions:\n" + "\n".join(f"  {name}" for name in _FUNCTIONS),
+    )
+    parser.add_argument(
+        "--run",
+        metavar="FUNCTION",
+        choices=_FUNCTIONS,
+        help="function to run (see available list below)",
+    )
+    args = parser.parse_args()
 
-        # Also manually confirmed that these new setpoint PVs have
-        # .DRVL and .DRVH, which are needed for the orbit feedforward script to
-        # work correctly. Just run the following section.
-        if True:  # Run on 05/16/2022
-            id_list = ap.getElements("epu49g1c23d")
-            for idobj in id_list:
-                print(idobj.name)
-                for iCh in range(6):
-                    try:
-                        pv = idobj.pv(field="cch{0:d}".format(iCh), handle="setpoint")[
-                            0
-                        ]
-                        print(caget([pv + ".DRVL", pv + ".DRVH"]))
-                    except IndexError:
-                        break
-                    except:
-                        raise
-        # DRVL & DRVH had to be adjusted from +/-10 to +/-8.0001
-        if False:  # Run on 05/16/2022
-            from cothread.catools import caput
-
-            id_list = ap.getElements("epu49g1c23d")
-            for idobj in id_list:
-                print(idobj.name)
-                for iCh in range(6):
-                    try:
-                        pv = idobj.pv(field="cch{0:d}".format(iCh), handle="setpoint")[
-                            0
-                        ]
-                        caput(f"{pv}.DRVL", -8.0001)
-                        caput(f"{pv}.DRVH", +8.0001)
-                        print(caget([pv + ".DRVL", pv + ".DRVH"]))
-                    except IndexError:
-                        break
-                    except:
-                        raise
-
-    elif False:  # Run on 11/03/2022
-        add_2nd_channels_to_C27_HEX_FF_quads(exist_ok=False)
-
-    elif False:  # Run on 11/11/2022
-        update_C27_straight(exist_ok=False)
-
-    elif False:  # Run on 11/08/2022
-        add_C27_HEX_unitconv_table_for_mainI_vs_By_Tesla()
-
-    elif False:  # Run on 11/23/2022
-        add_2nd_channels_to_C27_HEX_cch6thru9(exist_ok=False)
-
-    elif False:  # Run on 01/12/2023
-        update_C28_BNL_PSI_upgrade()
-
-    elif False:  # Last run on 09/18/2023
-        update_C20_straight(exist_ok=True)
-
-    elif False:  # Last run on 09/16/2025
-        update_C09_straight(exist_ok=False)
-    elif False:  # Last run on 10/17/2025
-        fix_C09()
-    elif False:  # Last run on 2026-03-21
-        add_C09_XBPM_and_4_new_skew_quads(exist_ok=False)
-        # Remember to run `save_pgz_db_contents_to_json(machine_list=["SR"])`
-        # after this run to update the JSON version of the database, so
-        # the changes can be easily git-diff'ed.
-
-    elif False:  # Last run on 03/21/2026
-        save_pgz_db_contents_to_json(machine_list=["SR"])
+    if args.run:
+        _FUNCTIONS[args.run]()
+    else:
+        print("No --run specified. Available functions:")
+        for name in _FUNCTIONS:
+            print(f"  {name}")
 
     print("Finished")

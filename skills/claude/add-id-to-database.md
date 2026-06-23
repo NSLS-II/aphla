@@ -60,7 +60,7 @@ Suggested initial content:
 - [ ] Step 2 — Back up production files
 - [ ] Step 3 — Sync JSON snapshot (if needed)
 - [ ] Step 4 — Write update function
-- [ ] Step 5 — Flip if/elif block
+- [ ] Step 5 — Add to _FUNCTIONS and run
 - [ ] Step 6 — Add unit conversion entries
 - [ ] Step 7 — Run update script
 - [ ] Step 8 — Copy unitconv to production
@@ -96,6 +96,15 @@ Before writing the update function, confirm these values with the user:
    - **EPU only** — Current strip feedforward (csff\*): feedforward table PVs
    - Correctors: cch0–cch3 setpoint + readback
    - Orbit feedforward: orbff0–orbff3 (enable, gap slot, phase slot if EPU, current setpoint)
+
+   **PV names are optional for the ID elements.** If PV names are not yet
+   available (e.g. waiting on controls group), you can proceed with `id_pvs = {}`
+   and add a skeleton ID entry (positions and groups, no PV fields). When PVs
+   become available, fill in `id_pvs` and re-run the function with
+   `exist_ok=True` to overwrite the element (see Step 4 for the partial pattern).
+   BPM (UBPM) PV names are always auto-generated from the device name and do not
+   need to be gathered manually.
+
 7. **Unit conversion group** — which existing YAML group to append the new
    element to, or whether a new group is needed
 
@@ -128,18 +137,12 @@ isolates the two concerns into separate commits.
 
 **To check:** Run `save_pgz_db_contents_to_json` and inspect `git diff`:
 
-```python
-elif True:  # Last run on YYYY-MM-DD
-    save_pgz_db_contents_to_json(machine_list=["SR"])
-```
-
 ```bash
-pixi run python db_update/update_apv2_db.py
+pixi run python db_update/update_apv2_db.py --run save_pgz_db_contents_to_json
 git diff db_update/nsls2_sr_elems_pvs_mvs.json
 ```
 
-If `git diff` shows no changes, the JSON is already in sync — flip the block
-back to `elif False:` and skip to Step 4.
+If `git diff` shows no changes, the JSON is already in sync — skip to Step 4.
 
 If there are changes, they represent pre-existing production updates not yet
 captured in the repo. Commit just the JSON now:
@@ -149,7 +152,7 @@ git add db_update/nsls2_sr_elems_pvs_mvs.json
 git commit -m "Sync JSON snapshot to current production state"
 ```
 
-Then flip the block back to `elif False:` and continue to Step 4.
+Then continue to Step 4.
 
 ---
 
@@ -322,46 +325,54 @@ def add_C##_XBPM(exist_ok=False):
     save_pgz_files_for_both_np1_and_np2(d, "SR")
 ```
 
+**Partial workflow — IDs without PVs:** If PV names for the ID elements are not
+yet available, write the function with `id_pvs = {}`. The ID element will be
+inserted into the database with all positional and group metadata but no PV
+field entries (`map = {}`). This is safe — `_add_new_ID_and_IDBPMs` simply
+skips the PV loop when `id_pvs` is empty. When PVs become available:
+
+1. Fill in `id_pvs` in the function.
+2. Add the function back to `_FUNCTIONS` with `exist_ok=True`:
+   ```python
+   "update_C##_straight": lambda: update_C##_straight(exist_ok=True),
+   ```
+3. Re-run:
+   ```bash
+   pixi run python db_update/update_apv2_db.py --run update_C##_straight
+   ```
+
 **Verify after writing:** Confirm element names match the LTE file and naming
 conventions, and PV names are reachable via `caget` if EPICS is accessible.
 
 ---
 
-## Step 5 — Flip the if/elif Block
+## Step 5 — Add to `_FUNCTIONS` and Run
 
 In the `if __name__ == "__main__":` block at the bottom of
-`db_update/update_apv2_db.py`:
-
-1. Find the last `elif True:` block and change it to `elif False:`. Update
-   its trailing comment to `# Last run on YYYY-MM-DD`.
-
-2. Add a new `elif True:` block immediately after it:
+`db_update/update_apv2_db.py`, add the new function to `_FUNCTIONS`:
 
 ```python
-elif True:  # TO-BE-RUN on YYYY-MM-DD
-    update_C##_straight(exist_ok=False)
+_FUNCTIONS = {
+    "save_pgz_db_contents_to_json": lambda: save_pgz_db_contents_to_json(
+        machine_list=["SR"]
+    ),
+    "update_C##_straight": lambda: update_C##_straight(exist_ok=False),
+}
 ```
 
-**Before editing**, the tail of the file looks like:
+Then run the script with `--run`:
+
+```bash
+pixi run python db_update/update_apv2_db.py --run update_C##_straight
+```
+
+**After a successful run:** Add a history comment to the `# Run history:` block:
+
 ```python
-    elif False:  # Last run on 2026-03-21
-        add_C09_XBPM_and_4_new_skew_quads(exist_ok=False)
-
-    elif True:  # Last run on 03/21/2026
-        save_pgz_db_contents_to_json(machine_list=["SR"])
+# YYYY-MM-DD — update_C##_straight(exist_ok=False)
 ```
 
-**After editing:**
-```python
-    elif False:  # Last run on 2026-03-21
-        add_C09_XBPM_and_4_new_skew_quads(exist_ok=False)
-
-    elif False:  # Last run on 03/21/2026
-        save_pgz_db_contents_to_json(machine_list=["SR"])
-
-    elif True:  # TO-BE-RUN on YYYY-MM-DD
-        update_C##_straight(exist_ok=False)
-```
+Then remove the entry from `_FUNCTIONS` (or leave it if you expect to re-run).
 
 ---
 
@@ -452,8 +463,8 @@ conda env for this step.
 - Both `.pgz` files are written to `/epics/aphla/apconf_v2/nsls2/`
 - Script prints `Finished`
 
-**After a successful run:** Update the `elif True:` comment to
-`elif False:  # Last run on YYYY-MM-DD`.
+**After a successful run:** Add a history comment to the `# Run history:` block
+and remove the function entry from `_FUNCTIONS`.
 
 **Troubleshooting:**
 - `"Specified element already exists"` — set `exist_ok=True` only when
@@ -478,20 +489,13 @@ Confirm the copy succeeded with `ls -la /epics/aphla/apconf_v2/nsls2/nsls2sr_uni
 The JSON in the repo must reflect the updated `.pgz` state so the commit diff
 is readable.
 
-In `update_apv2_db.py`, flip the `save_pgz_db_contents_to_json` block to
-`elif True:`:
+`save_pgz_db_contents_to_json` is always available in `_FUNCTIONS`. Run it with:
 
-```python
-elif True:  # Last run on YYYY-MM-DD
-    save_pgz_db_contents_to_json(machine_list=["SR"])
-```
-
-Run the script again:
 ```bash
-pixi run python db_update/update_apv2_db.py
+pixi run python db_update/update_apv2_db.py --run save_pgz_db_contents_to_json
 ```
 
-Then flip it back to `elif False:`.
+Then add a history comment to the `# Run history:` block.
 
 **Verify:** `git diff db_update/nsls2_sr_elems_pvs_mvs.json` should show the
 new element entries.
