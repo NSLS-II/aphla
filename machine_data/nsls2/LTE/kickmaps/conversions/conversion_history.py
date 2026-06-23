@@ -208,6 +208,44 @@ def gen_C09_CDI_half():
     _gen_radia_sdds_with_without_km2sdds(radia_file_base_name, common_kwargs)
 
 
+def gen_C29_SXN_EPU50():
+    """
+    C29 upstream EPU50 (SXN beamline).
+    Active length = 1.8 m.
+    """
+
+    radia_file_base_name = "SXN_EPU50LV"
+
+    common_kwargs = dict(
+        input_filepath=f"../orig_Radia/{radia_file_base_name}.txt",
+        input_format="radia",
+        output_length=1.8,
+        design_energy_GeV=3.0,
+        output_decimal=16,
+    )
+
+    _gen_radia_sdds_with_without_km2sdds(radia_file_base_name, common_kwargs)
+
+
+def gen_C29_ARI_EPU70():
+    """
+    C29 downstream EPU70 (ARI beamline).
+    Active length = 1.82 m.
+    """
+
+    radia_file_base_name = "ARI_EPU70LV"
+
+    common_kwargs = dict(
+        input_filepath=f"../orig_Radia/{radia_file_base_name}.txt",
+        input_format="radia",
+        output_length=1.82,
+        design_energy_GeV=3.0,
+        output_decimal=16,
+    )
+
+    _gen_radia_sdds_with_without_km2sdds(radia_file_base_name, common_kwargs)
+
+
 if __name__ == "__main__":
 
     if sys.argv[1] == "C27":
@@ -226,3 +264,6 @@ if __name__ == "__main__":
     elif sys.argv[1] == "C09":
         gen_C09_CDI()
         gen_C09_CDI_half()
+    elif sys.argv[1] == "C29":
+        gen_C29_SXN_EPU50()
+        gen_C29_ARI_EPU70()
