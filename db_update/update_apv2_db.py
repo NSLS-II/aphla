@@ -70,7 +70,7 @@ def save_pgz_db_contents_to_json(machine_list=None):
 
         d = get_elem_pv_mv_pgz_database_dict(machine)
 
-        json_filepath = pgz_filepath.name.replace(".pgz", ".json")
+        json_filepath = Path(__file__).parent / pgz_filepath.name.replace(".pgz", ".json")
         with open(json_filepath, "w") as f:
             json.dump(d, f, default=jsonify, indent=2)
 
@@ -1838,7 +1838,7 @@ if __name__ == "__main__":
         # after this run to update the JSON version of the database, so
         # the changes can be easily git-diff'ed.
 
-    elif True:  # Last run on 03/21/2026
+    elif False:  # Last run on 03/21/2026
         save_pgz_db_contents_to_json(machine_list=["SR"])
 
     print("Finished")
