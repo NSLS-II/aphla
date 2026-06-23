@@ -76,7 +76,8 @@ def conv_yaml_dict_to_plain_dict(yaml_dict):
     return json.loads(json.dumps(yaml_dict))
 
 
-def basic_lattice_integrity_check(LTE, straight_cell_num, n_existing_ubpms, n_existing_ukickmaps):
+def basic_lattice_integrity_check(LTE, straight_cell_num, n_existing_ubpms, n_existing_ukickmaps,
+                                  table_description="", L_col_header="Orig.L [m]", compare_L=None):
 
     LTE_d = LTE.get_used_beamline_element_defs()
 
@@ -118,7 +119,7 @@ def basic_lattice_integrity_check(LTE, straight_cell_num, n_existing_ubpms, n_ex
     ordered_skquad_names = np.array(ordered_skquad_names)
     assert np.all(ordered_skquad_names[::2] == ordered_skquad_names[1::2])
     ordered_skquad_names = ordered_skquad_names[::2].tolist()
-    assert len(ordered_skquad_names) == 30 + 1  # "+1" for C16SQL
+    assert len(ordered_skquad_names) == 30 + 1 + 15  # "+1" for C16SQL, "+15" for SQ3H (all odd cells)
 
     ordered_sext_names = [
         name
@@ -272,7 +273,9 @@ def basic_lattice_integrity_check(LTE, straight_cell_num, n_existing_ubpms, n_ex
 
     max_name_len = max([len(name) for name in flat_used_elem_names[iStart:iEnd]])
 
-    header = f'{"Name":{max_name_len}s}' + " | Orig.L [m] |   se [m]   |" + f" {'Type':6s}"
+    if table_description:
+        print(table_description)
+    header = f'{"Name":{max_name_len}s}' + f" | {L_col_header} |   se [m]   |" + f" {'Type':6s}"
     print(header)
     print("-" * len(header))
     straight_spos = 0.0
@@ -295,7 +298,11 @@ def basic_lattice_integrity_check(LTE, straight_cell_num, n_existing_ubpms, n_ex
             orig_L[name] = L
             orig_se[name] = s
 
-        print(f"{name:{max_name_len}s} | {L:10.6f} | {s:10.6f} | {elem_type}")
+        if compare_L is not None and (name not in compare_L or not np.isclose(compare_L[name], L)):
+            marker = "  <"
+        else:
+            marker = ""
+        print(f"{name:{max_name_len}s} | {L:10.6f} | {s:10.6f} | {elem_type}{marker}")
 
     is_cell_even = (straight_cell_num % 2 == 0)
 
@@ -348,21 +355,22 @@ def interactively_adjust_elements(
     # WARNING: Don't use S1/S3 values for `v3localbump` IOC (or equivalently S1/S2 values
     # for active interlock PVs). Those would be correct only if the ID center is exactly at
     # the straight center.
-    # TODO: Update these offsets to match actual design requirements for C29.
+    # Updated these offsets to match actual design requirements for C29.
     target_dse = {
-        "PU1G1C29A": -3.94,   # TODO: adjust; upstream of IDC29H1
-        "PU2G1C29A": -0.50,   # TODO: adjust; between IDC29H1 and IDC29H2
-        "PU3G1C29A": +0.50,   # TODO: adjust; between IDC29H1 and IDC29H2
-        "PU4G1C29A": +3.94,   # TODO: adjust; downstream of IDC29H2
+        "PU1G1C29A": -2.244,   # upstream of IDC29H1
+        "PU2G1C29A": -0.004,   # between IDC29H1 and IDC29H2
+        "PU3G1C29A": +0.139,   # between IDC29H1 and IDC29H2
+        "PU4G1C29A": +2.379,   # downstream of IDC29H2
     }
     # target_dsc [m]: s-pos of the element center w.r.t. the straight center
     # (i.e., dsc = 0 at the straight center)
-    # TODO: Update these offsets to match actual design requirements for C29.
+    # Updated these offsets to match actual design requirements for C29.
     target_dsc = {
-        "IDC29H1": -2.5,  # TODO: adjust; upstream EPU50 center offset
-        "IDC29H2": +2.5,  # TODO: adjust; downstream EPU70 center offset
+        "IDC29H1": -1.124,  # upstream EPU50 center offset
+        "IDC29H2": +1.259,  # downstream EPU70 center offset
     }
 
+    target_se["MK5G1C29A"] = straight_center_spos  # MK5 at straight center (3.3 m)
     target_se["PU1G1C29A"] = straight_center_spos + target_dse["PU1G1C29A"]
     target_se["IDC29H1"] = (
         straight_center_spos + target_dsc["IDC29H1"] + new_Ls["IDC29H1"] / 2
@@ -390,6 +398,7 @@ def interactively_adjust_elements(
         "DL02G1C29A": "DL02G1C29A",
         "IDC29H1": "IDC29H1",
         "DL03G1C29A": "PU2G1C29A",
+        "DL04G1C29A": "MK5G1C29A",  # absorbs the 0.004 m gap to center MK5 exactly
         "DL05G1C29A": "PU3G1C29A",
         "DL06G1C29A": "DL06G1C29A",
         "IDC29H2": "IDC29H2",
@@ -402,6 +411,12 @@ def interactively_adjust_elements(
     for name_for_L_adj, name_for_target_se in target_names.items():
         new_Ls[name_for_L_adj] = 0.0  # Only initializing here
 
+    print(
+        "Table 2 — Proposed element length adjustments. Each adjustable element's new\n"
+        "length is computed to place it (or a downstream reference element) at the\n"
+        "target s-position. Rows marked with '<' have a length that differs from the\n"
+        "original."
+    )
     header = f'{"Name":{max_name_len}s}' + " | Orig.L [m] |  New L [m] |   se [m]   "
     print(header)
     print("-" * len(header))
@@ -441,7 +456,11 @@ def interactively_adjust_elements(
         if name in target_se:
             np.testing.assert_almost_equal(se, target_se[name], decimal=9)
 
-        print(f"{name:{max_name_len}s} | {L:10.6f} | {new_L:10.6f} | {se:10.6f}")
+        if i not in (iStart, iEnd - 1) and not np.isclose(new_L, L):
+            marker = "  <"
+        else:
+            marker = ""
+        print(f"{name:{max_name_len}s} | {L:10.6f} | {new_L:10.6f} | {se:10.6f}{marker}")
 
     np.testing.assert_almost_equal(straight_spos, straight_end_spos, decimal=9)
 
@@ -630,7 +649,13 @@ def gen_new_layout_LTE_file(straight_cell_num, n_existing_ubpms, n_existing_ukic
         orig_L,
         max_name_len,
     ) = basic_lattice_integrity_check(
-        base_LTE, straight_cell_num, n_existing_ubpms, n_existing_ukickmaps)
+        base_LTE, straight_cell_num, n_existing_ubpms, n_existing_ukickmaps,
+        table_description=(
+            "Table 1 — Original straight section layout from the source LTE.\n"
+            "Lengths and s-positions are unmodified; element types are as-is\n"
+            "(IDs and BPMs still appear as DRIF placeholders)."
+        ),
+    )
 
     # Interactively adjust this section to generate a desirable table
     new_Ls = interactively_adjust_elements(
@@ -683,7 +708,7 @@ def gen_new_layout_LTE_file(straight_cell_num, n_existing_ubpms, n_existing_ukic
         ),
         dict(elem_name=new_u_name, prop_name="N_KICKS", prop_val=f"{nkicks_u}"),
         dict(elem_name=new_u_name, prop_name="PERIODS", prop_val=f"{nkicks_u}"),
-        dict(elem_name=new_u_name, prop_name="KREF", prop_val="1.0"),  # TODO: set correct KREF
+        dict(elem_name=new_u_name, prop_name="KREF", prop_val="3.53"),  # Updated to correct KREF
         dict(
             elem_name=new_d_name,
             prop_name="INPUT_FILE",
@@ -691,7 +716,7 @@ def gen_new_layout_LTE_file(straight_cell_num, n_existing_ubpms, n_existing_ukic
         ),
         dict(elem_name=new_d_name, prop_name="N_KICKS", prop_val=f"{nkicks_d}"),
         dict(elem_name=new_d_name, prop_name="PERIODS", prop_val=f"{nkicks_d}"),
-        dict(elem_name=new_d_name, prop_name="KREF", prop_val="1.0"),  # TODO: set correct KREF
+        dict(elem_name=new_d_name, prop_name="KREF", prop_val="6.44"),  # Updated to correct KREF
     ]
 
     new_elem_defs = []
@@ -720,14 +745,22 @@ def gen_new_layout_LTE_file(straight_cell_num, n_existing_ubpms, n_existing_ukic
     n_new_ukickmaps = n_existing_ukickmaps + 2  # Added 2 full-length kickmaps for C29
     gen_new_layout_w_xbpms_LTE_file(
         new_LTE_layout_filepath,
-        straight_cell_num, n_new_ubpms, n_new_ukickmaps
+        straight_cell_num, n_new_ubpms, n_new_ukickmaps,
+        compare_L=orig_L,
+        table_description=(
+            "Table 3 — Final straight section layout after all modifications.\n"
+            "New L [m] shows the lengths written to the LTE file; element names\n"
+            "and types reflect the renamed/retyped IDs and BPMs. Rows marked\n"
+            "with '<' differ from the original source LTE."
+        ),
     )
 
     print("Finished.")
 
 def gen_new_layout_w_xbpms_LTE_file(
         new_layout_LTE_wo_xbpms_filepath,
-        straight_cell_num, n_base_ubpms, n_base_ukickmaps
+        straight_cell_num, n_base_ubpms, n_base_ukickmaps,
+        compare_L=None, table_description="",
         ):
 
     base_LTE = _get_LTE_from_bug_fixed_ltemanager_Lattice(
@@ -746,7 +779,11 @@ def gen_new_layout_w_xbpms_LTE_file(
         orig_L,
         max_name_len,
     ) = basic_lattice_integrity_check(
-        base_LTE, straight_cell_num, n_base_ubpms, n_base_ukickmaps)
+        base_LTE, straight_cell_num, n_base_ubpms, n_base_ukickmaps,
+        table_description=table_description,
+        L_col_header="New L [m]",
+        compare_L=compare_L,
+    )
 
 
     elem_name_changes = {}
@@ -2525,7 +2562,7 @@ if __name__ == "__main__":
     # Run the following functions one by one in this order while adjusting the
     # script.
     funcs_to_run = {
-        "gen_new_layout_LTE_file": False,
+        "gen_new_layout_LTE_file": True,
         "gen_ids_quads_states_yaml": False,
         "gen_insertion_device_states_yaml": False,
         "gen_new_model_LTE_files": False,

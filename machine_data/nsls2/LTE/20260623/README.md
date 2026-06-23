@@ -82,10 +82,33 @@ Created `20260623_add_C29_SXN_ARI_to_LTE.py` by copying from
   adjust `target_dse`/`target_dsc` in `interactively_adjust_elements()` to match actual
   design requirements for the C29 EPU positions.
 
+### Phase 1 — `gen_new_layout_LTE_file` (DONE)
+
+**Bugs fixed during this phase:**
+- `basic_lattice_integrity_check`: skew quad assertion updated from `30 + 1` to
+  `30 + 1 + 15` to account for the 15 SQ3H elements added in the 20260304 LTE.
+- `interactively_adjust_elements`: `DL04G1C29A` added to `target_names` (pointing
+  to `MK5G1C29A`) so MK5 lands exactly at the straight center (se = 3.300 m).
+
+**Final C29 straight layout (local se from straight start, i.e., from GSG1C29A):**
+
+| Element        | se [m]   | L [m]  | Type     | Note                          |
+|----------------|----------|--------|----------|-------------------------------|
+| PU1G1C29A      | 1.056000 | 0      | MONI     | Upstream BPM                  |
+| EPU50G1C29U    | 3.076000 | 1.8000 | UKICKMAP | SXN; center at 2.176 m (−1.124 m from straight center) |
+| PU2G1C29A      | 3.296000 | 0      | MONI     | Between IDs                   |
+| MK5G1C29A      | 3.300000 | 0      | MARK     | Straight center                |
+| PU3G1C29A      | 3.439000 | 0      | MONI     | Between IDs                   |
+| EPU70G1C29D    | 5.469000 | 1.8200 | UKICKMAP | ARI; center at 4.559 m (+1.259 m from straight center) |
+| PU4G1C29A      | 5.679000 | 0      | MONI     | Downstream BPM                |
+
+**Output files written:**
+- `new_LTEs/20260623_aphla_layout_RelKMPaths.lte`
+- `new_LTEs/20260623_aphla_layout_w_xbpms_RelKMPaths.lte`
+
 ### Steps Remaining
 
-- [ ] **Phase 1** — `gen_new_layout_LTE_file`
-- [ ] **Phase 1** — `gen_new_layout_LTE_file` (set flag True, run, verify, adjust KREF + target positions, reset)
+- [x] **Phase 1** — `gen_new_layout_LTE_file`
 - [ ] **Phase 2** — `gen_ids_quads_states_yaml`
 - [ ] **Phase 3** — `gen_insertion_device_states_yaml`
 - [ ] **Phase 4** — `gen_new_model_LTE_files`
