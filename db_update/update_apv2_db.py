@@ -1308,6 +1308,9 @@ def _add_new_ID_and_IDBPMs(exist_ok, cell_num, ubpm_info_list, id_info_list, id_
         else:
             raise NotImplementedError
 
+        if not new["map"]:
+            new["tags"] = []
+
         d[elem_name] = new
 
     return d
@@ -1725,6 +1728,71 @@ def add_C09_XBPM_and_4_new_skew_quads(exist_ok=False):
     save_pgz_files_for_both_np1_and_np2(d, "SR")
 
 
+def add_C29_SXN_ARI_IDs(exist_ok=False):
+    """C29 SXN (EPU50) and ARI (EPU70) — partial: EPU PVs to be added later"""
+
+    assert np.__version__.startswith("2.")
+
+    cell_num = 29
+
+    # s-pos of center of straight
+    straight_sc = SR_CIRCUMF / 30 * cell_num  # [m]
+
+    ubpm_info_list = [
+        dict(
+            name="pu1g1c29a",
+            sc=float(f"{straight_sc - 2.244:.6f}"),
+            devname="C29-BPM7",
+            groups=["UBPM", "PU1"],
+        ),
+        dict(
+            name="pu2g1c29a",
+            sc=float(f"{straight_sc - 0.004:.6f}"),
+            devname="C29-BPM8",
+            groups=["UBPM", "PU2"],
+        ),
+        dict(
+            name="pu3g1c29a",
+            sc=float(f"{straight_sc + 0.139:.6f}"),
+            devname="C29-BPM9",
+            groups=["UBPM", "PU3"],
+        ),
+        dict(
+            name="pu4g1c29a",
+            sc=float(f"{straight_sc + 2.379:.6f}"),
+            devname="C29-BPM10",
+            groups=["UBPM", "PU4"],
+        ),
+    ]
+
+    id_info_list = [
+        dict(
+            name="epu50g1c29u",
+            type="EPU",
+            symmetry="U",
+            groups=["C29", "EPU", "EPU50", "ID", "G1", "U", "SXN"],
+            sc=float(f"{straight_sc - 1.124:.6f}"),
+            L=1.800,
+        ),
+        dict(
+            name="epu70g1c29d",
+            type="EPU",
+            symmetry="D",
+            groups=["C29", "EPU", "EPU70", "ID", "G1", "D", "ARI"],
+            sc=float(f"{straight_sc + 1.259:.6f}"),
+            L=1.820,
+        ),
+    ]
+
+    # EPU PVs not yet available; fill in id_pvs and re-run with exist_ok=True
+    id_pvs = {}
+
+    d = _add_new_ID_and_IDBPMs(
+        exist_ok, cell_num, ubpm_info_list, id_info_list, id_pvs)
+
+    save_pgz_files_for_both_np1_and_np2(d, "SR")
+
+
 if __name__ == "__main__":
     import argparse
 
@@ -1741,6 +1809,7 @@ if __name__ == "__main__":
     # 2025-10-17 — fix_C09()
     # 2026-03-21 — add_C09_XBPM_and_4_new_skew_quads(exist_ok=False)
     # 2026-03-21 — save_pgz_db_contents_to_json(machine_list=["SR"])
+    # 2026-06-23 — add_C29_SXN_ARI_IDs(exist_ok=True)   # UBPMs + EPU skeletons (id_pvs={}); tags=[] for empty-map elements
 
     _FUNCTIONS = {
         "save_pgz_db_contents_to_json": lambda: save_pgz_db_contents_to_json(

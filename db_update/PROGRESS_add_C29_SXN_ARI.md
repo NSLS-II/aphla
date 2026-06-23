@@ -13,14 +13,14 @@
 From LTE script (`target_dse`/`target_dsc`); straight_sc = SR_CIRCUMF / 30 * 29.
 (Straight center is 3.300 m from straight start in the ELEGANT lattice.)
 
-| Element     | se from straight start [m] | L [m] | sc offset from straight_sc [m] |
-|-------------|---------------------------|-------|-------------------------------|
-| pu1g1c29a   | 1.056                     | 0     | -2.244 (target_dse)           |
-| epu50g1c29u | 3.076                     | 1.800 | -1.124 (target_dsc)           |
-| pu2g1c29a   | 3.296                     | 0     | -0.004 (target_dse)           |
-| pu3g1c29a   | 3.439                     | 0     | +0.139 (target_dse)           |
-| epu70g1c29d | 5.469                     | 1.820 | +1.259 (target_dsc)           |
-| pu4g1c29a   | 5.679                     | 0     | +2.379 (target_dse)           |
+| Element     | se from straight start [m] | L [m] | sc offset from straight_sc [m] | devname   |
+|-------------|---------------------------|-------|-------------------------------|-----------|
+| pu1g1c29a   | 1.056                     | 0     | -2.244 (target_dse)           | C29-BPM7  |
+| epu50g1c29u | 3.076                     | 1.800 | -1.124 (target_dsc)           | —         |
+| pu2g1c29a   | 3.296                     | 0     | -0.004 (target_dse)           | C29-BPM8  |
+| pu3g1c29a   | 3.439                     | 0     | +0.139 (target_dse)           | C29-BPM9  |
+| epu70g1c29d | 5.469                     | 1.820 | +1.259 (target_dsc)           | —         |
+| pu4g1c29a   | 5.679                     | 0     | +2.379 (target_dse)           | C29-BPM10 |
 
 ## Unknowns still needed
 
@@ -69,15 +69,15 @@ For each EPU (EPU50 and EPU70):
 
 ## Progress
 
-- [ ] Step 1 — Gather parameters
+- [x] Step 1 — Gather parameters
 - [x] Step 2 — Back up production files
 - [x] Step 3 — Sync JSON snapshot (if needed) — verified in sync, skipped
-- [ ] Step 4 — Write update function
-- [ ] Step 5 — Add to _FUNCTIONS and run
+- [x] Step 4 — Write update function — add_C29_SXN_ARI_IDs(); EPU PVs deferred (id_pvs={})
+- [x] Step 5 — Add to _FUNCTIONS and run — add_C29_SXN_ARI_IDs(exist_ok=True); 2026-06-23
 - [ ] Step 6 — Add unit conversion entries
 - [ ] Step 7 — Run update script
 - [ ] Step 8 — Copy unitconv to production
-- [ ] Step 9 — Regenerate JSON snapshot
+- [x] Step 9 — Regenerate JSON snapshot
 - [ ] Step 10 — Commit
 
 ## Notes
