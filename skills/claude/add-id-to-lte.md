@@ -237,7 +237,14 @@ new_kickmap_elem_names = ["IVU18G1C##CM"]       # <-- update for new ID
 - New kickmap element is present
 - Twiss functions (beta, eta, phase) are consistent with expectations
 
-**If validation fails:** Check element names in the LTE files and fix the source functions.
+**If `expected_ses` assertions fail with a tiny mismatch (< 1e-10 m):** This is
+floating-point accumulation in cumulative s-positions, not a real error. The
+`expected_ses` assertions should use `decimal=9` (1 nm tolerance); `decimal=12`
+is too tight for elements deep in the ring where hundreds of element lengths
+accumulate. The `expected_Ls` assertions can stay at `decimal=12` since element
+lengths are stored exactly in the LTE file and do not accumulate error.
+
+**If validation fails for other reasons:** Check element names in the LTE files and fix the source functions.
 
 ## Step 7 — Phase 6 (Optional): Match Quads
 

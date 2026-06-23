@@ -1527,7 +1527,7 @@ def validate_new_LTE_files(
 
         for name, desired in expected_ses.items():
             i = elem_names.index(name)
-            np.testing.assert_almost_equal(ar["s"][i], desired, decimal=12)
+            np.testing.assert_almost_equal(ar["s"][i], desired, decimal=9)
 
     # C29 EPUs are NOT split for the X-BPM layout, so no _HALF handling needed here.
     expected_Ls["IVU20G1C03CM_HALF"] = 1.5
@@ -1560,7 +1560,7 @@ def validate_new_LTE_files(
 
         for name, desired in expected_ses.items():
             i = elem_names.index(name)
-            np.testing.assert_almost_equal(ar["s"][i], desired, decimal=12)
+            np.testing.assert_almost_equal(ar["s"][i], desired, decimal=9)
 
     # --- Check quads state ---
     (elem_name_patterns, prop_names, n_expected_matches) = list(

@@ -124,13 +124,50 @@ State definitions carried over from C09 CDI script:
 - `22ids_wo_IFE`: C20 IFE open
 - `22ids_wo_IFE_HEX`: C20 IFE and C27 HEX open
 
+### Phase 4 — `gen_new_model_LTE_files` (DONE)
+
+Ran without errors. Output: 14 model LTE files in `new_LTEs/`
+(7 state combinations × 2 for with/without X-BPMs):
+
+- `bare:day1`
+- `3dw:day1`, `3dw:nuy27`
+- `22ids_wo_IFE_HEX:17ids_matched_VS`, `22ids_wo_HEX:17ids_matched_VS`
+- `22ids_wo_IFE:18ids_matched_YL`, `22ids:18ids_matched_YL`
+
+### Phase 5 — `validate_new_LTE_files` (DONE)
+
+Ran without errors. All element positions validated:
+
+- `EPU50G1C29U`, `EPU70G1C29D` — lengths and end-positions confirmed
+- `PU1G1C29A`–`PU4G1C29A` — s-positions confirmed
+
+**Note:** `expected_ses` assertions use `decimal=9` (1 nm tolerance) rather than
+`decimal=12`, because cumulative s-positions at ~765 m accumulate floating-point
+errors on the order of 1e-11 m that exceed 12-decimal tolerance. Element lengths
+(`expected_Ls`) remain at `decimal=12` since they are stored exactly in the LTE.
+
+### Phase 7 — `publicize_new_kickmap_files` (DONE)
+
+Ran without errors. Copied to official kickmaps directory:
+
+- `/epics/aphla/apconf_v2/nsls2/models/SR/pyelegant/kickmaps/SXN_EPU50LV_1o8m_T2m2_woKm2sdds.sdds`
+- `/epics/aphla/apconf_v2/nsls2/models/SR/pyelegant/kickmaps/ARI_EPU70LV_1o82m_T2m2_woKm2sdds.sdds`
+
+### Phase 8 — `publicize_new_model_LTE_files` (DONE)
+
+Ran without errors. All 14 model LTE files written to:
+
+```
+/epics/aphla/apconf_v2/nsls2/models/SR/pyelegant/LTEs/20260623/
+```
+
 ### Steps Remaining
 
 - [x] **Phase 1** — `gen_new_layout_LTE_file`
 - [x] **Phase 2** — `gen_ids_quads_states_yaml`
 - [x] **Phase 3** — `gen_insertion_device_states_yaml`
-- [ ] **Phase 4** — `gen_new_model_LTE_files`
-- [ ] **Phase 5** — `validate_new_LTE_files`
-- [ ] **Phase 6** — `match_quads` (optional)
-- [ ] **Phase 7** — `publicize_new_kickmap_files`
-- [ ] **Phase 8** — `publicize_new_model_LTE_files`
+- [x] **Phase 4** — `gen_new_model_LTE_files`
+- [x] **Phase 5** — `validate_new_LTE_files`
+- [~] **Phase 6** — `match_quads` (skipped — all quad states reused from prior scripts)
+- [x] **Phase 7** — `publicize_new_kickmap_files`
+- [x] **Phase 8** — `publicize_new_model_LTE_files`
