@@ -474,6 +474,196 @@ SR:
       ]
     handles: [readback]
 
+  ID_EPU_gap_phase_type2_C29: &ID_EPU_gap_phase_type2_C29
+    elements: [epu50g1c29u, epu70g1c29d]
+    fields: [
+      gap, phase,
+      orbff0_m0_gap, orbff0_m1_gap, orbff0_m2_gap, orbff0_m3_gap,
+      orbff1_m0_gap, orbff1_m1_gap, orbff1_m2_gap, orbff1_m3_gap,
+      orbff2_m0_gap, orbff2_m1_gap, orbff2_m2_gap, orbff2_m3_gap,
+      orbff3_m0_gap, orbff3_m1_gap, orbff3_m2_gap, orbff3_m3_gap,
+      orbff0_m0_phase, orbff0_m1_phase, orbff0_m2_phase, orbff0_m3_phase,
+      orbff1_m0_phase, orbff1_m1_phase, orbff1_m2_phase, orbff1_m3_phase,
+      orbff2_m0_phase, orbff2_m1_phase, orbff2_m2_phase, orbff2_m3_phase,
+      orbff3_m0_phase, orbff3_m1_phase, orbff3_m2_phase, orbff3_m3_phase,
+      csff0_m0_gap,
+      csff0_m0_phase,
+      csff0_m1_gap,
+      csff0_m1_phase,
+      csff0_m2_gap,
+      csff0_m2_phase,
+      csff0_m3_gap,
+      csff0_m3_phase,
+      csff1_m0_gap,
+      csff1_m0_phase,
+      csff1_m1_gap,
+      csff1_m1_phase,
+      csff1_m2_gap,
+      csff1_m2_phase,
+      csff1_m3_gap,
+      csff1_m3_phase,
+      csff2_m0_gap,
+      csff2_m0_phase,
+      csff2_m1_gap,
+      csff2_m1_phase,
+      csff2_m2_gap,
+      csff2_m2_phase,
+      csff2_m3_gap,
+      csff2_m3_phase,
+      csff3_m0_gap,
+      csff3_m0_phase,
+      csff3_m1_gap,
+      csff3_m1_phase,
+      csff3_m2_gap,
+      csff3_m2_phase,
+      csff3_m3_gap,
+      csff3_m3_phase,
+      csff4_m0_gap,
+      csff4_m0_phase,
+      csff4_m1_gap,
+      csff4_m1_phase,
+      csff4_m2_gap,
+      csff4_m2_phase,
+      csff4_m3_gap,
+      csff4_m3_phase,
+      csff5_m0_gap,
+      csff5_m0_phase,
+      csff5_m1_gap,
+      csff5_m1_phase,
+      csff5_m2_gap,
+      csff5_m2_phase,
+      csff5_m3_gap,
+      csff5_m3_phase,
+      csff6_m0_gap,
+      csff6_m0_phase,
+      csff6_m1_gap,
+      csff6_m1_phase,
+      csff6_m2_gap,
+      csff6_m2_phase,
+      csff6_m3_gap,
+      csff6_m3_phase,
+      csff7_m0_gap,
+      csff7_m0_phase,
+      csff7_m1_gap,
+      csff7_m1_phase,
+      csff7_m2_gap,
+      csff7_m2_phase,
+      csff7_m3_gap,
+      csff7_m3_phase,
+      csff8_m0_gap,
+      csff8_m0_phase,
+      csff8_m1_gap,
+      csff8_m1_phase,
+      csff8_m2_gap,
+      csff8_m2_phase,
+      csff8_m3_gap,
+      csff8_m3_phase,
+      csff9_m0_gap,
+      csff9_m0_phase,
+      csff9_m1_gap,
+      csff9_m1_phase,
+      csff9_m2_gap,
+      csff9_m2_phase,
+      csff9_m3_gap,
+      csff9_m3_phase,
+      csff10_m0_gap,
+      csff10_m0_phase,
+      csff10_m1_gap,
+      csff10_m1_phase,
+      csff10_m2_gap,
+      csff10_m2_phase,
+      csff10_m3_gap,
+      csff10_m3_phase,
+      csff11_m0_gap,
+      csff11_m0_phase,
+      csff11_m1_gap,
+      csff11_m1_phase,
+      csff11_m2_gap,
+      csff11_m2_phase,
+      csff11_m3_gap,
+      csff11_m3_phase,
+      csff12_m0_gap,
+      csff12_m0_phase,
+      csff12_m1_gap,
+      csff12_m1_phase,
+      csff12_m2_gap,
+      csff12_m2_phase,
+      csff12_m3_gap,
+      csff12_m3_phase,
+      csff13_m0_gap,
+      csff13_m0_phase,
+      csff13_m1_gap,
+      csff13_m1_phase,
+      csff13_m2_gap,
+      csff13_m2_phase,
+      csff13_m3_gap,
+      csff13_m3_phase,
+      csff14_m0_gap,
+      csff14_m0_phase,
+      csff14_m1_gap,
+      csff14_m1_phase,
+      csff14_m2_gap,
+      csff14_m2_phase,
+      csff14_m3_gap,
+      csff14_m3_phase,
+      csff15_m0_gap,
+      csff15_m0_phase,
+      csff15_m1_gap,
+      csff15_m1_phase,
+      csff15_m2_gap,
+      csff15_m2_phase,
+      csff15_m3_gap,
+      csff15_m3_phase,
+      csff16_m0_gap,
+      csff16_m0_phase,
+      csff16_m1_gap,
+      csff16_m1_phase,
+      csff16_m2_gap,
+      csff16_m2_phase,
+      csff16_m3_gap,
+      csff16_m3_phase,
+      csff17_m0_gap,
+      csff17_m0_phase,
+      csff17_m1_gap,
+      csff17_m1_phase,
+      csff17_m2_gap,
+      csff17_m2_phase,
+      csff17_m3_gap,
+      csff17_m3_phase,
+      csff18_m0_gap,
+      csff18_m0_phase,
+      csff18_m1_gap,
+      csff18_m1_phase,
+      csff18_m2_gap,
+      csff18_m2_phase,
+      csff18_m3_gap,
+      csff18_m3_phase,
+      csff19_m0_gap,
+      csff19_m0_phase,
+      csff19_m1_gap,
+      csff19_m1_phase,
+      csff19_m2_gap,
+      csff19_m2_phase,
+      csff19_m3_gap,
+      csff19_m3_phase,
+      ]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: um
+    dst_unit: mm
+    class: polynomial
+    invertible: True
+    coeffs: [1e-3, 0.0]
+
+  ID_EPU_gap_phase_type2_C29_readonly:
+    <<: *ID_EPU_gap_phase_type2_C29
+    fields: [
+      gap_hilim, gap_lolim, gap_hinominal, gap_lonominal,
+      phase_hilim, phase_lolim,
+      ]
+    handles: [readback]
+
   ID_EPU_gap_phase_speed_type1:
     elements: [epu57g1c02c, epu57g1c21u, epu105g1c21d]
     fields: [gap_speed, phase_speed]
@@ -488,6 +678,18 @@ SR:
 
   ID_EPU_gap_phase_speed_type2:
     elements: [epu60g1c07d, epu49g1c23u, epu49g1c23d]
+    fields: [gap_speed, phase_speed]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: "um/s"
+    dst_unit: "mm/s"
+    class: polynomial
+    invertible: True
+    coeffs: [1e-3, 0.0]
+
+  ID_EPU_gap_phase_speed_type2_C29:
+    elements: [epu50g1c29u, epu70g1c29d]
     fields: [gap_speed, phase_speed]
     handles: [readback, setpoint]
     src_unitsys:

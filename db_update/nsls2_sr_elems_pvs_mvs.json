@@ -186329,7 +186329,7 @@
     }
   },
   "pu1g1c29a": {
-    "id": 1310,
+    "id": 1322,
     "archive": 0,
     "size": 0,
     "virtual": 0,
@@ -186554,7 +186554,7 @@
     }
   },
   "pu2g1c29a": {
-    "id": 1311,
+    "id": 1323,
     "archive": 0,
     "size": 0,
     "virtual": 0,
@@ -186779,7 +186779,7 @@
     }
   },
   "pu3g1c29a": {
-    "id": 1312,
+    "id": 1324,
     "archive": 0,
     "size": 0,
     "virtual": 0,
@@ -187004,7 +187004,7 @@
     }
   },
   "pu4g1c29a": {
-    "id": 1313,
+    "id": 1325,
     "archive": 0,
     "size": 0,
     "virtual": 0,
@@ -187229,7 +187229,7 @@
     }
   },
   "epu50g1c29u": {
-    "id": 1314,
+    "id": 1326,
     "archive": 0,
     "size": 0,
     "virtual": 0,
@@ -187241,11 +187241,1951 @@
     "elemPosition": 765.3353999999999,
     "elemIndex": 281206,
     "elemGroups": "C29;EPU;EPU50;ID;G1;U;SXN",
-    "tags": [],
-    "map": {}
+    "tags": [
+      "aphla.sys.SR"
+    ],
+    "map": {
+      "gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1:{EPU50:1}:CMD:MOVE_GAP"
+        },
+        "get": {
+          "pv": "SR:C29-ID:G1:{EPU50:1}:GAP:ACT"
+        }
+      },
+      "gap_trig": {
+        "put": {
+          "pv": "SR:C29-ID:G1:{EPU50:1}:CMD:MOTION"
+        }
+      },
+      "gap_go": {
+        "put": {
+          "pv": "SR:C29-ID:G1:{EPU50:1}:CMD:MOTION"
+        },
+        "get": {
+          "pv": "SR:C29-ID:G1:{EPU50:1}:GAP:ACT"
+        }
+      },
+      "gap_hinominal": {
+        "get": {
+          "pv": "SR:C29-1-ID:NomOpen-Sp"
+        }
+      },
+      "gap_lonominal": {
+        "get": {
+          "pv": "SR:C29-1-ID:NomClose-Sp"
+        }
+      },
+      "gap_ramping": {
+        "get": {
+          "pv": "SR:C29-ID:G1:{EPU50:1}:STATE"
+        }
+      },
+      "gap_speed": {
+        "put": {
+          "pv": "SR:C29-ID:G1:{EPU50:1}:CMD:SET_VELOCITY"
+        },
+        "get": {
+          "pv": "SR:C29-ID:G1:{EPU50:1}:CMD:SET_VELOCITY:RBV"
+        }
+      },
+      "gap_hilim": {
+        "get": {
+          "pv": "SR:C29-ID:G1:{EPU50:1}:CMD:MOVE_GAP.DRVH"
+        }
+      },
+      "gap_lolim": {
+        "get": {
+          "pv": "SR:C29-ID:G1:{EPU50:1}:CMD:MOVE_GAP.DRVL"
+        }
+      },
+      "phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1:{EPU50:1}:CMD:SET_PHASE"
+        },
+        "get": {
+          "pv": "SR:C29-ID:G1:{EPU50:1}:PHASE:RBV"
+        }
+      },
+      "phase_trig": {
+        "put": {
+          "pv": "SR:C29-ID:G1:{EPU50:1}:CMD:MOTION"
+        }
+      },
+      "phase_speed": {
+        "put": {
+          "pv": "SR:C29-ID:G1:{EPU50:1}:CMD:SET_VELOCITY"
+        },
+        "get": {
+          "pv": "SR:C29-ID:G1:{EPU50:1}:CMD:SET_VELOCITY:RBV"
+        }
+      },
+      "phase_hilim": {
+        "get": {
+          "pv": "SR:C29-ID:G1:{EPU50:1}:CMD:SET_PHASE.DRVH"
+        }
+      },
+      "phase_lolim": {
+        "get": {
+          "pv": "SR:C29-ID:G1:{EPU50:1}:CMD:SET_PHASE.DRVL"
+        }
+      },
+      "mode": {
+        "put": {
+          "pv": "SR:C29-ID:G1:{EPU50:1}:CMD:PHASE:SET_MODE"
+        },
+        "get": {
+          "pv": "SR:C29-ID:G1:{EPU50:1}:PHASE:STATE"
+        }
+      },
+      "cch0": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU1-CRR}Chan1:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU1-CRR}Chan1:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "cch[0]": {
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU1-CRR}Chan1:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "orbff0_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:0}Ena-Sel"
+        }
+      },
+      "orbff0_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:0}L2-Calc_.F"
+        }
+      },
+      "orbff0_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:0}L2-Calc_.G"
+        }
+      },
+      "orbff0_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:0}L2-Calc_.H"
+        }
+      },
+      "orbff0_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:0}L2-Calc_.I"
+        }
+      },
+      "orbff0_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:0}L2-Calc_.J"
+        }
+      },
+      "orbff0_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:0}L2-Calc_.K"
+        }
+      },
+      "orbff0_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:0}L2-Calc_.L"
+        }
+      },
+      "orbff0_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:0}L2-Calc_.M"
+        }
+      },
+      "orbff0_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:0}L2-Calc_.N"
+        }
+      },
+      "orbff0_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:0}L2-Calc_.O"
+        }
+      },
+      "orbff0_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:0}L2-Calc_.P"
+        }
+      },
+      "orbff0_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:0}L2-Calc_.Q"
+        }
+      },
+      "orbff0_output": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU1-CRR}Chan1:DAC_SetPt-SP"
+        }
+      },
+      "cch1": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU1-CRR}Chan2:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU1-CRR}Chan2:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "cch[1]": {
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU1-CRR}Chan2:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "orbff1_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:1}Ena-Sel"
+        }
+      },
+      "orbff1_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:1}L2-Calc_.F"
+        }
+      },
+      "orbff1_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:1}L2-Calc_.G"
+        }
+      },
+      "orbff1_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:1}L2-Calc_.H"
+        }
+      },
+      "orbff1_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:1}L2-Calc_.I"
+        }
+      },
+      "orbff1_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:1}L2-Calc_.J"
+        }
+      },
+      "orbff1_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:1}L2-Calc_.K"
+        }
+      },
+      "orbff1_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:1}L2-Calc_.L"
+        }
+      },
+      "orbff1_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:1}L2-Calc_.M"
+        }
+      },
+      "orbff1_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:1}L2-Calc_.N"
+        }
+      },
+      "orbff1_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:1}L2-Calc_.O"
+        }
+      },
+      "orbff1_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:1}L2-Calc_.P"
+        }
+      },
+      "orbff1_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:1}L2-Calc_.Q"
+        }
+      },
+      "orbff1_output": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU1-CRR}Chan2:DAC_SetPt-SP"
+        }
+      },
+      "cch2": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU1-CRR}Chan3:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU1-CRR}Chan3:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "cch[2]": {
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU1-CRR}Chan3:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "orbff2_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:2}Ena-Sel"
+        }
+      },
+      "orbff2_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:2}L2-Calc_.F"
+        }
+      },
+      "orbff2_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:2}L2-Calc_.G"
+        }
+      },
+      "orbff2_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:2}L2-Calc_.H"
+        }
+      },
+      "orbff2_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:2}L2-Calc_.I"
+        }
+      },
+      "orbff2_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:2}L2-Calc_.J"
+        }
+      },
+      "orbff2_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:2}L2-Calc_.K"
+        }
+      },
+      "orbff2_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:2}L2-Calc_.L"
+        }
+      },
+      "orbff2_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:2}L2-Calc_.M"
+        }
+      },
+      "orbff2_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:2}L2-Calc_.N"
+        }
+      },
+      "orbff2_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:2}L2-Calc_.O"
+        }
+      },
+      "orbff2_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:2}L2-Calc_.P"
+        }
+      },
+      "orbff2_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:2}L2-Calc_.Q"
+        }
+      },
+      "orbff2_output": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU1-CRR}Chan3:DAC_SetPt-SP"
+        }
+      },
+      "cch3": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU1-CRR}Chan4:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU1-CRR}Chan4:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "cch[3]": {
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU1-CRR}Chan4:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "orbff3_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:3}Ena-Sel"
+        }
+      },
+      "orbff3_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:3}L2-Calc_.F"
+        }
+      },
+      "orbff3_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:3}L2-Calc_.G"
+        }
+      },
+      "orbff3_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:3}L2-Calc_.H"
+        }
+      },
+      "orbff3_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:3}L2-Calc_.I"
+        }
+      },
+      "orbff3_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:3}L2-Calc_.J"
+        }
+      },
+      "orbff3_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:3}L2-Calc_.K"
+        }
+      },
+      "orbff3_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:3}L2-Calc_.L"
+        }
+      },
+      "orbff3_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:3}L2-Calc_.M"
+        }
+      },
+      "orbff3_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:3}L2-Calc_.N"
+        }
+      },
+      "orbff3_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:3}L2-Calc_.O"
+        }
+      },
+      "orbff3_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:3}L2-Calc_.P"
+        }
+      },
+      "orbff3_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FF:3}L2-Calc_.Q"
+        }
+      },
+      "orbff3_output": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU1-CRR}Chan4:DAC_SetPt-SP"
+        }
+      },
+      "csch1": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU1-S1}Chan1:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU1-S1}Chan1:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff0_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:0}Ena-Sel"
+        }
+      },
+      "csff0_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:0}L2-Calc_.F"
+        }
+      },
+      "csff0_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:0}L2-Calc_.G"
+        }
+      },
+      "csff0_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:0}L2-Calc_.H"
+        }
+      },
+      "csff0_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:0}L2-Calc_.I"
+        }
+      },
+      "csff0_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:0}L2-Calc_.J"
+        }
+      },
+      "csff0_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:0}L2-Calc_.K"
+        }
+      },
+      "csff0_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:0}L2-Calc_.L"
+        }
+      },
+      "csff0_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:0}L2-Calc_.M"
+        }
+      },
+      "csff0_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:0}L2-Calc_.N"
+        }
+      },
+      "csff0_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:0}L2-Calc_.O"
+        }
+      },
+      "csff0_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:0}L2-Calc_.P"
+        }
+      },
+      "csff0_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:0}L2-Calc_.Q"
+        }
+      },
+      "csch2": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU1-S1}Chan2:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU1-S1}Chan2:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff1_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:1}Ena-Sel"
+        }
+      },
+      "csff1_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:1}L2-Calc_.F"
+        }
+      },
+      "csff1_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:1}L2-Calc_.G"
+        }
+      },
+      "csff1_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:1}L2-Calc_.H"
+        }
+      },
+      "csff1_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:1}L2-Calc_.I"
+        }
+      },
+      "csff1_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:1}L2-Calc_.J"
+        }
+      },
+      "csff1_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:1}L2-Calc_.K"
+        }
+      },
+      "csff1_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:1}L2-Calc_.L"
+        }
+      },
+      "csff1_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:1}L2-Calc_.M"
+        }
+      },
+      "csff1_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:1}L2-Calc_.N"
+        }
+      },
+      "csff1_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:1}L2-Calc_.O"
+        }
+      },
+      "csff1_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:1}L2-Calc_.P"
+        }
+      },
+      "csff1_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:1}L2-Calc_.Q"
+        }
+      },
+      "csch3": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU1-S1}Chan3:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU1-S1}Chan3:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff2_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:2}Ena-Sel"
+        }
+      },
+      "csff2_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:2}L2-Calc_.F"
+        }
+      },
+      "csff2_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:2}L2-Calc_.G"
+        }
+      },
+      "csff2_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:2}L2-Calc_.H"
+        }
+      },
+      "csff2_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:2}L2-Calc_.I"
+        }
+      },
+      "csff2_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:2}L2-Calc_.J"
+        }
+      },
+      "csff2_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:2}L2-Calc_.K"
+        }
+      },
+      "csff2_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:2}L2-Calc_.L"
+        }
+      },
+      "csff2_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:2}L2-Calc_.M"
+        }
+      },
+      "csff2_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:2}L2-Calc_.N"
+        }
+      },
+      "csff2_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:2}L2-Calc_.O"
+        }
+      },
+      "csff2_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:2}L2-Calc_.P"
+        }
+      },
+      "csff2_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:2}L2-Calc_.Q"
+        }
+      },
+      "csch4": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU1-S1}Chan4:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU1-S1}Chan4:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff3_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:3}Ena-Sel"
+        }
+      },
+      "csff3_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:3}L2-Calc_.F"
+        }
+      },
+      "csff3_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:3}L2-Calc_.G"
+        }
+      },
+      "csff3_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:3}L2-Calc_.H"
+        }
+      },
+      "csff3_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:3}L2-Calc_.I"
+        }
+      },
+      "csff3_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:3}L2-Calc_.J"
+        }
+      },
+      "csff3_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:3}L2-Calc_.K"
+        }
+      },
+      "csff3_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:3}L2-Calc_.L"
+        }
+      },
+      "csff3_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:3}L2-Calc_.M"
+        }
+      },
+      "csff3_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:3}L2-Calc_.N"
+        }
+      },
+      "csff3_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:3}L2-Calc_.O"
+        }
+      },
+      "csff3_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:3}L2-Calc_.P"
+        }
+      },
+      "csff3_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:3}L2-Calc_.Q"
+        }
+      },
+      "csch5": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU1-S2}Chan1:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU1-S2}Chan1:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff4_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:4}Ena-Sel"
+        }
+      },
+      "csff4_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:4}L2-Calc_.F"
+        }
+      },
+      "csff4_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:4}L2-Calc_.G"
+        }
+      },
+      "csff4_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:4}L2-Calc_.H"
+        }
+      },
+      "csff4_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:4}L2-Calc_.I"
+        }
+      },
+      "csff4_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:4}L2-Calc_.J"
+        }
+      },
+      "csff4_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:4}L2-Calc_.K"
+        }
+      },
+      "csff4_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:4}L2-Calc_.L"
+        }
+      },
+      "csff4_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:4}L2-Calc_.M"
+        }
+      },
+      "csff4_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:4}L2-Calc_.N"
+        }
+      },
+      "csff4_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:4}L2-Calc_.O"
+        }
+      },
+      "csff4_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:4}L2-Calc_.P"
+        }
+      },
+      "csff4_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:4}L2-Calc_.Q"
+        }
+      },
+      "csch6": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU1-S2}Chan2:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU1-S2}Chan2:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff5_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:5}Ena-Sel"
+        }
+      },
+      "csff5_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:5}L2-Calc_.F"
+        }
+      },
+      "csff5_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:5}L2-Calc_.G"
+        }
+      },
+      "csff5_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:5}L2-Calc_.H"
+        }
+      },
+      "csff5_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:5}L2-Calc_.I"
+        }
+      },
+      "csff5_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:5}L2-Calc_.J"
+        }
+      },
+      "csff5_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:5}L2-Calc_.K"
+        }
+      },
+      "csff5_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:5}L2-Calc_.L"
+        }
+      },
+      "csff5_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:5}L2-Calc_.M"
+        }
+      },
+      "csff5_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:5}L2-Calc_.N"
+        }
+      },
+      "csff5_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:5}L2-Calc_.O"
+        }
+      },
+      "csff5_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:5}L2-Calc_.P"
+        }
+      },
+      "csff5_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:5}L2-Calc_.Q"
+        }
+      },
+      "csch7": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU1-S2}Chan3:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU1-S2}Chan3:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff6_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:6}Ena-Sel"
+        }
+      },
+      "csff6_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:6}L2-Calc_.F"
+        }
+      },
+      "csff6_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:6}L2-Calc_.G"
+        }
+      },
+      "csff6_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:6}L2-Calc_.H"
+        }
+      },
+      "csff6_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:6}L2-Calc_.I"
+        }
+      },
+      "csff6_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:6}L2-Calc_.J"
+        }
+      },
+      "csff6_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:6}L2-Calc_.K"
+        }
+      },
+      "csff6_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:6}L2-Calc_.L"
+        }
+      },
+      "csff6_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:6}L2-Calc_.M"
+        }
+      },
+      "csff6_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:6}L2-Calc_.N"
+        }
+      },
+      "csff6_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:6}L2-Calc_.O"
+        }
+      },
+      "csff6_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:6}L2-Calc_.P"
+        }
+      },
+      "csff6_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:6}L2-Calc_.Q"
+        }
+      },
+      "csch8": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU1-S2}Chan4:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU1-S2}Chan4:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff7_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:7}Ena-Sel"
+        }
+      },
+      "csff7_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:7}L2-Calc_.F"
+        }
+      },
+      "csff7_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:7}L2-Calc_.G"
+        }
+      },
+      "csff7_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:7}L2-Calc_.H"
+        }
+      },
+      "csff7_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:7}L2-Calc_.I"
+        }
+      },
+      "csff7_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:7}L2-Calc_.J"
+        }
+      },
+      "csff7_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:7}L2-Calc_.K"
+        }
+      },
+      "csff7_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:7}L2-Calc_.L"
+        }
+      },
+      "csff7_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:7}L2-Calc_.M"
+        }
+      },
+      "csff7_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:7}L2-Calc_.N"
+        }
+      },
+      "csff7_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:7}L2-Calc_.O"
+        }
+      },
+      "csff7_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:7}L2-Calc_.P"
+        }
+      },
+      "csff7_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:7}L2-Calc_.Q"
+        }
+      },
+      "csch9": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU1-S3}Chan1:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU1-S3}Chan1:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff8_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:8}Ena-Sel"
+        }
+      },
+      "csff8_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:8}L2-Calc_.F"
+        }
+      },
+      "csff8_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:8}L2-Calc_.G"
+        }
+      },
+      "csff8_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:8}L2-Calc_.H"
+        }
+      },
+      "csff8_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:8}L2-Calc_.I"
+        }
+      },
+      "csff8_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:8}L2-Calc_.J"
+        }
+      },
+      "csff8_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:8}L2-Calc_.K"
+        }
+      },
+      "csff8_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:8}L2-Calc_.L"
+        }
+      },
+      "csff8_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:8}L2-Calc_.M"
+        }
+      },
+      "csff8_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:8}L2-Calc_.N"
+        }
+      },
+      "csff8_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:8}L2-Calc_.O"
+        }
+      },
+      "csff8_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:8}L2-Calc_.P"
+        }
+      },
+      "csff8_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:8}L2-Calc_.Q"
+        }
+      },
+      "csch10": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU1-S3}Chan2:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU1-S3}Chan2:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff9_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:9}Ena-Sel"
+        }
+      },
+      "csff9_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:9}L2-Calc_.F"
+        }
+      },
+      "csff9_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:9}L2-Calc_.G"
+        }
+      },
+      "csff9_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:9}L2-Calc_.H"
+        }
+      },
+      "csff9_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:9}L2-Calc_.I"
+        }
+      },
+      "csff9_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:9}L2-Calc_.J"
+        }
+      },
+      "csff9_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:9}L2-Calc_.K"
+        }
+      },
+      "csff9_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:9}L2-Calc_.L"
+        }
+      },
+      "csff9_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:9}L2-Calc_.M"
+        }
+      },
+      "csff9_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:9}L2-Calc_.N"
+        }
+      },
+      "csff9_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:9}L2-Calc_.O"
+        }
+      },
+      "csff9_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:9}L2-Calc_.P"
+        }
+      },
+      "csff9_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:9}L2-Calc_.Q"
+        }
+      },
+      "csch11": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU1-S3}Chan3:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU1-S3}Chan3:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff10_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:10}Ena-Sel"
+        }
+      },
+      "csff10_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:10}L2-Calc_.F"
+        }
+      },
+      "csff10_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:10}L2-Calc_.G"
+        }
+      },
+      "csff10_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:10}L2-Calc_.H"
+        }
+      },
+      "csff10_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:10}L2-Calc_.I"
+        }
+      },
+      "csff10_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:10}L2-Calc_.J"
+        }
+      },
+      "csff10_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:10}L2-Calc_.K"
+        }
+      },
+      "csff10_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:10}L2-Calc_.L"
+        }
+      },
+      "csff10_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:10}L2-Calc_.M"
+        }
+      },
+      "csff10_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:10}L2-Calc_.N"
+        }
+      },
+      "csff10_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:10}L2-Calc_.O"
+        }
+      },
+      "csff10_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:10}L2-Calc_.P"
+        }
+      },
+      "csff10_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:10}L2-Calc_.Q"
+        }
+      },
+      "csch12": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU1-S3}Chan4:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU1-S3}Chan4:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff11_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:11}Ena-Sel"
+        }
+      },
+      "csff11_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:11}L2-Calc_.F"
+        }
+      },
+      "csff11_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:11}L2-Calc_.G"
+        }
+      },
+      "csff11_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:11}L2-Calc_.H"
+        }
+      },
+      "csff11_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:11}L2-Calc_.I"
+        }
+      },
+      "csff11_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:11}L2-Calc_.J"
+        }
+      },
+      "csff11_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:11}L2-Calc_.K"
+        }
+      },
+      "csff11_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:11}L2-Calc_.L"
+        }
+      },
+      "csff11_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:11}L2-Calc_.M"
+        }
+      },
+      "csff11_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:11}L2-Calc_.N"
+        }
+      },
+      "csff11_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:11}L2-Calc_.O"
+        }
+      },
+      "csff11_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:11}L2-Calc_.P"
+        }
+      },
+      "csff11_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:11}L2-Calc_.Q"
+        }
+      },
+      "csch13": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU1-S4}Chan1:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU1-S4}Chan1:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff12_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:12}Ena-Sel"
+        }
+      },
+      "csff12_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:12}L2-Calc_.F"
+        }
+      },
+      "csff12_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:12}L2-Calc_.G"
+        }
+      },
+      "csff12_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:12}L2-Calc_.H"
+        }
+      },
+      "csff12_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:12}L2-Calc_.I"
+        }
+      },
+      "csff12_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:12}L2-Calc_.J"
+        }
+      },
+      "csff12_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:12}L2-Calc_.K"
+        }
+      },
+      "csff12_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:12}L2-Calc_.L"
+        }
+      },
+      "csff12_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:12}L2-Calc_.M"
+        }
+      },
+      "csff12_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:12}L2-Calc_.N"
+        }
+      },
+      "csff12_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:12}L2-Calc_.O"
+        }
+      },
+      "csff12_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:12}L2-Calc_.P"
+        }
+      },
+      "csff12_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:12}L2-Calc_.Q"
+        }
+      },
+      "csch14": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU1-S4}Chan2:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU1-S4}Chan2:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff13_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:13}Ena-Sel"
+        }
+      },
+      "csff13_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:13}L2-Calc_.F"
+        }
+      },
+      "csff13_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:13}L2-Calc_.G"
+        }
+      },
+      "csff13_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:13}L2-Calc_.H"
+        }
+      },
+      "csff13_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:13}L2-Calc_.I"
+        }
+      },
+      "csff13_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:13}L2-Calc_.J"
+        }
+      },
+      "csff13_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:13}L2-Calc_.K"
+        }
+      },
+      "csff13_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:13}L2-Calc_.L"
+        }
+      },
+      "csff13_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:13}L2-Calc_.M"
+        }
+      },
+      "csff13_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:13}L2-Calc_.N"
+        }
+      },
+      "csff13_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:13}L2-Calc_.O"
+        }
+      },
+      "csff13_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:13}L2-Calc_.P"
+        }
+      },
+      "csff13_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:13}L2-Calc_.Q"
+        }
+      },
+      "csch15": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU1-S4}Chan3:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU1-S4}Chan3:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff14_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:14}Ena-Sel"
+        }
+      },
+      "csff14_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:14}L2-Calc_.F"
+        }
+      },
+      "csff14_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:14}L2-Calc_.G"
+        }
+      },
+      "csff14_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:14}L2-Calc_.H"
+        }
+      },
+      "csff14_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:14}L2-Calc_.I"
+        }
+      },
+      "csff14_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:14}L2-Calc_.J"
+        }
+      },
+      "csff14_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:14}L2-Calc_.K"
+        }
+      },
+      "csff14_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:14}L2-Calc_.L"
+        }
+      },
+      "csff14_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:14}L2-Calc_.M"
+        }
+      },
+      "csff14_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:14}L2-Calc_.N"
+        }
+      },
+      "csff14_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:14}L2-Calc_.O"
+        }
+      },
+      "csff14_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:14}L2-Calc_.P"
+        }
+      },
+      "csff14_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:14}L2-Calc_.Q"
+        }
+      },
+      "csch16": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU1-S4}Chan4:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU1-S4}Chan4:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff15_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:15}Ena-Sel"
+        }
+      },
+      "csff15_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:15}L2-Calc_.F"
+        }
+      },
+      "csff15_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:15}L2-Calc_.G"
+        }
+      },
+      "csff15_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:15}L2-Calc_.H"
+        }
+      },
+      "csff15_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:15}L2-Calc_.I"
+        }
+      },
+      "csff15_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:15}L2-Calc_.J"
+        }
+      },
+      "csff15_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:15}L2-Calc_.K"
+        }
+      },
+      "csff15_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:15}L2-Calc_.L"
+        }
+      },
+      "csff15_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:15}L2-Calc_.M"
+        }
+      },
+      "csff15_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:15}L2-Calc_.N"
+        }
+      },
+      "csff15_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:15}L2-Calc_.O"
+        }
+      },
+      "csff15_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:15}L2-Calc_.P"
+        }
+      },
+      "csff15_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:15}L2-Calc_.Q"
+        }
+      },
+      "csch17": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU1-S5}Chan1:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU1-S5}Chan1:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff16_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:16}Ena-Sel"
+        }
+      },
+      "csff16_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:16}L2-Calc_.F"
+        }
+      },
+      "csff16_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:16}L2-Calc_.G"
+        }
+      },
+      "csff16_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:16}L2-Calc_.H"
+        }
+      },
+      "csff16_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:16}L2-Calc_.I"
+        }
+      },
+      "csff16_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:16}L2-Calc_.J"
+        }
+      },
+      "csff16_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:16}L2-Calc_.K"
+        }
+      },
+      "csff16_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:16}L2-Calc_.L"
+        }
+      },
+      "csff16_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:16}L2-Calc_.M"
+        }
+      },
+      "csff16_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:16}L2-Calc_.N"
+        }
+      },
+      "csff16_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:16}L2-Calc_.O"
+        }
+      },
+      "csff16_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:16}L2-Calc_.P"
+        }
+      },
+      "csff16_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:16}L2-Calc_.Q"
+        }
+      },
+      "csch18": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU1-S5}Chan2:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU1-S5}Chan2:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff17_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:17}Ena-Sel"
+        }
+      },
+      "csff17_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:17}L2-Calc_.F"
+        }
+      },
+      "csff17_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:17}L2-Calc_.G"
+        }
+      },
+      "csff17_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:17}L2-Calc_.H"
+        }
+      },
+      "csff17_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:17}L2-Calc_.I"
+        }
+      },
+      "csff17_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:17}L2-Calc_.J"
+        }
+      },
+      "csff17_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:17}L2-Calc_.K"
+        }
+      },
+      "csff17_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:17}L2-Calc_.L"
+        }
+      },
+      "csff17_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:17}L2-Calc_.M"
+        }
+      },
+      "csff17_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:17}L2-Calc_.N"
+        }
+      },
+      "csff17_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:17}L2-Calc_.O"
+        }
+      },
+      "csff17_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:17}L2-Calc_.P"
+        }
+      },
+      "csff17_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:17}L2-Calc_.Q"
+        }
+      },
+      "csch19": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU1-S5}Chan3:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU1-S5}Chan3:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff18_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:18}Ena-Sel"
+        }
+      },
+      "csff18_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:18}L2-Calc_.F"
+        }
+      },
+      "csff18_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:18}L2-Calc_.G"
+        }
+      },
+      "csff18_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:18}L2-Calc_.H"
+        }
+      },
+      "csff18_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:18}L2-Calc_.I"
+        }
+      },
+      "csff18_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:18}L2-Calc_.J"
+        }
+      },
+      "csff18_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:18}L2-Calc_.K"
+        }
+      },
+      "csff18_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:18}L2-Calc_.L"
+        }
+      },
+      "csff18_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:18}L2-Calc_.M"
+        }
+      },
+      "csff18_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:18}L2-Calc_.N"
+        }
+      },
+      "csff18_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:18}L2-Calc_.O"
+        }
+      },
+      "csff18_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:18}L2-Calc_.P"
+        }
+      },
+      "csff18_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:18}L2-Calc_.Q"
+        }
+      },
+      "csch20": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU1-S5}Chan4:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU1-S5}Chan4:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff19_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:19}Ena-Sel"
+        }
+      },
+      "csff19_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:19}L2-Calc_.F"
+        }
+      },
+      "csff19_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:19}L2-Calc_.G"
+        }
+      },
+      "csff19_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:19}L2-Calc_.H"
+        }
+      },
+      "csff19_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:19}L2-Calc_.I"
+        }
+      },
+      "csff19_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:19}L2-Calc_.J"
+        }
+      },
+      "csff19_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:19}L2-Calc_.K"
+        }
+      },
+      "csff19_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:19}L2-Calc_.L"
+        }
+      },
+      "csff19_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:19}L2-Calc_.M"
+        }
+      },
+      "csff19_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:19}L2-Calc_.N"
+        }
+      },
+      "csff19_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:19}L2-Calc_.O"
+        }
+      },
+      "csff19_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:19}L2-Calc_.P"
+        }
+      },
+      "csff19_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:1-FFCS:19}L2-Calc_.Q"
+        }
+      }
+    }
   },
   "epu70g1c29d": {
-    "id": 1315,
+    "id": 1327,
     "archive": 0,
     "size": 0,
     "virtual": 0,
@@ -187257,7 +189197,1947 @@
     "elemPosition": 767.7284,
     "elemIndex": 281494,
     "elemGroups": "C29;EPU;EPU70;ID;G1;D;ARI",
-    "tags": [],
-    "map": {}
+    "tags": [
+      "aphla.sys.SR"
+    ],
+    "map": {
+      "gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1:{EPU70:2}:CMD:MOVE_GAP"
+        },
+        "get": {
+          "pv": "SR:C29-ID:G1:{EPU70:2}:GAP:ACT"
+        }
+      },
+      "gap_trig": {
+        "put": {
+          "pv": "SR:C29-ID:G1:{EPU70:2}:CMD:MOTION"
+        }
+      },
+      "gap_go": {
+        "put": {
+          "pv": "SR:C29-ID:G1:{EPU70:2}:CMD:MOTION"
+        },
+        "get": {
+          "pv": "SR:C29-ID:G1:{EPU70:2}:GAP:ACT"
+        }
+      },
+      "gap_hinominal": {
+        "get": {
+          "pv": "SR:C29-2-ID:NomOpen-Sp"
+        }
+      },
+      "gap_lonominal": {
+        "get": {
+          "pv": "SR:C29-2-ID:NomClose-Sp"
+        }
+      },
+      "gap_ramping": {
+        "get": {
+          "pv": "SR:C29-ID:G1:{EPU70:2}:STATE"
+        }
+      },
+      "gap_speed": {
+        "put": {
+          "pv": "SR:C29-ID:G1:{EPU70:2}:CMD:SET_VELOCITY"
+        },
+        "get": {
+          "pv": "SR:C29-ID:G1:{EPU70:2}:CMD:SET_VELOCITY:RBV"
+        }
+      },
+      "gap_hilim": {
+        "get": {
+          "pv": "SR:C29-ID:G1:{EPU70:2}:CMD:MOVE_GAP.DRVH"
+        }
+      },
+      "gap_lolim": {
+        "get": {
+          "pv": "SR:C29-ID:G1:{EPU70:2}:CMD:MOVE_GAP.DRVL"
+        }
+      },
+      "phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1:{EPU70:2}:CMD:SET_PHASE"
+        },
+        "get": {
+          "pv": "SR:C29-ID:G1:{EPU70:2}:PHASE:RBV"
+        }
+      },
+      "phase_trig": {
+        "put": {
+          "pv": "SR:C29-ID:G1:{EPU70:2}:CMD:MOTION"
+        }
+      },
+      "phase_speed": {
+        "put": {
+          "pv": "SR:C29-ID:G1:{EPU70:2}:CMD:SET_VELOCITY"
+        },
+        "get": {
+          "pv": "SR:C29-ID:G1:{EPU70:2}:CMD:SET_VELOCITY:RBV"
+        }
+      },
+      "phase_hilim": {
+        "get": {
+          "pv": "SR:C29-ID:G1:{EPU70:2}:CMD:SET_PHASE.DRVH"
+        }
+      },
+      "phase_lolim": {
+        "get": {
+          "pv": "SR:C29-ID:G1:{EPU70:2}:CMD:SET_PHASE.DRVL"
+        }
+      },
+      "mode": {
+        "put": {
+          "pv": "SR:C29-ID:G1:{EPU70:2}:CMD:PHASE:SET_MODE"
+        },
+        "get": {
+          "pv": "SR:C29-ID:G1:{EPU70:2}:PHASE:STATE"
+        }
+      },
+      "cch0": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU2-CRR}Chan1:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU2-CRR}Chan1:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "cch[0]": {
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU2-CRR}Chan1:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "orbff0_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:0}Ena-Sel"
+        }
+      },
+      "orbff0_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:0}L2-Calc_.F"
+        }
+      },
+      "orbff0_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:0}L2-Calc_.G"
+        }
+      },
+      "orbff0_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:0}L2-Calc_.H"
+        }
+      },
+      "orbff0_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:0}L2-Calc_.I"
+        }
+      },
+      "orbff0_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:0}L2-Calc_.J"
+        }
+      },
+      "orbff0_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:0}L2-Calc_.K"
+        }
+      },
+      "orbff0_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:0}L2-Calc_.L"
+        }
+      },
+      "orbff0_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:0}L2-Calc_.M"
+        }
+      },
+      "orbff0_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:0}L2-Calc_.N"
+        }
+      },
+      "orbff0_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:0}L2-Calc_.O"
+        }
+      },
+      "orbff0_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:0}L2-Calc_.P"
+        }
+      },
+      "orbff0_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:0}L2-Calc_.Q"
+        }
+      },
+      "orbff0_output": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU2-CRR}Chan1:DAC_SetPt-SP"
+        }
+      },
+      "cch1": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU2-CRR}Chan2:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU2-CRR}Chan2:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "cch[1]": {
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU2-CRR}Chan2:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "orbff1_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:1}Ena-Sel"
+        }
+      },
+      "orbff1_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:1}L2-Calc_.F"
+        }
+      },
+      "orbff1_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:1}L2-Calc_.G"
+        }
+      },
+      "orbff1_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:1}L2-Calc_.H"
+        }
+      },
+      "orbff1_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:1}L2-Calc_.I"
+        }
+      },
+      "orbff1_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:1}L2-Calc_.J"
+        }
+      },
+      "orbff1_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:1}L2-Calc_.K"
+        }
+      },
+      "orbff1_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:1}L2-Calc_.L"
+        }
+      },
+      "orbff1_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:1}L2-Calc_.M"
+        }
+      },
+      "orbff1_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:1}L2-Calc_.N"
+        }
+      },
+      "orbff1_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:1}L2-Calc_.O"
+        }
+      },
+      "orbff1_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:1}L2-Calc_.P"
+        }
+      },
+      "orbff1_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:1}L2-Calc_.Q"
+        }
+      },
+      "orbff1_output": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU2-CRR}Chan2:DAC_SetPt-SP"
+        }
+      },
+      "cch2": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU2-CRR}Chan3:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU2-CRR}Chan3:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "cch[2]": {
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU2-CRR}Chan3:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "orbff2_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:2}Ena-Sel"
+        }
+      },
+      "orbff2_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:2}L2-Calc_.F"
+        }
+      },
+      "orbff2_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:2}L2-Calc_.G"
+        }
+      },
+      "orbff2_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:2}L2-Calc_.H"
+        }
+      },
+      "orbff2_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:2}L2-Calc_.I"
+        }
+      },
+      "orbff2_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:2}L2-Calc_.J"
+        }
+      },
+      "orbff2_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:2}L2-Calc_.K"
+        }
+      },
+      "orbff2_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:2}L2-Calc_.L"
+        }
+      },
+      "orbff2_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:2}L2-Calc_.M"
+        }
+      },
+      "orbff2_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:2}L2-Calc_.N"
+        }
+      },
+      "orbff2_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:2}L2-Calc_.O"
+        }
+      },
+      "orbff2_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:2}L2-Calc_.P"
+        }
+      },
+      "orbff2_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:2}L2-Calc_.Q"
+        }
+      },
+      "orbff2_output": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU2-CRR}Chan3:DAC_SetPt-SP"
+        }
+      },
+      "cch3": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU2-CRR}Chan4:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU2-CRR}Chan4:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "cch[3]": {
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU2-CRR}Chan4:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "orbff3_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:3}Ena-Sel"
+        }
+      },
+      "orbff3_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:3}L2-Calc_.F"
+        }
+      },
+      "orbff3_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:3}L2-Calc_.G"
+        }
+      },
+      "orbff3_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:3}L2-Calc_.H"
+        }
+      },
+      "orbff3_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:3}L2-Calc_.I"
+        }
+      },
+      "orbff3_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:3}L2-Calc_.J"
+        }
+      },
+      "orbff3_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:3}L2-Calc_.K"
+        }
+      },
+      "orbff3_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:3}L2-Calc_.L"
+        }
+      },
+      "orbff3_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:3}L2-Calc_.M"
+        }
+      },
+      "orbff3_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:3}L2-Calc_.N"
+        }
+      },
+      "orbff3_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:3}L2-Calc_.O"
+        }
+      },
+      "orbff3_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:3}L2-Calc_.P"
+        }
+      },
+      "orbff3_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FF:3}L2-Calc_.Q"
+        }
+      },
+      "orbff3_output": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU2-CRR}Chan4:DAC_SetPt-SP"
+        }
+      },
+      "csch1": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU2-S1}Chan1:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU2-S1}Chan1:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff0_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:0}Ena-Sel"
+        }
+      },
+      "csff0_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:0}L2-Calc_.F"
+        }
+      },
+      "csff0_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:0}L2-Calc_.G"
+        }
+      },
+      "csff0_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:0}L2-Calc_.H"
+        }
+      },
+      "csff0_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:0}L2-Calc_.I"
+        }
+      },
+      "csff0_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:0}L2-Calc_.J"
+        }
+      },
+      "csff0_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:0}L2-Calc_.K"
+        }
+      },
+      "csff0_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:0}L2-Calc_.L"
+        }
+      },
+      "csff0_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:0}L2-Calc_.M"
+        }
+      },
+      "csff0_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:0}L2-Calc_.N"
+        }
+      },
+      "csff0_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:0}L2-Calc_.O"
+        }
+      },
+      "csff0_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:0}L2-Calc_.P"
+        }
+      },
+      "csff0_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:0}L2-Calc_.Q"
+        }
+      },
+      "csch2": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU2-S1}Chan2:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU2-S1}Chan2:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff1_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:1}Ena-Sel"
+        }
+      },
+      "csff1_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:1}L2-Calc_.F"
+        }
+      },
+      "csff1_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:1}L2-Calc_.G"
+        }
+      },
+      "csff1_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:1}L2-Calc_.H"
+        }
+      },
+      "csff1_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:1}L2-Calc_.I"
+        }
+      },
+      "csff1_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:1}L2-Calc_.J"
+        }
+      },
+      "csff1_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:1}L2-Calc_.K"
+        }
+      },
+      "csff1_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:1}L2-Calc_.L"
+        }
+      },
+      "csff1_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:1}L2-Calc_.M"
+        }
+      },
+      "csff1_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:1}L2-Calc_.N"
+        }
+      },
+      "csff1_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:1}L2-Calc_.O"
+        }
+      },
+      "csff1_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:1}L2-Calc_.P"
+        }
+      },
+      "csff1_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:1}L2-Calc_.Q"
+        }
+      },
+      "csch3": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU2-S1}Chan3:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU2-S1}Chan3:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff2_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:2}Ena-Sel"
+        }
+      },
+      "csff2_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:2}L2-Calc_.F"
+        }
+      },
+      "csff2_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:2}L2-Calc_.G"
+        }
+      },
+      "csff2_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:2}L2-Calc_.H"
+        }
+      },
+      "csff2_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:2}L2-Calc_.I"
+        }
+      },
+      "csff2_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:2}L2-Calc_.J"
+        }
+      },
+      "csff2_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:2}L2-Calc_.K"
+        }
+      },
+      "csff2_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:2}L2-Calc_.L"
+        }
+      },
+      "csff2_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:2}L2-Calc_.M"
+        }
+      },
+      "csff2_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:2}L2-Calc_.N"
+        }
+      },
+      "csff2_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:2}L2-Calc_.O"
+        }
+      },
+      "csff2_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:2}L2-Calc_.P"
+        }
+      },
+      "csff2_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:2}L2-Calc_.Q"
+        }
+      },
+      "csch4": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU2-S1}Chan4:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU2-S1}Chan4:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff3_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:3}Ena-Sel"
+        }
+      },
+      "csff3_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:3}L2-Calc_.F"
+        }
+      },
+      "csff3_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:3}L2-Calc_.G"
+        }
+      },
+      "csff3_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:3}L2-Calc_.H"
+        }
+      },
+      "csff3_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:3}L2-Calc_.I"
+        }
+      },
+      "csff3_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:3}L2-Calc_.J"
+        }
+      },
+      "csff3_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:3}L2-Calc_.K"
+        }
+      },
+      "csff3_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:3}L2-Calc_.L"
+        }
+      },
+      "csff3_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:3}L2-Calc_.M"
+        }
+      },
+      "csff3_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:3}L2-Calc_.N"
+        }
+      },
+      "csff3_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:3}L2-Calc_.O"
+        }
+      },
+      "csff3_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:3}L2-Calc_.P"
+        }
+      },
+      "csff3_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:3}L2-Calc_.Q"
+        }
+      },
+      "csch5": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU2-S2}Chan1:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU2-S2}Chan1:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff4_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:4}Ena-Sel"
+        }
+      },
+      "csff4_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:4}L2-Calc_.F"
+        }
+      },
+      "csff4_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:4}L2-Calc_.G"
+        }
+      },
+      "csff4_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:4}L2-Calc_.H"
+        }
+      },
+      "csff4_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:4}L2-Calc_.I"
+        }
+      },
+      "csff4_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:4}L2-Calc_.J"
+        }
+      },
+      "csff4_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:4}L2-Calc_.K"
+        }
+      },
+      "csff4_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:4}L2-Calc_.L"
+        }
+      },
+      "csff4_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:4}L2-Calc_.M"
+        }
+      },
+      "csff4_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:4}L2-Calc_.N"
+        }
+      },
+      "csff4_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:4}L2-Calc_.O"
+        }
+      },
+      "csff4_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:4}L2-Calc_.P"
+        }
+      },
+      "csff4_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:4}L2-Calc_.Q"
+        }
+      },
+      "csch6": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU2-S2}Chan2:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU2-S2}Chan2:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff5_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:5}Ena-Sel"
+        }
+      },
+      "csff5_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:5}L2-Calc_.F"
+        }
+      },
+      "csff5_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:5}L2-Calc_.G"
+        }
+      },
+      "csff5_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:5}L2-Calc_.H"
+        }
+      },
+      "csff5_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:5}L2-Calc_.I"
+        }
+      },
+      "csff5_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:5}L2-Calc_.J"
+        }
+      },
+      "csff5_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:5}L2-Calc_.K"
+        }
+      },
+      "csff5_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:5}L2-Calc_.L"
+        }
+      },
+      "csff5_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:5}L2-Calc_.M"
+        }
+      },
+      "csff5_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:5}L2-Calc_.N"
+        }
+      },
+      "csff5_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:5}L2-Calc_.O"
+        }
+      },
+      "csff5_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:5}L2-Calc_.P"
+        }
+      },
+      "csff5_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:5}L2-Calc_.Q"
+        }
+      },
+      "csch7": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU2-S2}Chan3:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU2-S2}Chan3:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff6_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:6}Ena-Sel"
+        }
+      },
+      "csff6_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:6}L2-Calc_.F"
+        }
+      },
+      "csff6_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:6}L2-Calc_.G"
+        }
+      },
+      "csff6_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:6}L2-Calc_.H"
+        }
+      },
+      "csff6_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:6}L2-Calc_.I"
+        }
+      },
+      "csff6_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:6}L2-Calc_.J"
+        }
+      },
+      "csff6_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:6}L2-Calc_.K"
+        }
+      },
+      "csff6_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:6}L2-Calc_.L"
+        }
+      },
+      "csff6_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:6}L2-Calc_.M"
+        }
+      },
+      "csff6_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:6}L2-Calc_.N"
+        }
+      },
+      "csff6_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:6}L2-Calc_.O"
+        }
+      },
+      "csff6_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:6}L2-Calc_.P"
+        }
+      },
+      "csff6_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:6}L2-Calc_.Q"
+        }
+      },
+      "csch8": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU2-S2}Chan4:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU2-S2}Chan4:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff7_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:7}Ena-Sel"
+        }
+      },
+      "csff7_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:7}L2-Calc_.F"
+        }
+      },
+      "csff7_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:7}L2-Calc_.G"
+        }
+      },
+      "csff7_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:7}L2-Calc_.H"
+        }
+      },
+      "csff7_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:7}L2-Calc_.I"
+        }
+      },
+      "csff7_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:7}L2-Calc_.J"
+        }
+      },
+      "csff7_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:7}L2-Calc_.K"
+        }
+      },
+      "csff7_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:7}L2-Calc_.L"
+        }
+      },
+      "csff7_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:7}L2-Calc_.M"
+        }
+      },
+      "csff7_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:7}L2-Calc_.N"
+        }
+      },
+      "csff7_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:7}L2-Calc_.O"
+        }
+      },
+      "csff7_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:7}L2-Calc_.P"
+        }
+      },
+      "csff7_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:7}L2-Calc_.Q"
+        }
+      },
+      "csch9": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU2-S3}Chan1:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU2-S3}Chan1:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff8_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:8}Ena-Sel"
+        }
+      },
+      "csff8_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:8}L2-Calc_.F"
+        }
+      },
+      "csff8_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:8}L2-Calc_.G"
+        }
+      },
+      "csff8_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:8}L2-Calc_.H"
+        }
+      },
+      "csff8_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:8}L2-Calc_.I"
+        }
+      },
+      "csff8_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:8}L2-Calc_.J"
+        }
+      },
+      "csff8_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:8}L2-Calc_.K"
+        }
+      },
+      "csff8_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:8}L2-Calc_.L"
+        }
+      },
+      "csff8_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:8}L2-Calc_.M"
+        }
+      },
+      "csff8_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:8}L2-Calc_.N"
+        }
+      },
+      "csff8_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:8}L2-Calc_.O"
+        }
+      },
+      "csff8_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:8}L2-Calc_.P"
+        }
+      },
+      "csff8_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:8}L2-Calc_.Q"
+        }
+      },
+      "csch10": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU2-S3}Chan2:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU2-S3}Chan2:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff9_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:9}Ena-Sel"
+        }
+      },
+      "csff9_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:9}L2-Calc_.F"
+        }
+      },
+      "csff9_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:9}L2-Calc_.G"
+        }
+      },
+      "csff9_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:9}L2-Calc_.H"
+        }
+      },
+      "csff9_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:9}L2-Calc_.I"
+        }
+      },
+      "csff9_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:9}L2-Calc_.J"
+        }
+      },
+      "csff9_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:9}L2-Calc_.K"
+        }
+      },
+      "csff9_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:9}L2-Calc_.L"
+        }
+      },
+      "csff9_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:9}L2-Calc_.M"
+        }
+      },
+      "csff9_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:9}L2-Calc_.N"
+        }
+      },
+      "csff9_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:9}L2-Calc_.O"
+        }
+      },
+      "csff9_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:9}L2-Calc_.P"
+        }
+      },
+      "csff9_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:9}L2-Calc_.Q"
+        }
+      },
+      "csch11": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU2-S3}Chan3:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU2-S3}Chan3:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff10_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:10}Ena-Sel"
+        }
+      },
+      "csff10_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:10}L2-Calc_.F"
+        }
+      },
+      "csff10_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:10}L2-Calc_.G"
+        }
+      },
+      "csff10_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:10}L2-Calc_.H"
+        }
+      },
+      "csff10_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:10}L2-Calc_.I"
+        }
+      },
+      "csff10_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:10}L2-Calc_.J"
+        }
+      },
+      "csff10_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:10}L2-Calc_.K"
+        }
+      },
+      "csff10_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:10}L2-Calc_.L"
+        }
+      },
+      "csff10_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:10}L2-Calc_.M"
+        }
+      },
+      "csff10_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:10}L2-Calc_.N"
+        }
+      },
+      "csff10_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:10}L2-Calc_.O"
+        }
+      },
+      "csff10_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:10}L2-Calc_.P"
+        }
+      },
+      "csff10_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:10}L2-Calc_.Q"
+        }
+      },
+      "csch12": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU2-S3}Chan4:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU2-S3}Chan4:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff11_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:11}Ena-Sel"
+        }
+      },
+      "csff11_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:11}L2-Calc_.F"
+        }
+      },
+      "csff11_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:11}L2-Calc_.G"
+        }
+      },
+      "csff11_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:11}L2-Calc_.H"
+        }
+      },
+      "csff11_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:11}L2-Calc_.I"
+        }
+      },
+      "csff11_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:11}L2-Calc_.J"
+        }
+      },
+      "csff11_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:11}L2-Calc_.K"
+        }
+      },
+      "csff11_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:11}L2-Calc_.L"
+        }
+      },
+      "csff11_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:11}L2-Calc_.M"
+        }
+      },
+      "csff11_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:11}L2-Calc_.N"
+        }
+      },
+      "csff11_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:11}L2-Calc_.O"
+        }
+      },
+      "csff11_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:11}L2-Calc_.P"
+        }
+      },
+      "csff11_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:11}L2-Calc_.Q"
+        }
+      },
+      "csch13": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU2-S4}Chan1:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU2-S4}Chan1:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff12_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:12}Ena-Sel"
+        }
+      },
+      "csff12_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:12}L2-Calc_.F"
+        }
+      },
+      "csff12_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:12}L2-Calc_.G"
+        }
+      },
+      "csff12_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:12}L2-Calc_.H"
+        }
+      },
+      "csff12_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:12}L2-Calc_.I"
+        }
+      },
+      "csff12_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:12}L2-Calc_.J"
+        }
+      },
+      "csff12_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:12}L2-Calc_.K"
+        }
+      },
+      "csff12_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:12}L2-Calc_.L"
+        }
+      },
+      "csff12_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:12}L2-Calc_.M"
+        }
+      },
+      "csff12_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:12}L2-Calc_.N"
+        }
+      },
+      "csff12_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:12}L2-Calc_.O"
+        }
+      },
+      "csff12_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:12}L2-Calc_.P"
+        }
+      },
+      "csff12_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:12}L2-Calc_.Q"
+        }
+      },
+      "csch14": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU2-S4}Chan2:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU2-S4}Chan2:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff13_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:13}Ena-Sel"
+        }
+      },
+      "csff13_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:13}L2-Calc_.F"
+        }
+      },
+      "csff13_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:13}L2-Calc_.G"
+        }
+      },
+      "csff13_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:13}L2-Calc_.H"
+        }
+      },
+      "csff13_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:13}L2-Calc_.I"
+        }
+      },
+      "csff13_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:13}L2-Calc_.J"
+        }
+      },
+      "csff13_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:13}L2-Calc_.K"
+        }
+      },
+      "csff13_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:13}L2-Calc_.L"
+        }
+      },
+      "csff13_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:13}L2-Calc_.M"
+        }
+      },
+      "csff13_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:13}L2-Calc_.N"
+        }
+      },
+      "csff13_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:13}L2-Calc_.O"
+        }
+      },
+      "csff13_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:13}L2-Calc_.P"
+        }
+      },
+      "csff13_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:13}L2-Calc_.Q"
+        }
+      },
+      "csch15": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU2-S4}Chan3:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU2-S4}Chan3:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff14_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:14}Ena-Sel"
+        }
+      },
+      "csff14_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:14}L2-Calc_.F"
+        }
+      },
+      "csff14_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:14}L2-Calc_.G"
+        }
+      },
+      "csff14_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:14}L2-Calc_.H"
+        }
+      },
+      "csff14_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:14}L2-Calc_.I"
+        }
+      },
+      "csff14_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:14}L2-Calc_.J"
+        }
+      },
+      "csff14_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:14}L2-Calc_.K"
+        }
+      },
+      "csff14_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:14}L2-Calc_.L"
+        }
+      },
+      "csff14_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:14}L2-Calc_.M"
+        }
+      },
+      "csff14_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:14}L2-Calc_.N"
+        }
+      },
+      "csff14_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:14}L2-Calc_.O"
+        }
+      },
+      "csff14_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:14}L2-Calc_.P"
+        }
+      },
+      "csff14_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:14}L2-Calc_.Q"
+        }
+      },
+      "csch16": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU2-S4}Chan4:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU2-S4}Chan4:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff15_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:15}Ena-Sel"
+        }
+      },
+      "csff15_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:15}L2-Calc_.F"
+        }
+      },
+      "csff15_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:15}L2-Calc_.G"
+        }
+      },
+      "csff15_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:15}L2-Calc_.H"
+        }
+      },
+      "csff15_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:15}L2-Calc_.I"
+        }
+      },
+      "csff15_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:15}L2-Calc_.J"
+        }
+      },
+      "csff15_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:15}L2-Calc_.K"
+        }
+      },
+      "csff15_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:15}L2-Calc_.L"
+        }
+      },
+      "csff15_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:15}L2-Calc_.M"
+        }
+      },
+      "csff15_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:15}L2-Calc_.N"
+        }
+      },
+      "csff15_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:15}L2-Calc_.O"
+        }
+      },
+      "csff15_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:15}L2-Calc_.P"
+        }
+      },
+      "csff15_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:15}L2-Calc_.Q"
+        }
+      },
+      "csch17": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU2-S5}Chan1:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU2-S5}Chan1:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff16_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:16}Ena-Sel"
+        }
+      },
+      "csff16_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:16}L2-Calc_.F"
+        }
+      },
+      "csff16_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:16}L2-Calc_.G"
+        }
+      },
+      "csff16_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:16}L2-Calc_.H"
+        }
+      },
+      "csff16_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:16}L2-Calc_.I"
+        }
+      },
+      "csff16_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:16}L2-Calc_.J"
+        }
+      },
+      "csff16_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:16}L2-Calc_.K"
+        }
+      },
+      "csff16_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:16}L2-Calc_.L"
+        }
+      },
+      "csff16_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:16}L2-Calc_.M"
+        }
+      },
+      "csff16_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:16}L2-Calc_.N"
+        }
+      },
+      "csff16_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:16}L2-Calc_.O"
+        }
+      },
+      "csff16_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:16}L2-Calc_.P"
+        }
+      },
+      "csff16_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:16}L2-Calc_.Q"
+        }
+      },
+      "csch18": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU2-S5}Chan2:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU2-S5}Chan2:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff17_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:17}Ena-Sel"
+        }
+      },
+      "csff17_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:17}L2-Calc_.F"
+        }
+      },
+      "csff17_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:17}L2-Calc_.G"
+        }
+      },
+      "csff17_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:17}L2-Calc_.H"
+        }
+      },
+      "csff17_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:17}L2-Calc_.I"
+        }
+      },
+      "csff17_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:17}L2-Calc_.J"
+        }
+      },
+      "csff17_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:17}L2-Calc_.K"
+        }
+      },
+      "csff17_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:17}L2-Calc_.L"
+        }
+      },
+      "csff17_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:17}L2-Calc_.M"
+        }
+      },
+      "csff17_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:17}L2-Calc_.N"
+        }
+      },
+      "csff17_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:17}L2-Calc_.O"
+        }
+      },
+      "csff17_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:17}L2-Calc_.P"
+        }
+      },
+      "csff17_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:17}L2-Calc_.Q"
+        }
+      },
+      "csch19": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU2-S5}Chan3:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU2-S5}Chan3:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff18_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:18}Ena-Sel"
+        }
+      },
+      "csff18_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:18}L2-Calc_.F"
+        }
+      },
+      "csff18_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:18}L2-Calc_.G"
+        }
+      },
+      "csff18_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:18}L2-Calc_.H"
+        }
+      },
+      "csff18_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:18}L2-Calc_.I"
+        }
+      },
+      "csff18_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:18}L2-Calc_.J"
+        }
+      },
+      "csff18_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:18}L2-Calc_.K"
+        }
+      },
+      "csff18_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:18}L2-Calc_.L"
+        }
+      },
+      "csff18_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:18}L2-Calc_.M"
+        }
+      },
+      "csff18_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:18}L2-Calc_.N"
+        }
+      },
+      "csff18_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:18}L2-Calc_.O"
+        }
+      },
+      "csff18_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:18}L2-Calc_.P"
+        }
+      },
+      "csff18_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:18}L2-Calc_.Q"
+        }
+      },
+      "csch20": {
+        "put": {
+          "pv": "SR:C29-MG{PS:EPU2-S5}Chan4:DAC_SetPt-SP",
+          "epsilon": 0.05
+        },
+        "get": {
+          "pv": "SR:C29-MG{PS:EPU2-S5}Chan4:DCCT1-I",
+          "epsilon": 0.05
+        }
+      },
+      "csff19_on": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:19}Ena-Sel"
+        }
+      },
+      "csff19_m0_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:19}L2-Calc_.F"
+        }
+      },
+      "csff19_m0_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:19}L2-Calc_.G"
+        }
+      },
+      "csff19_m0_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:19}L2-Calc_.H"
+        }
+      },
+      "csff19_m1_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:19}L2-Calc_.I"
+        }
+      },
+      "csff19_m1_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:19}L2-Calc_.J"
+        }
+      },
+      "csff19_m1_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:19}L2-Calc_.K"
+        }
+      },
+      "csff19_m2_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:19}L2-Calc_.L"
+        }
+      },
+      "csff19_m2_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:19}L2-Calc_.M"
+        }
+      },
+      "csff19_m2_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:19}L2-Calc_.N"
+        }
+      },
+      "csff19_m3_gap": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:19}L2-Calc_.O"
+        }
+      },
+      "csff19_m3_phase": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:19}L2-Calc_.P"
+        }
+      },
+      "csff19_m3_I": {
+        "put": {
+          "pv": "SR:C29-ID:G1A{EPU:2-FFCS:19}L2-Calc_.Q"
+        }
+      }
+    }
   }
 }

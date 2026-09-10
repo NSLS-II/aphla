@@ -5,16 +5,17 @@ Detailed technical reference for the work tracked in
 
 ## Reference status
 
-- Skeletons for `epu50g1c29u`, `epu70g1c29d` + 4 UBPMs already committed
-  (`df7ccc6`), `id_pvs={}` for both EPUs.
-- Progress checklist: Steps 1–5, 9 done. Steps 6, 7, 8, 10 remain, and Step 4
-  needs a follow-up edit (fill `id_pvs`, then re-run with `exist_ok=True`).
-- The database implementation files remain unchanged in this documentation
-  phase.
-- Data collection is complete enough to begin implementation. Current-strip
-  power-supply limits remain pending for MASAR CID 85 only; archiver
-  registration and the later controlled motion test are external follow-ups
-  and do not block the database changes.
+- The initial C29 element skeletons and four UBPMs were committed in `df7ccc6`.
+- On 2026-09-10, the complete EPU PV mappings, type-2 unit conversions,
+  production `.pgz` update, production unitconv copy, and repository JSON
+  snapshot regeneration were completed from the `v2` branch.
+- The EPU IOC prefix initially omitted the colon after `}`. It was corrected
+  (for example, `SR:C29-ID:G1:{EPU50:1}:GAP:ACT`) before the successful
+  production rerun.
+- The remaining work is external follow-up: archiver registration, a
+  controlled-motion/archive validation, and current-strip limits for MASAR
+  CID 85. The database implementation itself is complete; only its commit is
+  pending.
 
 ## Collected PV names and implementation status
 
@@ -223,8 +224,8 @@ select all four lookup-table sets as documented above.
 
 ### Feedforward repository investigation
 
-The local repository `/nsls2/users/yhidaka/git_repos/aphla-id-orb-fdfrwrd`
-was inspected. It is primarily measurement, table-generation, and validation
+The local `aphla-id-orb-fdfrwrd` repository was inspected. It is primarily
+measurement, table-generation, and validation
 code rather than the live feedforward IOC implementation.
 
 - It obtains gap and phase values through aphla readbacks and waits for
@@ -272,6 +273,38 @@ All units are A (Ampere) for the PVs right above.
 ### Unit conversion type (Step 6, `v2tests/nsls2sr_unitconv.yaml`)
 - Both C29 EPUs use microns (um), so both belong in the type-2 conversion
   entries.
+- The type-2 conversion applies to gap/phase scalar values, limits, speeds,
+  and orbit-feedforward gap/phase table coordinates: `unitsys="phy"` is mm.
+- Keep current-related values raw (`unitsys=None`) for feedforward
+  measurement, table generation, and validation. This includes `cch*`,
+  `csch*`, and orbit/current-strip feedforward `_I` tables. Their raw unit can
+  vary by device (for example, A or 10uA), so do not infer a physical-current
+  conversion merely from the field name.
+- `KeyError: (None, "phy")` is therefore expected for those current-related
+  C29 fields with no physical conversion. It is not a blocker for the current
+  feedforward workflow, which records and uses their raw units. Binary,
+  trigger, status, and mode fields likewise remain raw-only.
+
+### Live aphla verification
+
+Run the manual live-EPICS test from the repository root. It exercises every
+available readback/setpoint handle for both C29 EPUs, tests raw values and any
+available physical conversion, and prints only per-element and final totals
+plus failures:
+
+```bash
+pixi run python tests/live_test_c29.py
+```
+
+Current-strip feedforward (`csff*`) is included by default. While those
+channels are offline, use this temporary reduced check instead:
+
+```bash
+pixi run python tests/live_test_c29.py --exclude-csff
+```
+
+The 2026-09-10 reduced check reported 348 passes, 520 CSFF skips, 156
+expected raw-only (`no-phy`) skips, and no failures.
 
 ### Readback update and archive observations
 
@@ -665,29 +698,16 @@ SR:C29-ID:G1A{EPU:1-FFCS:i}L2-Calc_.Q
 The controller index remains zero-based: `FFCS:0` maps to `csch1` and
 `FFCS:19` maps to `csch20`.
 
-## Implementation steps to close out
+## Remaining follow-ups
 
-1. **Step 4 (redo)** — edit `add_C29_SXN_ARI_IDs()` in
-   `db_update/update_apv2_db.py`: fill `id_pvs` for both EPUs per the
-   Pattern-A template (gap/gap_trig/gap_go/gap_hinominal/gap_lonominal/
-   gap_ramping/gap_speed/gap_hilim/gap_lolim, plus phase/phase_trig/
-   phase_speed/phase_hilim/phase_lolim, mode, cch0-3, cch[0-3], orbff0-3
-   variants for all four table slots, current strips, and csff).
-2. Add back to `_FUNCTIONS`:
-   `"add_C29_SXN_ARI_IDs": lambda: add_C29_SXN_ARI_IDs(exist_ok=True)`
-3. **Step 6** — edit `v2tests/nsls2sr_unitconv.yaml`: append
-   `epu50g1c29u`/`epu70g1c29d` to the type-2 µm blocks (including the
-   corresponding `_readonly` and `_speed` blocks), and to the
-   right `ID_orb_cor_channel` entry.
-4. **Step 7** — back up production files again (Step 2 pattern), then:
-   `pixi run python db_update/update_apv2_db.py --run add_C29_SXN_ARI_IDs`
-5. **Step 8** — `cp v2tests/nsls2sr_unitconv.yaml /epics/aphla/apconf_v2/nsls2/nsls2sr_unitconv.yaml`
-6. **Step 9 (rerun)** — regenerate JSON snapshot:
-   `pixi run python db_update/update_apv2_db.py --run save_pgz_db_contents_to_json`
-7. **Step 10** — commit `update_apv2_db.py`, `nsls2sr_unitconv.yaml`,
-   `nsls2_sr_elems_pvs_mvs.json`, `PROGRESS_add_C29_SXN_ARI.md` together.
-   Message: `Add epu50g1c29u, epu70g1c29d PVs to aphla v2 database` (or similar
-   — UBPMs already committed, so scope this commit to the PV fill-in).
+1. Register the documented scalar and hardware PVs with the archiver; lookup
+   tables remain MASAR-controlled and are intentionally excluded.
+2. Obtain current-strip `.DRVH`/`.DRVL` values and update MASAR CID 85.
+3. When current-strip feedforward channels are online, run the full live test
+   (without `--exclude-csff`) and perform the controlled-motion/archive check.
+4. Commit this completed database work, including its mapping, unit
+   conversions, JSON snapshot, documentation, Pixi test dependency, and live
+   validation test.
 
 ## Notes for future sessions
 

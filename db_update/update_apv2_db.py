@@ -1156,7 +1156,9 @@ def _get_existing_straight_elems(cell_num):
 
     return existing_elems
 
-def _add_new_ID_and_IDBPMs(exist_ok, cell_num, ubpm_info_list, id_info_list, id_pvs):
+def _add_new_ID_and_IDBPMs(
+    exist_ok, cell_num, ubpm_info_list, id_info_list, id_pvs,
+    id_pvs_by_elem=None):
 
     print_elems_around_straight(cell_num, n=5)
 
@@ -1280,7 +1282,8 @@ def _add_new_ID_and_IDBPMs(exist_ok, cell_num, ubpm_info_list, id_info_list, id_
         elif "ID" in info["groups"]:
             new["map"] = {}
 
-            for fld, pv_d in id_pvs.items():
+            elem_id_pvs = (id_pvs_by_elem or {}).get(elem_name, id_pvs)
+            for fld, pv_d in elem_id_pvs.items():
                 fld_d = {}
 
                 non_handle_keys = []
@@ -1728,6 +1731,68 @@ def add_C09_XBPM_and_4_new_skew_quads(exist_ok=False):
     save_pgz_files_for_both_np1_and_np2(d, "SR")
 
 
+def _make_c29_id_pvs(epu_num):
+    """Build the Pattern-A PV map for one C29 EPU."""
+    axis = f"EPU{50 if epu_num == 1 else 70}:{epu_num}"
+    id_prefix = f"SR:C29-ID:G1:{{{axis}}}:"
+    gap_sp = f"{id_prefix}CMD:MOVE_GAP"
+    phase_sp = f"{id_prefix}CMD:SET_PHASE"
+    motion_pv = f"{id_prefix}CMD:MOTION"
+    velocity_sp = f"{id_prefix}CMD:SET_VELOCITY"
+    velocity_rb = f"{id_prefix}CMD:SET_VELOCITY:RBV"
+    id_pvs = {
+        "gap": dict(setpoint=gap_sp, readback=f"{id_prefix}GAP:ACT"),
+        "gap_trig": dict(setpoint=motion_pv),
+        "gap_go": dict(setpoint=motion_pv, readback=f"{id_prefix}GAP:ACT"),
+        "gap_hinominal": dict(readback=f"SR:C29-{epu_num}-ID:NomOpen-Sp"),
+        "gap_lonominal": dict(readback=f"SR:C29-{epu_num}-ID:NomClose-Sp"),
+        "gap_ramping": dict(readback=f"{id_prefix}STATE"),
+        "gap_speed": dict(setpoint=velocity_sp, readback=velocity_rb),
+        "gap_hilim": dict(readback=f"{gap_sp}.DRVH"),
+        "gap_lolim": dict(readback=f"{gap_sp}.DRVL"),
+        "phase": dict(setpoint=phase_sp, readback=f"{id_prefix}PHASE:RBV"),
+        "phase_trig": dict(setpoint=motion_pv),
+        "phase_speed": dict(setpoint=velocity_sp, readback=velocity_rb),
+        "phase_hilim": dict(readback=f"{phase_sp}.DRVH"),
+        "phase_lolim": dict(readback=f"{phase_sp}.DRVL"),
+        "mode": dict(
+            setpoint=f"{id_prefix}CMD:PHASE:SET_MODE",
+            readback=f"{id_prefix}PHASE:STATE"),
+    }
+    epsilon = 0.05
+    for i_ch in range(4):
+        ch = i_ch + 1
+        corrector_prefix = f"SR:C29-MG{{PS:EPU{epu_num}-CRR}}Chan{ch}"
+        setpoint = f"{corrector_prefix}:DAC_SetPt-SP"
+        readback = f"{corrector_prefix}:DCCT1-I"
+        id_pvs[f"cch{i_ch}"] = dict(
+            setpoint=setpoint, readback=readback, epsilon=epsilon)
+        id_pvs[f"cch[{i_ch}]"] = dict(readback=readback, epsilon=epsilon)
+        ff_prefix = f"SR:C29-ID:G1A{{EPU:{epu_num}-FF:{i_ch}}}"
+        id_pvs[f"orbff{i_ch}_on"] = dict(setpoint=f"{ff_prefix}Ena-Sel")
+        for i_slot in range(4):
+            for field, suffix0 in (("gap", "F"), ("phase", "G"), ("I", "H")):
+                suffix = chr(ord(suffix0) + 3 * i_slot)
+                id_pvs[f"orbff{i_ch}_m{i_slot}_{field}"] = dict(
+                    setpoint=f"{ff_prefix}L2-Calc_.{suffix}")
+        id_pvs[f"orbff{i_ch}_output"] = dict(setpoint=setpoint)
+    for i_ch in range(20):
+        ps_num, ch = i_ch // 4 + 1, i_ch % 4 + 1
+        ps_prefix = f"SR:C29-MG{{PS:EPU{epu_num}-S{ps_num}}}Chan{ch}"
+        setpoint = f"{ps_prefix}:DAC_SetPt-SP"
+        readback = f"{ps_prefix}:DCCT1-I"
+        id_pvs[f"csch{i_ch + 1}"] = dict(
+            setpoint=setpoint, readback=readback, epsilon=epsilon)
+        ffcs_prefix = f"SR:C29-ID:G1A{{EPU:{epu_num}-FFCS:{i_ch}}}"
+        id_pvs[f"csff{i_ch}_on"] = dict(setpoint=f"{ffcs_prefix}Ena-Sel")
+        for i_slot in range(4):
+            for field, suffix0 in (("gap", "F"), ("phase", "G"), ("I", "H")):
+                suffix = chr(ord(suffix0) + 3 * i_slot)
+                id_pvs[f"csff{i_ch}_m{i_slot}_{field}"] = dict(
+                    setpoint=f"{ffcs_prefix}L2-Calc_.{suffix}")
+    return id_pvs
+
+
 def add_C29_SXN_ARI_IDs(exist_ok=False):
     """C29 SXN (EPU50) and ARI (EPU70) — partial: EPU PVs to be added later"""
 
@@ -1784,11 +1849,14 @@ def add_C29_SXN_ARI_IDs(exist_ok=False):
         ),
     ]
 
-    # EPU PVs not yet available; fill in id_pvs and re-run with exist_ok=True
-    id_pvs = {}
+    id_pvs_by_elem = {
+        "epu50g1c29u": _make_c29_id_pvs(epu_num=1),
+        "epu70g1c29d": _make_c29_id_pvs(epu_num=2),
+    }
 
     d = _add_new_ID_and_IDBPMs(
-        exist_ok, cell_num, ubpm_info_list, id_info_list, id_pvs)
+        exist_ok, cell_num, ubpm_info_list, id_info_list, {},
+        id_pvs_by_elem=id_pvs_by_elem)
 
     save_pgz_files_for_both_np1_and_np2(d, "SR")
 
@@ -1812,6 +1880,7 @@ if __name__ == "__main__":
     # 2026-06-23 — add_C29_SXN_ARI_IDs(exist_ok=True)   # UBPMs + EPU skeletons (id_pvs={}); tags=[] for empty-map elements
 
     _FUNCTIONS = {
+        "add_C29_SXN_ARI_IDs": lambda: add_C29_SXN_ARI_IDs(exist_ok=True),
         "save_pgz_db_contents_to_json": lambda: save_pgz_db_contents_to_json(
             machine_list=["SR"]
         ),

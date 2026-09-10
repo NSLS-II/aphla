@@ -14,13 +14,22 @@ the repo for easy `git diff` inspection of changes.
 Unit conversion config: `v2tests/nsls2sr_unitconv.yaml` (source of truth in
 the repo; must be copied to production after editing).
 
+Before making or applying an aphla v2 database update, work from the `v2`
+branch:
+
+```bash
+cd ~/git_repos/aphla
+git switch v2
+git branch --show-current  # must print: v2
+```
+
 ---
 
 ## Files to modify
 
 | File | Purpose |
 |------|---------|
-| `db_update/update_apv2_db.py` | Main update script; add a new function and flip `if/elif` block |
+| `db_update/update_apv2_db.py` | Main update script; add a new function and register it in `_FUNCTIONS` |
 | `v2tests/nsls2sr_unitconv.yaml` | Unit conversion entries for new elements |
 | `db_update/nsls2_sr_elems_pvs_mvs.json` | Auto-regenerated; commit after running `save_pgz_db_contents_to_json` |
 
@@ -43,12 +52,11 @@ If `db_update/nsls2_sr_elems_pvs_mvs.json` is behind the current `.pgz`
 state (e.g. after recent production changes not yet committed), run
 `save_pgz_db_contents_to_json` first so the next commit's diff is clean:
 
-In `update_apv2_db.py`, set the `elif True:` block to:
-```python
-elif True:
-    save_pgz_db_contents_to_json(machine_list=["SR"])
+```bash
+pixi run python db_update/update_apv2_db.py --run save_pgz_db_contents_to_json
 ```
-Run the script, commit just the JSON, then flip that block back to `False`.
+
+If this changes the snapshot, commit just the JSON before proceeding.
 
 ### 3. Write the new update function in `update_apv2_db.py`
 
@@ -86,15 +94,14 @@ elem_index = (us_elem.index + ref_elem.index) // 2
 Check that the gap is large enough (existing elements typically have ~200-unit
 gaps between them, so the midpoint is safe).
 
-### 4. Flip the `if/elif` block
+### 4. Register the update function
 
-In the `if __name__ == "__main__"` block at the bottom of `update_apv2_db.py`:
-- Set the previous `elif True:` to `elif False:`
-- Add a new block:
-  ```python
-  elif True:  # TO-BE-RUN on YYYY-MM-DD
-      my_new_function(exist_ok=False)
-  ```
+Add the function to the `_FUNCTIONS` mapping at the bottom of
+`update_apv2_db.py`, for example:
+
+```python
+"my_new_function": lambda: my_new_function(exist_ok=False),
+```
 
 ### 5. Add unit conversion entries to `v2tests/nsls2sr_unitconv.yaml`
 
@@ -125,16 +132,16 @@ In the `if __name__ == "__main__"` block at the bottom of `update_apv2_db.py`:
 Use the pixi environment (requires numpy 2 for the numpy-2 pgz write path):
 
 ```bash
-cd /nsls2/users/yhidaka/git_repos/aphla
-pixi run python db_update/update_apv2_db.py
+cd ~/git_repos/aphla
+pixi run python db_update/update_apv2_db.py --run my_new_function
 ```
 
 Or use the VS Code debugger with the "Debug: Current File with Arguments pixi default" configuration.
 
 After a successful run:
-- Update the comment: `elif False:  # Last run on YYYY-MM-DD`
-- Flip the `save_pgz_db_contents_to_json` block to `elif True:` and run again to regenerate the JSON.
-- Then flip that back to `elif False:`.
+- Regenerate the JSON snapshot with:
+  `pixi run python db_update/update_apv2_db.py --run save_pgz_db_contents_to_json`
+- Retain the `_FUNCTIONS` entry only when a deliberate future rerun is useful.
 
 ### 7. Copy unitconv to production
 

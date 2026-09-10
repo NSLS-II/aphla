@@ -79,25 +79,26 @@ For each EPU (EPU50 and EPU70):
 
 ## Progress
 
-Data collection is complete enough to begin the database implementation. The
-pending current-strip power-supply limits are needed for MASAR CID 85, not for
-defining the C29 database PV mappings. Archiver registration and the later
-controlled motion test are external follow-ups and do not block implementation.
+The database implementation, production update, JSON regeneration, and live
+aphla validation are complete. Pending current-strip power-supply limits are
+needed for MASAR CID 85, not for the C29 database mapping. Archiver
+registration and the later controlled-motion test are external follow-ups.
 
 - [x] Step 1 — Gather parameters
 - [x] Step 2 — Back up production files
 - [x] Step 3 — Sync JSON snapshot (if needed) — verified in sync, skipped
 - [x] Step 4 (skeleton) — Write update function — add_C29_SXN_ARI_IDs(); EPU PVs intentionally deferred during data collection
-- [x] Step 5 — Add to _FUNCTIONS and run — add_C29_SXN_ARI_IDs(exist_ok=True); 2026-06-23
-- [ ] Step 6 — Add unit conversion entries
-- [ ] Step 7 — Run update script
-- [ ] Step 8 — Copy unitconv to production
+- [x] Step 5 — Add to `_FUNCTIONS` and run — initial skeleton added 2026-06-23; complete PV mapping run with `exist_ok=True` on 2026-09-10
+- [x] Step 6 — Add unit conversion entries
+- [x] Step 7 — Run update script
+- [x] Step 8 — Copy unitconv to production
 - [x] Step 9 — Regenerate JSON snapshot
-- [ ] Step 10 — Commit
+- [x] Step 10 — Commit
 
 ## Notes
 
-- 2026-08-28 — Resuming to fill `id_pvs` (skeleton currently `{}`). Detailed
+- 2026-08-28 — Resumed to fill `id_pvs` (the skeleton was `{}` at that time,
+  before the September completion). Detailed
   PV mappings and the implementation reference are maintained in
   `db_update/C29_SXN_ARI_REFERENCE.md`.
 
@@ -154,7 +155,7 @@ controlled motion test are external follow-ups and do not block implementation.
   initial archive targets; a controlled C29 motion test should verify the
   effective archive behavior after registration.
 
-- 2026-09-10 — Inspected `/nsls2/users/yhidaka/git_repos/aphla-id-orb-fdfrwrd`.
+- 2026-09-10 — Inspected the `aphla-id-orb-fdfrwrd` repository.
   The measurement/table-generation code uses gap and phase readbacks,
   configured triggers, readback tolerances, and fixed settling delays; it does
   not reference an ID moving-status PV. The live feedforward IOC itself is not
@@ -203,3 +204,27 @@ controlled motion test are external follow-ups and do not block implementation.
   lookup tables; and CID 73 (`CS_FeedForward`) for C29 current-strip lookup
   tables. No additional required MASAR config was found in the available
   repositories. Current-strip limits remain pending from the ID Group.
+
+- 2026-09-10 — Ran `add_C29_SXN_ARI_IDs(exist_ok=True)` from the `v2` branch,
+  which updated both production `.pgz` variants. Copied the updated
+  `nsls2sr_unitconv.yaml` to production and regenerated the repository JSON
+  snapshot. The generated snapshot contains both C29 EPUs with the expected
+  scalar, corrector, orbit-feedforward, current-strip, and current-strip
+  feedforward mappings.
+
+- 2026-09-10 — Verified live C29 aphla reads after correcting the EPU IOC PV
+  prefix: a missing colon after each closing EPU brace was corrected before the
+  successful rerun. Gap/phase scalar values, limits, speeds, and orbit-feedforward
+  coordinate tables support `unitsys="phy"` in mm. For feedforward
+  measurement/table generation, corrector/current-strip fields and current
+  lookup tables are intentionally used with `unitsys=None`; their raw current
+  units can vary by device. The resulting missing `None`-to-`phy` conversion
+  is expected and does not block that workflow.
+
+- 2026-09-10 — Added the manual live-EPICS validation command
+  `pixi run python tests/live_test_c29.py`. It tests all supported C29
+  readback/setpoint combinations and reports totals and failures only.
+  Current-strip feedforward channels are included by default; while they are
+  offline, `--exclude-csff` produced 348 passes, 520 CSFF skips, 156 expected
+  raw-only (`no-phy`) skips, and no failures. Run the full test after CSFF
+  channels are online.

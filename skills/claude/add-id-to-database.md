@@ -116,9 +116,9 @@ Before writing the update function, confirm these values with the user:
 
 ```bash
 cd /epics/aphla/apconf_v2/nsls2
-cp nsls2_sr_elems_pvs_mvs.pgz        nsls2_sr_elems_pvs_mvs.pgz.arch$(date +%Y%m%d)
-cp nsls2_sr_elems_pvs_mvs.numpy2.pgz nsls2_sr_elems_pvs_mvs.numpy2.pgz.arch$(date +%Y%m%d)
-cp nsls2sr_unitconv.yaml              nsls2sr_unitconv.yaml.arch$(date +%Y%m%d)
+cp nsls2_sr_elems_pvs_mvs.pgz        nsls2_sr_elems_pvs_mvs.pgz.bak.$(date +%Y%m%d)
+cp nsls2_sr_elems_pvs_mvs.numpy2.pgz nsls2_sr_elems_pvs_mvs.numpy2.pgz.bak.$(date +%Y%m%d)
+cp nsls2sr_unitconv.yaml              nsls2sr_unitconv.yaml.bak.$(date +%Y%m%d)
 ```
 
 Confirm all three backup files exist before continuing.
@@ -450,7 +450,7 @@ using YAML anchors to avoid repetition:
 ## Step 7 — Run the Update Script
 
 ```bash
-cd /nsls2/users/yhidaka/git_repos/aphla
+cd ~/git_repos/aphla
 pixi run python db_update/update_apv2_db.py
 ```
 
@@ -504,7 +504,9 @@ new element entries.
 
 ## Step 10 — Commit
 
-Stage the four modified/new files (including the progress log):
+Stage the implementation, unit conversions, JSON snapshot, and progress log.
+Also stage any focused validation test or documentation updated for this
+specific change:
 
 ```bash
 git add db_update/update_apv2_db.py
@@ -551,8 +553,12 @@ Examples:
 6. **orbff `L2-Calc_` slot varies by beamline** — C09 CDI gap slot is `.F`;
    C20 IFE is `.C`. Check the actual IOC record before assuming a slot letter.
 
-7. **The script writes to production directly** — there is no dry-run mode.
+7. **IOC prefix punctuation is significant** — preserve separators around
+   braces exactly. For example, the C29 EPU prefix is
+   `SR:C29-ID:G1:{EPU50:1}:`, with a colon after `}`.
+
+8. **The script writes to production directly** — there is no dry-run mode.
    Always back up (Step 2) before running.
 
-8. **`save_pgz_db_contents_to_json` is slow** — loading and serializing the
+9. **`save_pgz_db_contents_to_json` is slow** — loading and serializing the
    full database takes ~30 s.

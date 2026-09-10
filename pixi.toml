@@ -10,6 +10,7 @@ epics-base = "*"  # required for cothread to work
 
 [pypi-dependencies]
 aphla = { path = ".", editable = true }
+pytest = ">=7.4,<8"
 
 [activation.env]
 APHLA_CONFIG_DIR = "/epics/aphla/apconf_v2"
