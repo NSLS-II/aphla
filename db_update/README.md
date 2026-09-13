@@ -127,6 +127,23 @@ Add the function to the `_FUNCTIONS` mapping at the bottom of
     coeffs: [0.000504, 0.0]
   ```
 
+**For new insertion devices with orbit correctors (`cch0`-`cch3`/`cch5`):**
+every existing working ID has a `phy`-unitsys entry for its corrector fields
+in one of the `ID_orb_cor_channel_type*` blocks (see
+`ID_orb_cor_channel_type2` for the standard `A -> A` identity case). A new ID
+must be added to the `elements:` list of the matching
+`ID_orb_cor_channel_type*` block (or a new type block created if its
+corrector current unit/polarity differs), with `handles: [readback,
+setpoint]` and a `phy` conversion — even if it is a trivial identity
+(`src_unit: A, dst_unit: A, coeffs: [1.0, 0.0]`). Do not skip this just
+because gap/phase conversions were added: gap/phase and corrector-channel
+conversions are independent blocks and are easy to forget. Confirm by
+grepping the new element name across the whole `nsls2sr_unitconv.yaml` file
+and checking it appears in a corrector block, not just a gap/phase block.
+(This was missed for `epu50g1c29u`/`epu70g1c29d` and caused a `KeyError:
+('phy', None)` when setting corrector setpoints — see
+`C29_SXN_ARI_REFERENCE.md`.)
+
 ### 6. Run the update script
 
 Use the pixi environment (requires numpy 2 for the numpy-2 pgz write path):

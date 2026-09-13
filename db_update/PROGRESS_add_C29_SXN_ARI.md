@@ -89,7 +89,10 @@ registration and the later controlled-motion test are external follow-ups.
 - [x] Step 3 — Sync JSON snapshot (if needed) — verified in sync, skipped
 - [x] Step 4 (skeleton) — Write update function — add_C29_SXN_ARI_IDs(); EPU PVs intentionally deferred during data collection
 - [x] Step 5 — Add to `_FUNCTIONS` and run — initial skeleton added 2026-06-23; complete PV mapping run with `exist_ok=True` on 2026-09-10
-- [x] Step 6 — Add unit conversion entries
+- [x] Step 6a — Add gap/phase (and speed) unit conversion entries
+- [x] Step 6b — Add corrector-channel (`cch0`-`cch3`) `phy` unit conversion
+      entries — initially missed; added 2026-09-12 to `ID_orb_cor_channel_type2`
+      in `v2tests/nsls2sr_unitconv.yaml`, matching the `epu49g1c23u/d` precedent
 - [x] Step 7 — Run update script
 - [x] Step 8 — Copy unitconv to production
 - [x] Step 9 — Regenerate JSON snapshot
@@ -114,6 +117,15 @@ registration and the later controlled-motion test are external follow-ups.
   and C21 use `csch1`–`csch18`, while C23 uses `csch0`–`csch19`. C29 will use
   the one-based convention `csch1`–`csch20`; both SXN and ARI collections are
   complete.
+
+- 2026-09-12 — Discovered `epu50g1c29u`/`epu70g1c29d` were missing `phy`
+  unit-conversion entries for `cch0`-`cch3` (never added to
+  `ID_orb_cor_channel_type2` in `v2tests/nsls2sr_unitconv.yaml`, unlike every
+  other working EPU). This caused `KeyError: ('phy', None)` when setting
+  corrector setpoints in physical units from `aphla-id-orb-fdfrwrd`. Added the
+  missing entries; see `README.md` and `C29_SXN_ARI_REFERENCE.md` for the
+  corrected guidance. Backup/production-copy of `nsls2sr_unitconv.yaml` still
+  pending (must be done outside a read-only-`/epics` sandbox).
 
 - 2026-09-09 — Clarified mechanical EPU enum values versus feedforward table
   slots. In the aphla/feedforward configuration, `m0`–`m3` are generic

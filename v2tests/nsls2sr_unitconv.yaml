@@ -737,6 +737,7 @@ SR:
                dw100g1c08u, dw100g1c08d, dw100g1c18u, dw100g1c18d, dw100g1c28u, dw100g1c28d,
                scw70g1c27d,
                epu49g1c23u, epu49g1c23d,
+               epu50g1c29u, epu70g1c29d,
                _phaserg1c23c]
     # *) Only "ivu20g1c03c" and "scw70g1c27d" have cch6, cch7, cch8, cch9.
     #    For "ivu20g1c03c", these channels were introduced when its ID

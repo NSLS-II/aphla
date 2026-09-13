@@ -275,15 +275,34 @@ All units are A (Ampere) for the PVs right above.
   entries.
 - The type-2 conversion applies to gap/phase scalar values, limits, speeds,
   and orbit-feedforward gap/phase table coordinates: `unitsys="phy"` is mm.
-- Keep current-related values raw (`unitsys=None`) for feedforward
+- **Correction (2026-09-12):** the paragraph below previously claimed that
+  leaving `cch*` current-related fields raw-only was intentional. That was
+  wrong — every other working EPU (e.g. `epu49g1c23u/d`) registers a `phy`
+  conversion for `cch0`-`cch5` in `ID_orb_cor_channel_type2`, even though it
+  is a trivial identity (`A -> A`, `coeffs: [1.0, 0.0]`). `epu50g1c29u` and
+  `epu70g1c29d` were never added to that block, which is a plain omission,
+  not a design choice. This caused `KeyError: ('phy', None)` (note: the
+  actual direction hit in practice was `src='phy', dst=None`, not
+  `(None, 'phy')` as originally written here) when
+  `aphla-id-orb-fdfrwrd`'s `idff_pyepics.py` tried to set corrector setpoints
+  in physical units for these two EPUs. Fixed by adding
+  `epu50g1c29u, epu70g1c29d` to the `ID_orb_cor_channel_type2` `elements:`
+  list in `v2tests/nsls2sr_unitconv.yaml` (identity `A -> A` conversion,
+  matching precedent). See `README.md`'s new "For new insertion devices with
+  orbit correctors" note and `PROGRESS_add_C29_SXN_ARI.md` Step 6b for the
+  general procedure going forward. `csch*` and current-strip feedforward
+  fields remain raw-only for now (no working-precedent EPU registers a `phy`
+  conversion for those), but should be revisited if the same error shows up
+  for those fields.
+- ~~Keep current-related values raw (`unitsys=None`) for feedforward
   measurement, table generation, and validation. This includes `cch*`,
   `csch*`, and orbit/current-strip feedforward `_I` tables. Their raw unit can
   vary by device (for example, A or 10uA), so do not infer a physical-current
-  conversion merely from the field name.
-- `KeyError: (None, "phy")` is therefore expected for those current-related
+  conversion merely from the field name.~~
+- ~~`KeyError: (None, "phy")` is therefore expected for those current-related
   C29 fields with no physical conversion. It is not a blocker for the current
-  feedforward workflow, which records and uses their raw units. Binary,
-  trigger, status, and mode fields likewise remain raw-only.
+  feedforward workflow, which records and uses their raw units.~~ Binary,
+  trigger, status, and mode fields remain raw-only (this part still holds).
 
 ### Live aphla verification
 
